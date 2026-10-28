@@ -4,28 +4,93 @@ The long-range plan is `1D Thermal Baseline Build Steps.md`. This file holds onl
 
 ## Where Step 5 stands (Oct 28)
 
-Ground temperature: **`flann_safe` is the chosen residual model** (FLANN ridge, no albedo terms, covariates clamped to the rover's 1st-99th percentiles). LOBO macro RMSE 4.74 K against the benchmark's 5.38 K and the baseline's 6.72 K; 4.87 K vs 5.37 K without sols 3763-3778. Pooled RMSE (5.82 K) is still worse than the benchmark (5.51 K), because block 0 (7.46 K) dominates the rows. 8 configurations tried. Details in `progress.md`.
+Ground temperature is done at the rover. The chosen residual model, `flann_safe`, is a FLANN ridge with no albedo terms and covariates clamped to the rover's 1st-99th percentiles. It scores a LOBO macro RMSE of 4.74 K against the benchmark's 5.38 K. 9 configurations were tried. Details are in `progress.md`.
 
-## Next: needs the user's choice
+**User decision (Oct 28): the map uses `flann_safe_no_ti`, not `flann_safe`.** That is the same model without its TI terms:
 
-Done Oct 28: the block 0 diagnostic (TI, not sky IR) and the with/without-TI-terms comparison at the rover and as a crater-wide estimate. The map itself is not made yet. See `progress.md`.
+- It scores a LOBO macro RMSE of 4.86 K (4.99 K without sols 3763-3778) and a pooled RMSE of 5.83 K.
+- The TI terms earned only 0.12 K at the rover, under the 0.2 K bar every other addition had to clear.
+- Through the clamp, the TI terms would have warmed nights by about 3.3 K on the 82% of crater pixels whose THEMIS TI is below the rover's 361 tiu minimum.
+- TI still enters through the physics baseline: THEMIS TI x `ti_scale`, as fitted.
 
-1. **Choose the residual for the map: `flann_safe` or `flann_safe_no_ti`.** Recommended: `flann_safe_no_ti`. The TI terms earn 0.12 K at the rover (under the 0.2 K bar used for every other addition) but warm about 82% of the map by about 3.3 K at night through the clamp, in a TI range (below 361 tiu) the rover never saw. This is a user decision because the pre-set rule chose `flann_safe`.
-2. **Step 6, the map, both ways.** Needs from the user: the Ls values (proposal 15, 75, 195, 255, 340), a tau per map Ls (proposal: the training table's median tau in each Ls bin, never extrapolated), and the output format agreed with the map team. The baseline is shared, so both residual versions cost one solver run: about 2 h per Ls at 200 m (530,000 columns). Report the fraction of pixels clamped per covariate.
-3. **Literature check** of REMS-derived TI along the traverse (Hamilton et al. 2014, Vasavada et al. 2017; cited from memory, not checked) against the implied 330-400 tiu.
-4. **Air temperature** (separate model). Ask the user before starting.
-5. **Sealed test** (blocks 4 and 8): only when the user says so.
-6. **Proposals only (out of scope):** two-layer soil for block 0's shape error; a TI mapping that shrinks THEMIS variation instead of scaling it (every block implies 330-400 tiu).
+## Next: Step 6, the map
 
-### Watch for (unchanged)
+Starting it brings the full-grid export into scope (the user's go-ahead, Oct 28). Begin with a dry run on a small window around the rover before the full grid.
 
-- Spatial skill cannot be measured here: all rover positions lie within about 10 x 5 km.
-- The residual model must not undo the baseline's spatial terms. `flann_safe`: TI 10.4 K at night (bounded by the clamp), slope 2.4 K, no albedo term.
-- Count every configuration tried: 9 so far (4 tree configurations, 5 FLANN variants; number 9 is sensitivity only). The sensitivity run re-scored the same 4 tree configurations and selected nothing.
+### Decisions made (Oct 28)
 
-### Open questions for the user
+| Item | Decision |
+|---|---|
+| Residual model | `flann_safe_no_ti`, refit on all training rows (all-blocks baseline parameters), with its all-blocks clamp ranges for slope and the baseline-as-predictor. |
+| Ls values | 15, 75, 195, 255, 340 deg |
+| Tau per Ls | Median per-sol `tau` of the training sols within +-15 deg of each Ls. Placeholder-tau sols are excluded, and the sealed test is not read. Tau is one value for the whole map at each Ls, and is never extrapolated. |
+| Baseline parameters | All-blocks fit from `outputs/baseline/fit_params.csv`: `g_diff` 0.8193, `f_ir` 0.0312, `ti_scale` 0.7396. |
 
-- Which of items 1-4 to do next.
-- Which Ls values the map shows (proposal: 15, 75, 195, 255, 340); needed for Step 6.
-- The web-map output format; needed for Step 6.
-- Whether to run a one-off Mars Climate Database comparison at the Gale cell.
+Tau values, computed Oct 28 from `gale_rems_training.csv`:
+
+| Ls (deg) | Sols in window | Blocks | Median tau | IQR | Range |
+|---|---|---|---|---|---|
+| 15 | 21 | 1, 5 | 0.78 | 0.73-0.79 | 0.68-0.89 |
+| 75 | 17 | 3, 5 | 0.49 | 0.46-0.51 | 0.42-0.53 |
+| 195 | 37 | 0, 2 | 0.69 | 0.67-0.71 | 0.63-1.16 |
+| 255 | 14 | 0, 2 | 1.09 | 1.04-1.24 | 1.01-1.35 |
+| 340 | 22 | 5, 7, 9 | 1.11 | 1.03-1.16 | 0.95-1.51 |
+
+Ls 255 has the fewest sols (14). Recompute these values in the Step 6 notebook rather than hard-coding them, and assert that they match this table.
+
+### Design
+
+1. **Grid.** Block-average the 100 m static table (`gale_dust_devil_features_100m.csv`, 1436 x 1477) 2 x 2 to about 200 m (718 x 738). Average aspect as a circular mean of sin and cos, never as raw degrees. 1477 is odd, so drop the last column, and state it in the metadata. Latitude per row comes from the transform in `gale_dust_devil_meta.json`, with the pixel size doubled for the 200 m grid. Read the CSV by columns, in chunks if needed.
+2. **Inputs per pixel.** Slope, aspect, THEMIS TI and `albedo_mean` from the table. Albedo still drives the physics; it is only absent from the residual model.
+3. **Baseline.** Run `thermal1d.simulate_sols` per Ls on chunks of pixels (for example 50,000 columns; a 37-layer float64 profile is about 15 MB per 50,000 columns). Runtime is about 2 h per Ls (measured about 0.015 s per column), so about 10 h for 5 Ls. Log progress to a file. Store results as float32.
+4. **Residual.** Apply `flann_safe_no_ti` with clamping. Report the fraction of pixels clamped per covariate.
+5. **Time steps.** Output every 30 min of LTST (48 frames per Ls), at the step ending at each frame time. Say whether frames are instants or bin centres in the metadata.
+6. **Check (pass condition from the build steps):**
+   - The rover pixel of a Step 4 sol at the same Ls and tau reproduces the Step 4 model within 0.05 K.
+   - The output loads in the map with the right orientation (row 0 at the north edge).
+7. **Optional second map, as a sensitivity:** `flann_safe` (with TI terms). The baseline is shared, so it costs only the residual pass.
+
+### Output format options
+
+The numbers that drive the choice:
+
+- 718 x 738 = 529,884 pixels per frame.
+- 5 Ls x 48 frames = 240 frames.
+- One frame is 2.1 MB as float32, 1.06 MB as 16-bit and 0.53 MB as 8-bit.
+- So the whole set is about 254 MB at 16-bit and 127 MB at 8-bit, before compression.
+- The model error is about 5 K, so 0.1 K steps lose nothing that matters.
+
+| Format | What it is | Pros | Cons |
+|---|---|---|---|
+| **A. Cloud-optimized GeoTIFF (COG)**, one file per Ls with 48 bands | Standard georeferenced raster; int16 at 0.01 K or float32, with a nodata value | Opens in QGIS for checking. Carries georeferencing. Web maps can read it with geotiff.js, georaster-layer-for-leaflet or the OpenLayers GeoTIFF source. | Needs `rasterio` (installed 1.5.2, but not on the allowed list: needs user approval). Decoding in the browser is heavier. The Mars coordinate reference system (IAU 2015:49900) is not an EPSG code, so web maps treat it as plain degrees. |
+| **B. 16-bit PNG per frame** (grayscale, value = (T - 100 K) x 100) plus a JSON manifest | Lossless image with values encoded in the pixel | Every browser decodes PNG natively. The client applies the colour scale, so hover readouts and legend changes stay possible. Small after compression. | No georeferencing in the file (the manifest carries bounds). Needs Pillow (installed 13.0.0, not on the allowed list: needs approval). Value decoding is custom code in the web app. |
+| **C. Coloured PNG per frame** plus a legend | A ready-to-show picture (for example an image overlay in Leaflet with lat/lon bounds) | The simplest to display; no decoding. | Values are lost, so there is no hover temperature. The colour scale is fixed at export. Needs Pillow (approval). |
+| **D. Raw binary plus a JSON manifest** (uint16 at 0.01 K, little-endian, one file per Ls) | Bytes the browser reads straight into a typed array | numpy only (already allowed). Fastest to load in JavaScript. Exact values. | A custom format: no GIS tool opens it, and the web app needs a small loader. |
+| **E. float16 NumPy stack (`.npy`/`.npz`) plus `meta.json`** | The handover brief's original proposal | numpy only. Matches `gale_dust_devil_meta.json`. The quickest to write. | Browsers do not read `.npy` without a parser, and float16 needs decoding in JavaScript. Best as an internal or archive format. |
+| **F. XYZ map tiles** (z/x/y PNG) | Pyramid tiles for slippy maps | Standard for basemaps with deep zoom. | Overkill for a 718 x 738 grid, which fits in a few tiles. Web Mercator tiling on Mars adds projection questions. |
+| **G. NetCDF or Zarr** | Self-describing science arrays | Good for sharing with scientists. | Needs xarray or netCDF4, which are not installed and not part of this phase. Not for the web map. |
+
+**Recommendation:** write **A** (COG, int16 at 0.01 K) as the master copy that we check in QGIS and that carries the georeferencing. Then export the web copy the map team prefers: **B** for interactive values (hover readout, client colour scale), or **C** if they only need pictures. Both A and B need `rasterio` or Pillow added to the allowed libraries in `CLAUDE.md`. If neither is approved, **D** needs numpy only.
+
+### Questions before Step 6 starts
+
+- Which web format the map team wants: B, C or D, or another their map library needs.
+- Whether to approve `rasterio` (for A) and Pillow (for B and C) in `CLAUDE.md`'s allowed libraries. Both are already installed in `gale-env`, so nothing new needs installing.
+- Whether the frames should be every 30 min (48 per Ls, as in the handover brief) or every hour (24 per Ls, half the size).
+
+## Later items
+
+1. **Literature check** of REMS-derived TI along the traverse (Hamilton et al. 2014, Vasavada et al. 2017; cited from memory, not checked) against the implied 330-400 tiu.
+2. **Air temperature** (separate model). Ask the user before starting.
+3. **Sealed test** (blocks 4 and 8): only when the user says so. It is a time test within 1 km of training positions, not a spatial test.
+4. **Proposals only (out of scope):**
+   - a two-layer soil, for block 0's remaining shape error;
+   - a TI mapping that shrinks THEMIS variation instead of scaling it, since every block implies 330-400 tiu;
+   - a one-off Mars Climate Database comparison at the Gale cell.
+
+### Watch for
+
+- **Spatial skill cannot be measured here.** All rover positions lie within about 10 x 5 km. Say so beside the map.
+- **Most of the map is outside the rover's TI range.** 82% of pixels are below 361 tiu, where the baseline runs at `ti_scale` x THEMIS (a 281 tiu pixel runs at 208 tiu). Nothing in the rover data tests TI below about 330 tiu.
+- **Slope is clamped to 1.25-12.27 deg in the residual only.** The physics still sees the true slope, so steep crater walls and Mount Sharp's flanks rest on the baseline alone.
+- **Count every configuration tried:** 9 so far (4 tree configurations and 5 FLANN variants; number 9 is a sensitivity run). Step 6 adds none.

@@ -2,6 +2,14 @@
 
 The newest session goes at the top. What we learned goes in `discoveries.md`, what not to retry goes in `closed_ideas.md`, and the next step goes in `plan.md`.
 
+## Session 2g (Oct 28, 2026): Step 6 decisions (user)
+
+- **Residual for the map: `flann_safe_no_ti`** (TI terms dropped; see Session 2f).
+- **Ls values: 15, 75, 195, 255, 340 deg.**
+- **Tau: the median per-sol tau within +-15 deg of each Ls** (0.78, 0.49, 0.69, 1.09, 1.11), placeholder sols excluded.
+- The output format is still open. The options are in `plan.md`.
+- Found: `rasterio` 1.5.2 and Pillow 13.0.0 are already installed in `gale-env`, but `CLAUDE.md` does not allow them yet.
+
 ## Session 2f (Oct 28, 2026): residual with and without TI terms (map sensitivity, part 1)
 
 User request (plan option: map with and without the residual's TI terms). The map itself (Step 6) was **not** produced: it needs the Ls values, a tau per map Ls and the output format (open questions), and about 2 h of solver time per Ls. Done instead: configuration 9, `flann_safe_no_ti` (sensitivity only, never selected), in `residual_flann_lobo.ipynb`, and a crater-wide estimate of the difference from the 100 m feature table's TI column (no solver run).

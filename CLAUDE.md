@@ -15,7 +15,7 @@ Read the relevant section there before changing a rule in this file.
 
 ## Current status
 
-Steps 0-4 are done (Oct 28): Gates 1 and 2 pass, and the fitted baseline does not beat the benchmark in leave-one-block-out scoring (macro RMSE 6.72 K vs 5.38 K). Step 5 (residual model) started Oct 28 at the user's request. Chosen ground-temperature residual: `flann_safe` in `notebooks/residual_flann_lobo.ipynb` (FLANN ridge, no albedo, clamped covariates), LOBO macro 4.74 K against the benchmark's 5.38 K (see `docs/progress.md`).
+Steps 0-4 are done (Oct 28): Gates 1 and 2 pass, and the fitted baseline does not beat the benchmark in leave-one-block-out scoring (macro RMSE 6.72 K vs 5.38 K). Step 5 (residual model) is done for ground temperature (Oct 28). The map uses `flann_safe_no_ti` (user decision Oct 28: FLANN ridge without albedo or TI terms, clamped covariates; LOBO macro 4.86 K against the benchmark's 5.38 K), from `notebooks/residual_flann_lobo.ipynb`. Next is Step 6, the map; its decisions (Ls values, tau, output-format options) are in `docs/plan.md`.
 
 Project notes in `docs/`, read before starting work:
 - `plan.md`: the next step's concrete design.
