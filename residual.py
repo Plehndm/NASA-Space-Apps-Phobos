@@ -76,9 +76,24 @@ FLANN_DAILY_HARMONICS = 3     # LTST harmonics 1..3
 FLANN_SEASON_HARMONICS = 2    # Ls harmonics 1..2
 FLANN_RIDGE_ALPHA = 1.0       # on standardized basis columns; fixed, not tuned
 FLANN_STATIC = ["ti_themis_tiu", "slope_deg", "aspect_sin", "aspect_cos", "albedo_mean", "baseline_k"]
+FLANN_STATIC_NO_ALBEDO = [c for c in FLANN_STATIC if c != "albedo_mean"]   # Oct 28: rover albedo spans 0.24-0.26 only
+
+# Clamping (Oct 28, user request): covariates held to the training rows' percentile range
+# before the residual model, so the map never extrapolates the residual. Aspect is circular
+# and tau comes from the table, so neither is clamped.
+CLAMP_COLUMNS = ["ti_themis_tiu", "slope_deg", "albedo_mean", "baseline_k"]
+CLAMP_PERCENTILES = (1.0, 99.0)
+
+# FLANN variants scored in residual_flann_lobo.ipynb: name -> (static terms, clamp)
+FLANN_VARIANTS = {
+    "flann": (FLANN_STATIC, False),
+    "flann_clamped": (FLANN_STATIC, True),
+    "flann_no_albedo": (FLANN_STATIC_NO_ALBEDO, False),
+    "flann_safe": (FLANN_STATIC_NO_ALBEDO, True),
+}
 
 
-def make_flann_basis(df):
+def make_flann_basis(df, static=FLANN_STATIC):
     """FLANN functional expansion. df as for make_features. Returns a DataFrame of basis columns.
 
     Daily harmonics 1-3 of LTST and seasonal harmonics 1-2 of Ls, each times (1, tau); tau;
@@ -101,7 +116,7 @@ def make_flann_basis(df):
             v = fn(m * ls)
             cols[f"ls_{name}{m}"] = v
             cols[f"ls_{name}{m}_x_tau"] = v * tau
-    for c in FLANN_STATIC:
+    for c in static:
         v = f[c].to_numpy()
         cols[c] = v
         cols[f"{c}_x_ltst_sin1"] = v * np.sin(w)
@@ -113,3 +128,19 @@ def make_flann_basis(df):
 
 def make_flann_learner():
     return make_pipeline(StandardScaler(), Ridge(alpha=FLANN_RIDGE_ALPHA))
+
+
+def clamp_ranges(df):
+    """(lo, hi) per CLAMP_COLUMNS from the rows of df (the training rows), at CLAMP_PERCENTILES."""
+    return {c: tuple(np.percentile(df[c].to_numpy(), CLAMP_PERCENTILES)) for c in CLAMP_COLUMNS}
+
+
+def apply_clamp(df, ranges):
+    """Copy of df with each CLAMP_COLUMNS column clipped to its range. Returns (df, clipped-row fraction per column)."""
+    out = df.copy()
+    frac = {}
+    for c, (lo, hi) in ranges.items():
+        v = out[c].to_numpy()
+        frac[c] = float(np.mean((v < lo) | (v > hi)))
+        out[c] = np.clip(v, lo, hi)
+    return out, frac

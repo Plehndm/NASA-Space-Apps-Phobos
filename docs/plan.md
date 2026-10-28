@@ -4,25 +4,20 @@ The long-range plan is `1D Thermal Baseline Build Steps.md`. This file holds onl
 
 ## Where Step 5 stands (Oct 28)
 
-The residual model (`no_elev`, gradient boosting) gives a macro RMSE of 5.28 K against the benchmark's 5.38 K. It loses without sols 3763-3778 and on pooled RMSE. The main failure is block 0, whose thermal inertia (566-682 tiu) lies above every other block's. Details are in `progress.md` and `discoveries.md`.
+Ground temperature: **`flann_safe` is the chosen residual model** (FLANN ridge, no albedo terms, covariates clamped to the rover's 1st-99th percentiles). LOBO macro RMSE 4.74 K against the benchmark's 5.38 K and the baseline's 6.72 K; 4.87 K vs 5.37 K without sols 3763-3778. Pooled RMSE (5.82 K) is still worse than the benchmark (5.51 K), because block 0 (7.46 K) dominates the rows. 8 configurations tried. Details in `progress.md`.
 
 ## Next: needs the user's choice
 
-Done Oct 28: the `ti_scale` >= 0.5 sensitivity run (no change) and FLANN as the second learner (adopted by the rule, macro 4.86 K, but unsafe on the map as it stands). See `progress.md`.
-
-1. **Make FLANN map-safe** (recommended). Pick one before running, each is a new configuration:
-   - (a) clamp every static covariate to the rover's 1st-99th percentile before the residual model, on the map only (no LOBO change, since LOBO rows are inside the range by construction except block 0's TI);
-   - (b) drop the albedo terms from the basis (the rover's albedo spans only 0.24-0.26), and rerun LOBO with the same rule as configuration 6;
-   - (c) both.
-2. **Block 0 diagnostic:** what `ti_scale` block 0 alone would need (diagnostic only). It tells whether the 10 K night TI effect is THEMIS TI or something else at Bradbury.
-3. **SVR** (optional third learner). Lower priority now: it reverts to a constant off-range like trees.
-4. **Air temperature** (separate model). Ask the user before starting.
+1. **Block 0 diagnostic** (recommended first): the `ti_scale` block 0 alone would need (a diagnostic, never a baseline fit). The chosen model carries a 10 K night TI effect learned almost entirely from block 0, which will be applied to every high-TI map pixel. This checks whether TI explains it.
+2. **Air temperature** (separate model): a function of predicted ground temperature, elevation and time of day. Ask the user before starting.
+3. **Step 6, the map:** needs the Ls values (proposal 15, 75, 195, 255, 340) and the output format. The map applies `flann_safe` with the all-blocks clamp ranges (`outputs/residual/flann_safe_clamp_ranges.csv`) and reports the fraction of pixels clamped per covariate.
+4. **Sealed test** (blocks 4 and 8): only when the user says so. Remember it is a time test within 1 km of training positions, not a spatial test.
 
 ### Watch for (unchanged)
 
 - Spatial skill cannot be measured here: all rover positions lie within about 10 x 5 km.
-- The residual model must not undo the baseline's spatial terms. Trees: partial-dependence ranges at most 1.8 K. FLANN: TI 10 K at night inside the rover range, albedo 29 K when extended to 0.10-0.35.
-- Count every configuration tried: 5 so far (4 tree configurations, 1 FLANN). The sensitivity run re-scored the same 4 and selected nothing.
+- The residual model must not undo the baseline's spatial terms. `flann_safe`: TI 10.4 K at night (bounded by the clamp), slope 2.4 K, no albedo term.
+- Count every configuration tried: 8 so far (4 tree configurations, 4 FLANN variants). The sensitivity run re-scored the same 4 tree configurations and selected nothing.
 
 ### Open questions for the user
 

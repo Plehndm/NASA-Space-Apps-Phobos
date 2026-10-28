@@ -42,6 +42,13 @@ Decided Oct 28: no bound changes or new parameters before Step 5.
 | Model absorbed flux as a residual predictor | Tested | 0.04 K worse macro, better in 4 of 9 blocks. | Never on its own; time and tau already carry it. |
 | Static covariates dropped (`time_only`) | Tested | 0.34 K worse macro than `no_elev`. | - |
 
+## Residual model inputs (Oct 28)
+
+| Idea | Status | Why closed | Reopen if |
+|---|---|---|---|
+| Albedo as a residual predictor (linear learner) | Tested | Rover albedo spans 0.24-0.26; the term moved the residual by 29 K over 0.10-0.35, and dropping it improved macro RMSE by 0.14 K. | An albedo source with real spread along the traverse. |
+| Unclamped linear residual model on the map | Tested | Extrapolates linearly (TI 14 K, slope 5 K, albedo 29 K over map ranges). Clamping costs 0.02 K macro. | Never. |
+
 ## Second learners for the residual model (Oct 28, reasoned with the user)
 
 | Idea | Status | Why closed | Reopen if |

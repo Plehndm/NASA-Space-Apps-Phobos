@@ -49,3 +49,10 @@ Each entry gives the evidence. Data and split findings from before Oct 27 are in
 - **Linear TI extrapolation goes the right way at night, but only about 1 K of the 9 K.** The fold-0 model cools nights by about 1 K from TI 450 to 620 tiu. Block 0 night bias drops from +9.2 K (trees) to +6.4 K.
 - **Albedo is a hidden campaign ID for a linear learner.** The rover's albedo spans only 0.24-0.26 (1st-99th percentile), so its large coefficient (with an opposing baseline term, a sign of collinearity) is fitted on almost no spread. Extended to 0.10-0.35 it moves the residual by 29 K at 07 h. Trees are flat outside the range, so they never showed this.
 - **The all-blocks model learns a 10 K night TI effect inside the rover range,** almost all from block 0. On the map, every high-TI pixel would get colder nights. That is plausible if THEMIS TI is too high there, but nothing here can check it.
+
+## Map-safe FLANN (Oct 28)
+
+- **Dropping albedo improves LOBO** (macro 4.86 to 4.72 K, pooled 5.83 to 5.63 K). Albedo was acting as a campaign ID, not a terrain effect.
+- **Clamping costs only block 0** (6.86 to 7.46 K, because its TI is clipped to 514 tiu in fold 0 and the night TI extrapolation is lost) **and helps block 10** (4.04 to 3.72 K, because its suspect 23.9 deg slope is clipped to 12.3 deg). Net macro cost 0.02 K.
+- **The remaining map risk is the TI night term** (about 10 K across 361-682 tiu, coefficient -9.2 K per standard deviation on TI x cos LTST). It comes almost entirely from block 0. Clamping bounds it but does not make it right.
+- **The baseline as a predictor carries a large term** (-10.6 K per standard deviation on baseline x sin LTST). Clamped to 183-284 K on the map.

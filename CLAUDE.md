@@ -15,7 +15,7 @@ Read the relevant section there before changing a rule in this file.
 
 ## Current status
 
-Steps 0-4 are done (Oct 28): Gates 1 and 2 pass, and the fitted baseline does not beat the benchmark in leave-one-block-out scoring (macro RMSE 6.72 K vs 5.38 K). Step 5 (residual model) started Oct 28 at the user's request: `notebooks/residual_lobo.ipynb` scores macro 5.28 K against the benchmark's 5.38 K (see `docs/progress.md`).
+Steps 0-4 are done (Oct 28): Gates 1 and 2 pass, and the fitted baseline does not beat the benchmark in leave-one-block-out scoring (macro RMSE 6.72 K vs 5.38 K). Step 5 (residual model) started Oct 28 at the user's request. Chosen ground-temperature residual: `flann_safe` in `notebooks/residual_flann_lobo.ipynb` (FLANN ridge, no albedo, clamped covariates), LOBO macro 4.74 K against the benchmark's 5.38 K (see `docs/progress.md`).
 
 Project notes in `docs/`, read before starting work:
 - `plan.md`: the next step's concrete design.
@@ -81,7 +81,7 @@ MarsDataPipeline/
   thermal1d.py           # grid, solver, surface energy balance, solar geometry, data loader
   tests/test_thermal1d.py
   residual.py            # Step 5: residual-model predictors, learner, benchmark
-  notebooks/             # baseline_diagnostic.ipynb, baseline_fit_lobo.ipynb, residual_lobo.ipynb
+  notebooks/             # baseline_diagnostic, baseline_fit_lobo, residual_lobo, residual_flann_lobo, ti_sensitivity_lobo
   executed/              # nbconvert output (git-ignored)
   outputs/baseline/      # CSVs and PNGs (git-ignored)
   processed_data/        # inputs, read-only (git-ignored)

@@ -2,6 +2,26 @@
 
 The newest session goes at the top. What we learned goes in `discoveries.md`, what not to retry goes in `closed_ideas.md`, and the next step goes in `plan.md`.
 
+## Session 2d (Oct 28, 2026): map-safe FLANN (no albedo terms, clamped covariates)
+
+User request (both fixes). `residual_flann_lobo.ipynb` now scores four variants; rules fixed in the notebook before the run. Clamping: TI, slope, albedo and the baseline (as a predictor) clipped to the fold's training-row 1st-99th percentiles in training and prediction, so the LOBO score is the map pipeline's score. Configurations tried: 8 in total.
+
+**Result: `flann_safe` (no albedo, clamped) passes the rule** (macro gain 0.54 K over `no_elev`, better in 8 of 9 blocks) **and is the chosen residual model for the map.**
+
+| | Benchmark | `no_elev` (trees) | `flann` | `flann_clamped` | `flann_no_albedo` | `flann_safe` |
+|---|---|---|---|---|---|---|
+| Macro RMSE, 9 blocks | 5.38 | 5.28 | 4.86 | 4.86 | 4.72 | **4.74** |
+| Macro, without sols 3763-3778 | 5.37 | 5.43 | 4.95 | 5.00 | 4.80 | 4.87 |
+| Macro, without block 0 | 5.43 | 4.84 | 4.57 | 4.49 | 4.45 | 4.40 |
+| Pooled RMSE, main rows | 5.51 | 6.55 | 5.83 | 6.01 | 5.63 | 5.82 |
+| Placeholder-tau rows | 4.39 | 4.73 | 4.19 | 4.29 | 4.11 | 4.14 |
+| Block 0 RMSE | 5.04 | 8.79 | 7.23 | 7.82 | 6.86 | 7.46 |
+| Blocks beating the benchmark | - | 5 | 5 | 5 | 7 | 7 |
+
+`flann_safe` per block (RMSE / bias, K): 0: 7.46 / +2.58; 1: 2.86 / -0.28; 2: 5.36 / +0.86; 3: 2.64 / -0.20; 5: 5.54 / +0.11; 6: 5.37 / -1.82; 7: 4.33 / -1.51; 9: 5.38 / +1.62; 10: 3.72 / -0.29.
+
+Largest hourly spread of the predicted residual, all-blocks `flann_safe`: TI 10.4 K at night (same inside and beyond the rover range, since clamped), slope 2.4 K, albedo 0. Clamp ranges: TI 361-682 tiu, slope 1.25-12.27 deg, baseline 183-284 K (`outputs/residual/flann_safe_clamp_ranges.csv`). Night bias at 22-03 h is still +1.8 to +2.5 K on main rows.
+
 ## Session 2c (Oct 28, 2026): second learner, FLANN-style ridge
 
 User request (plan option 1). `notebooks/residual_flann_lobo.ipynb` (about 1 min); basis and ridge in `residual.py` (39 columns, alpha 1.0 on standardized columns), fixed in `plan.md` before the run. Same fold baselines (reproduced exactly), training rows and benchmark as Step 5. Configuration 5.
