@@ -15,7 +15,15 @@ Read the relevant section there before changing a rule in this file.
 
 ## Current status
 
-Steps 0-4 are done (Oct 28): Gates 1 and 2 pass, and the fitted baseline does not beat the benchmark in leave-one-block-out scoring (macro RMSE 6.72 K vs 5.38 K). Next is Step 5, the residual model, which stays out of scope until the user asks for it. Read `docs/progress_log.md` first.
+Steps 0-4 are done (Oct 28): Gates 1 and 2 pass, and the fitted baseline does not beat the benchmark in leave-one-block-out scoring (macro RMSE 6.72 K vs 5.38 K). Next is Step 5, the residual model, which stays out of scope until the user asks for it.
+
+Project notes in `docs/`, read before starting work:
+- `plan.md`: the next step's concrete design.
+- `progress.md`: what happened, with scores (newest session first).
+- `discoveries.md`: what we learned and the evidence.
+- `closed_ideas.md`: what not to try again. Check it before proposing a change.
+
+Update them at the end of each session: append to `progress.md`, `discoveries.md` and `closed_ideas.md`, and rewrite `plan.md` for the next step.
 
 ## Scope
 
@@ -46,7 +54,9 @@ Do not add a physics term or a fitted parameter that is not listed in this file.
 - Allowed libraries:
   - `thermal1d.py` uses numpy only.
   - Notebooks may also use pandas and matplotlib.
-  - scipy, lightgbm and xarray are not part of this phase.
+  - Step 5 (residual model) may use xgboost and scikit-learn (installed Oct 28 with user approval: xgboost 3.4.1, scikit-learn 1.9.1, which pulled in scipy 1.18.1). Use them in Step 5 code only, never in `thermal1d.py`.
+  - lightgbm and xarray are not installed and are not part of this phase.
+  - Installed by request on Oct 27: pytest 9.2.0, nbconvert 7.17.2.
 - Past crashes (0xC06D007F) were fixed only by the clean environment. Never run notebooks on the default `python3` kernel.
 
 ### Commands
