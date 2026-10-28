@@ -307,6 +307,33 @@ def absorbed_flux(lat_deg, ls_deg, tau, slope_deg, aspect_deg, albedo, ltst_hr,
     return (1.0 - albedo) * (direct_tilted + diffuse) + eps * l_sky
 
 
+# --- running sols ---------------------------------------------------------
+
+def simulate_sols(lat_deg, ls_deg, tau, slope_deg, aspect_deg, albedo, ti,
+                  g_diff=G_DIFF, f_ir=F_IR, ti_scale=TI_SCALE, b_tau=B_TAU, eps=EPS):
+    """Periodic surface temperature for a batch of sols, each at its own Ls, tau and pixel.
+
+    All inputs are (n_sol,). Returns (Ts, n_spinup_sols): Ts is (n_sol, STEPS_PER_SOL) K at
+    the end of each step (see step_ltst), and n_spinup_sols the sols the batch needed.
+    """
+    grid = make_grid(np.asarray(ti, dtype=np.float64) * ti_scale)
+    flux = absorbed_flux(lat_deg, ls_deg, tau, slope_deg, aspect_deg, albedo, step_ltst(),
+                         g_diff, f_ir, b_tau, eps)
+    _, Ts, _, n_sols = spin_up(grid, flux_in=flux, eps=eps)
+    return Ts, n_sols
+
+
+def bin_centre_step(bins, n_steps=STEPS_PER_SOL):
+    """Index of the step that ends exactly at the centre of each 15-minute REMS bin."""
+    per_bin = n_steps * BIN_HOURS / 24.0
+    assert per_bin == int(per_bin) and int(per_bin) % 2 == 0, "bin centre must fall on a step end"
+    bins = np.asarray(bins)
+    assert np.all((bins >= 0) & (bins < round(24.0 / BIN_HOURS))), "bin out of range"
+    idx = bins * int(per_bin) + int(per_bin) // 2 - 1
+    assert np.allclose(step_ltst(n_steps)[idx], (bins + 0.5) * BIN_HOURS), "bin centre mismatch"
+    return idx
+
+
 # --- data loader ----------------------------------------------------------
 
 def _parse(values, kind):
