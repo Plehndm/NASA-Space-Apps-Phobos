@@ -26,6 +26,14 @@ B_TAU = 1.0                  # sky-IR growth with tau, fixed
 G_DIFF = 0.5                 # diffuse fraction of scattered light, fitted, bounds [0, 1]
 F_IR = 0.04                  # sky-IR fraction of noon flat sunlight, fitted, bounds [0, 0.15]
 TI_SCALE = 1.0               # thermal-inertia scale factor, fitted, bounds [0.7, 1.3]
+PARAM_NAMES = ("g_diff", "f_ir", "ti_scale")
+PARAM_BOUNDS = np.array([[0.0, 1.0], [0.0, 0.15], [0.7, 1.3]])
+
+# --- fitting --------------------------------------------------------------
+FIT_GRID_POINTS = 5           # coarse grid points per parameter, bounds included
+FIT_FD_FRAC = 0.01            # finite-difference step, fraction of each parameter's range
+FIT_GN_STEPS = 4              # Gauss-Newton steps after the coarse grid
+FIT_MAX_HALVINGS = 5          # step halvings when a Gauss-Newton step does not lower the SSE
 
 # --- latitude of a grid row (gale_dust_devil_meta.json transform) --------
 LAT_TOP_DEG = -4.148577212911933       # deg, north edge of row 0
@@ -330,6 +338,31 @@ def simulate_sols(lat_deg, ls_deg, tau, slope_deg, aspect_deg, albedo, ti,
     return Ts, n_sols, T_start
 
 
+def make_evaluator(sol_inputs, row_sol, row_step):
+    """Model ground temperature at REMS rows as a function of the three global parameters.
+
+    sol_inputs: dict of (n_sol,) arrays lat_deg, ls_deg, tau, slope_deg, aspect_deg, albedo,
+    ti. row_sol, row_step: (n_row,) index of each row's sol and bin-centre step. Returns
+    evaluate(params) -> (n_row,) K, with params = (g_diff, f_ir, ti_scale). Results are
+    cached by params, and each run warm-starts from the previous run's periodic profile.
+    """
+    cache = {}
+    warm = {"T": None}
+
+    def evaluate(params):
+        key = tuple(round(float(p), 10) for p in params)
+        if key not in cache:
+            g_diff, f_ir, ti_scale = key
+            Ts, _, warm["T"] = simulate_sols(
+                sol_inputs["lat_deg"], sol_inputs["ls_deg"], sol_inputs["tau"],
+                sol_inputs["slope_deg"], sol_inputs["aspect_deg"], sol_inputs["albedo"],
+                sol_inputs["ti"], g_diff=g_diff, f_ir=f_ir, ti_scale=ti_scale, T_init=warm["T"])
+            cache[key] = Ts[row_sol, row_step]
+        return cache[key]
+
+    return evaluate
+
+
 def bin_centre_step(bins, n_steps=STEPS_PER_SOL):
     """Index of the step that ends exactly at the centre of each 15-minute REMS bin."""
     per_bin = n_steps * BIN_HOURS / 24.0
@@ -379,3 +412,50 @@ def load_rems_table(path, allow_test=False):
     print(f"loaded {len(rows)} rows; dropped {n_test if not allow_test else 0} sealed-test rows "
           f"and {n_missing} rows without ground temperature; {int(keep.sum())} rows kept")
     return {name: col[keep] for name, col in data.items()}
+
+
+# --- fitting --------------------------------------------------------------
+
+def fit_global_params(evaluate, obs, use, grid_points=FIT_GRID_POINTS, gn_steps=FIT_GN_STEPS):
+    """Least-squares fit of (g_diff, f_ir, ti_scale) inside PARAM_BOUNDS on rows `use`.
+
+    A coarse grid over the bounds, then projected Gauss-Newton steps with a forward-difference
+    Jacobian; a step that does not lower the SSE is halved up to FIT_MAX_HALVINGS times, and
+    the fit stops when no halving helps. Returns (params, sse, at_bound): at_bound is a
+    (3,) bool array, True where the parameter sits on a bound.
+    """
+    lo, hi = PARAM_BOUNDS[:, 0], PARAM_BOUNDS[:, 1]
+    assert use.dtype == bool and use.shape == obs.shape and use.any(), "use must be a non-empty row mask"
+    assert np.all(np.isfinite(obs[use])), "non-finite observations in fitting rows"
+
+    def sse(p):
+        r = evaluate(p)[use] - obs[use]
+        return float(r @ r)
+
+    axes = [np.linspace(lo[j], hi[j], grid_points) for j in range(3)]
+    grid = np.stack(np.meshgrid(*axes, indexing="ij"), axis=-1).reshape(-1, 3)
+    grid_sse = np.array([sse(p) for p in grid])
+    p, best = grid[np.argmin(grid_sse)], grid_sse.min()
+
+    h = FIT_FD_FRAC * (hi - lo)
+    for _ in range(gn_steps):
+        base = evaluate(p)[use]
+        r = base - obs[use]
+        J = np.empty((r.size, 3))
+        for j in range(3):
+            step = h[j] if p[j] + h[j] <= hi[j] else -h[j]
+            q = p.copy()
+            q[j] += step
+            J[:, j] = (evaluate(q)[use] - base) / step
+        delta = np.linalg.lstsq(J, -r, rcond=None)[0]
+        for _ in range(FIT_MAX_HALVINGS + 1):
+            cand = np.clip(p + delta, lo, hi)
+            cand_sse = sse(cand)
+            if cand_sse < best:
+                break
+            delta = delta / 2.0
+        else:
+            break
+        p, best = cand, cand_sse
+    at_bound = np.isclose(p, lo) | np.isclose(p, hi)
+    return p, best, at_bound
