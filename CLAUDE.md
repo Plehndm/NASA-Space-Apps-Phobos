@@ -13,6 +13,10 @@ The only in-situ truth is Curiosity's REMS ground temperature at the rover's pos
 Background, decisions and past mistakes: `docs/Handover Brief Gale Crater Temperature Heatmap (Oct 26).md` and `Gale Crater Diurnal Temperature Model Plan Summary.pdf` (project root).
 Read the relevant section there before changing a rule in this file.
 
+## Current status
+
+Steps 0-4 are done (Oct 28): Gates 1 and 2 pass, and the fitted baseline does not beat the benchmark in leave-one-block-out scoring (macro RMSE 6.72 K vs 5.38 K). Next is Step 5, the residual model, which stays out of scope until the user asks for it. Read `docs/progress_log.md` first.
+
 ## Scope
 
 **In scope, in this order:**
