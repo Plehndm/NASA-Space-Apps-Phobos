@@ -198,22 +198,26 @@ def radiative_equilibrium_temperature(flux_in, eps=EPS):
 
 
 def spin_up(grid, flux_in=None, surface_temp=None, eps=EPS,
-            tol=SPINUP_TOL_K, max_sols=SPINUP_MAX_SOLS):
+            tol=SPINUP_TOL_K, max_sols=SPINUP_MAX_SOLS, T_init=None):
     """Repeat one sol until the start-of-sol profile changes by less than tol at all depths.
 
-    Starts from the radiative-equilibrium mean temperature (flux_in) or the mean prescribed
-    surface temperature (surface_temp). After each sol that has not converged, the whole
+    Starts from T_init (n_col, n_nodes) when given, for example the periodic profile of a
+    previous evaluation (warm start); otherwise from the radiative-equilibrium mean
+    temperature (flux_in) or the mean prescribed surface temperature (surface_temp).
+    After each sol that has not converged, the whole
     column is shifted so its deepest node equals that sol's mean surface temperature: in the
     periodic state the sol-mean temperature is the same at every depth, so the shift is zero
     there and only removes the slow deep transient. Returns (T_start, Ts, newton_iters,
     n_sols): the periodic start-of-sol profile, the surface series of the last sol, the
     largest Newton iteration count over the spin-up, and the number of sols run.
     """
-    if flux_in is not None:
-        T_init = radiative_equilibrium_temperature(flux_in, eps)
+    if T_init is not None:
+        assert T_init.shape == grid.z.shape, f"T_init shape {T_init.shape} != grid shape {grid.z.shape}"
+        T = T_init.astype(np.float64, copy=True)
+    elif flux_in is not None:
+        T = np.repeat(radiative_equilibrium_temperature(flux_in, eps)[:, None], grid.z.shape[1], axis=1)
     else:
-        T_init = surface_temp.mean(axis=1)
-    T = np.repeat(T_init[:, None], grid.z.shape[1], axis=1)
+        T = np.repeat(surface_temp.mean(axis=1)[:, None], grid.z.shape[1], axis=1)
     newton_max = 0
     for n_sols in range(1, max_sols + 1):
         T_new, Ts, it = run_sol(T, grid, flux_in=flux_in, surface_temp=surface_temp, eps=eps)
@@ -310,17 +314,20 @@ def absorbed_flux(lat_deg, ls_deg, tau, slope_deg, aspect_deg, albedo, ltst_hr,
 # --- running sols ---------------------------------------------------------
 
 def simulate_sols(lat_deg, ls_deg, tau, slope_deg, aspect_deg, albedo, ti,
-                  g_diff=G_DIFF, f_ir=F_IR, ti_scale=TI_SCALE, b_tau=B_TAU, eps=EPS):
+                  g_diff=G_DIFF, f_ir=F_IR, ti_scale=TI_SCALE, b_tau=B_TAU, eps=EPS, T_init=None):
     """Periodic surface temperature for a batch of sols, each at its own Ls, tau and pixel.
 
-    All inputs are (n_sol,). Returns (Ts, n_spinup_sols): Ts is (n_sol, STEPS_PER_SOL) K at
-    the end of each step (see step_ltst), and n_spinup_sols the sols the batch needed.
+    All inputs are (n_sol,). T_init is an optional warm-start profile (see spin_up); the
+    grid is the same in skin-depth units for any ti_scale, so a profile from another
+    ti_scale fits. Returns (Ts, n_spinup_sols, T_start): Ts is (n_sol, STEPS_PER_SOL) K at
+    the end of each step (see step_ltst), n_spinup_sols the sols the batch needed and
+    T_start the periodic start-of-sol profile, for warm-starting the next call.
     """
     grid = make_grid(np.asarray(ti, dtype=np.float64) * ti_scale)
     flux = absorbed_flux(lat_deg, ls_deg, tau, slope_deg, aspect_deg, albedo, step_ltst(),
                          g_diff, f_ir, b_tau, eps)
-    _, Ts, _, n_sols = spin_up(grid, flux_in=flux, eps=eps)
-    return Ts, n_sols
+    T_start, Ts, _, n_sols = spin_up(grid, flux_in=flux, eps=eps, T_init=T_init)
+    return Ts, n_sols, T_start
 
 
 def bin_centre_step(bins, n_steps=STEPS_PER_SOL):
