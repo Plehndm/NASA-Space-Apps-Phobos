@@ -70,13 +70,54 @@ The numbers that drive the choice:
 | **F. XYZ map tiles** (z/x/y PNG) | Pyramid tiles for slippy maps | Standard for basemaps with deep zoom. | Overkill for a 718 x 738 grid, which fits in a few tiles. Web Mercator tiling on Mars adds projection questions. |
 | **G. NetCDF or Zarr** | Self-describing science arrays | Good for sharing with scientists. | Needs xarray or netCDF4, which are not installed and not part of this phase. Not for the web map. |
 
-**Recommendation:** write **A** (COG, int16 at 0.01 K) as the master copy that we check in QGIS and that carries the georeferencing. Then export the web copy the map team prefers: **B** for interactive values (hover readout, client colour scale), or **C** if they only need pictures. Both A and B need `rasterio` or Pillow added to the allowed libraries in `CLAUDE.md`. If neither is approved, **D** needs numpy only.
+**User decision (Oct 28): write all four of A, B, C and D.** `rasterio` and Pillow are allowed for Step 6 (see `CLAUDE.md`). E, F and G are not written.
 
-### Questions before Step 6 starts
+### Export specification (A-D)
 
-- Which web format the map team wants: B, C or D, or another their map library needs.
-- Whether to approve `rasterio` (for A) and Pillow (for B and C) in `CLAUDE.md`'s allowed libraries. Both are already installed in `gale-env`, so nothing new needs installing.
-- Whether the frames should be every 30 min (48 per Ls, as in the handover brief) or every hour (24 per Ls, half the size).
+Shared by all four formats:
+
+- **Folder.** Everything goes in `outputs/map/`, which is git-ignored. Add `MAP_OUT_DIR` to `paths.py`.
+- **Grid.** 718 rows x 738 columns at about 200 m, with row 0 at the north edge.
+  - The transform is the one in `gale_dust_devil_meta.json` with the pixel size doubled, starting at the same north-west corner.
+  - The coordinate reference system is Mars 2000 geographic, a sphere of radius 3,396,190 m (IAU 2015:49900), written as WKT. Web maps treat the coordinates as plain degrees.
+- **Frames.** For each Ls in `LS{015,075,195,255,340}`, there are 48 LTST instants, 00:00, 00:30, ..., 23:30. Each frame is the temperature at the solver step ending at that time.
+- **Master array.** Keep float32 in memory. Every format below is encoded from the same array.
+- **Manifest.** `outputs/map/map_manifest.json` holds:
+  - the grid shape, transform and CRS WKT, and the list of LTST and Ls values;
+  - the tau per Ls;
+  - each format's encoding;
+  - the model: baseline parameters, residual variant `flann_safe_no_ti`, its clamp ranges and the fraction of pixels clamped per covariate;
+  - the git commit and the creation date;
+  - caveat text: spatial skill not measured, 82% of pixels below the rover's TI range, the slope clamp in the residual.
+
+| | File naming | Encoding |
+|---|---|---|
+| **A. COG** | `cog/gale_tsurf_ls{LLL}.tif`, one per Ls, 48 bands | int16. T = 200 K + 0.01 K x value, with nodata -32768. The scale and offset are set in the GeoTIFF tags so GIS shows kelvin. Band descriptions read `LTST hh:mm`. DEFLATE compression with predictor 2. Use the GDAL `COG` driver, and assert it exists before writing. |
+| **B. 16-bit PNG** | `png16/ls{LLL}/ltst_{hhmm}.png` | 16-bit grayscale (Pillow mode `I;16`). T = 100 K + 0.01 K x value, with 0 as nodata. Covers 100.01-755 K. |
+| **C. Coloured PNG** | `png_color/ls{LLL}/ltst_{hhmm}.png` and `png_color/legend.png` | RGBA 8-bit. Nodata is transparent. One fixed scale for every frame, so frames compare across Ls and time. The matplotlib `inferno` colour map is perceptually uniform. The range is 150-300 K; confirm it in the dry run, record the clipped fraction, and change it only before the full run. |
+| **D. Raw binary** | `raw/gale_tsurf_ls{LLL}.u16`, one per Ls | uint16, little-endian, C order, shape (48, 718, 738), so it is frame, then row, then column. Same encoding as B. |
+
+The sizes before compression come to about 1 GB in all:
+
+| Format | Size |
+|---|---|
+| A | about 254 MB |
+| B | about 254 MB |
+| C | about 509 MB as RGBA |
+| D | 254 MB |
+
+DEFLATE and PNG compression shrink A, B and C a lot. Measure the real size in the dry run.
+
+### Checks (in addition to the design checks)
+
+- **Lossless formats.** Decode each A, B and D file back to kelvin. Every pixel must match the float32 master within 0.005 K, with the same nodata pattern.
+- **Coloured PNGs.** Each C frame maps back to the master within one colour-map step.
+- **Orientation.** The rover pixel (row 304, col 372 on the 100 m grid; row 152, col 186 on the 200 m grid) sits at the rover's lat/lon in A, read with rasterio, and in B and D, through the manifest transform.
+- **QGIS.** Open one A file in QGIS on the user's machine and confirm it lands on Gale. This is a manual step for the user.
+
+### Question before the full run
+
+- **Frame spacing.** Every 30 min gives 48 per Ls, as in the handover brief and the default above. Every hour gives 24 per Ls and halves the size. The default stands unless the user changes it.
 
 ## Later items
 

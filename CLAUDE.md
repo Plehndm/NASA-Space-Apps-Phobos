@@ -32,10 +32,11 @@ Update them at the end of each session: append to `progress.md`, `discoveries.md
 2. Mars forcing.
 3. The physics-only diagnostic against REMS.
 4. The global-parameter fit with leave-one-block-out (LOBO) scoring.
+5. The residual model for ground temperature (user request, Oct 28; done).
+6. The full-grid export (Step 6; user go-ahead Oct 28). Its design is in `docs/plan.md`.
 
 **Out of scope until the user asks:**
-- the residual model and air temperature
-- the full-grid export
+- air temperature
 - the dust devil layer (parked)
 - atmospheric coupling, layered soils, temperature-dependent conductivity, CO2 frost
 - the Mars Climate Database as a dependency
@@ -55,6 +56,7 @@ Do not add a physics term or a fitted parameter that is not listed in this file.
   - `thermal1d.py` uses numpy only.
   - Notebooks may also use pandas and matplotlib.
   - Step 5 (residual model) may use xgboost and scikit-learn (installed Oct 28 with user approval: xgboost 3.4.1, scikit-learn 1.9.1, which pulled in scipy 1.18.1). Use them in Step 5 code only, never in `thermal1d.py`.
+  - Step 6 (map export) may use rasterio 1.5.2 (GeoTIFF) and Pillow 13.0.0 (PNG), both already in `gale-env`; allowed by the user on Oct 28. The export module may also use matplotlib, for the colour scale. Never use them in `thermal1d.py` or `residual.py`.
   - lightgbm and xarray are not installed and are not part of this phase.
   - Installed by request on Oct 27: pytest 9.2.0, nbconvert 7.17.2.
 - Past crashes (0xC06D007F) were fixed only by the clean environment. Never run notebooks on the default `python3` kernel.
@@ -81,9 +83,11 @@ MarsDataPipeline/
   thermal1d.py           # grid, solver, surface energy balance, solar geometry, data loader
   tests/test_thermal1d.py
   residual.py            # Step 5: residual-model predictors, learner, benchmark
-  notebooks/             # baseline_diagnostic, baseline_fit_lobo, residual_lobo, residual_flann_lobo, ti_sensitivity_lobo
+  notebooks/             # baseline_diagnostic, baseline_fit_lobo, residual_lobo, residual_flann_lobo, ti_sensitivity_lobo, block0_diagnostic
   executed/              # nbconvert output (git-ignored)
   outputs/baseline/      # CSVs and PNGs (git-ignored)
+  outputs/residual/      # Step 5 outputs (git-ignored)
+  outputs/map/           # Step 6 map export (git-ignored); formats in docs/plan.md
   processed_data/        # inputs, read-only (git-ignored)
   gale-env/              # virtual environment (git-ignored, never edit)
   docs/                  # the two briefs
@@ -329,4 +333,4 @@ Blocks 4 and 8 (sols 1343-1360, 3069-3110) are not read, scored or plotted in th
 
 **Environment**
 - Do not multiply large float32 arrays by float64 numpy scalars (NumPy 2 doubles the memory); use `np.float32(x)`. This matters later, for the grid export.
-- Do not load whole large rasters. This phase needs no rasters at all, since the training table carries every covariate.
+- Do not load whole large rasters. Steps 1-5 need none, since the training table carries every covariate. Step 6 reads the 100 m feature table (`gale_dust_devil_features_100m.csv`) by column and writes rasters; it never opens the 20 m DEM, slope or aspect rasters.
