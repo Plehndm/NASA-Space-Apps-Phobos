@@ -91,6 +91,11 @@ Before writing the loader, read the CSV header and `build_rems_training_table.ip
 
 Do not guess these names.
 
+Recorded Oct 27 (from the header, `build_rems_training_table.ipynb` and `rems_batch.ipynb`):
+- sol: `sol`; ground temperature: `ground_temp_k`; time: `bin`, with `ltst_bin_start_hr = bin / 4`.
+- Each REMS value is the mean of 1 Hz readings over [start, start + 15 min), so the model is compared at the bin **centre**, `ltst_bin_start_hr + 0.125`.
+- `ltst_bin_center_hr` is rounded to 0.01 h (up to 0.005 h off). The table's `flux_*` and `sun_elev_deg` columns were computed at that rounded value and the rover `latitude_deg`; Gate 2 uses the same LTST so the check isolates the formulas.
+
 ### Columns used
 
 | Group | Columns |

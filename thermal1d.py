@@ -3,6 +3,7 @@
 Shapes: per-column inputs are (n_col,), time series are (n_col, n_steps) and
 temperature profiles are (n_col, n_nodes). Node 0 is the surface.
 """
+import csv
 from typing import NamedTuple
 
 import numpy as np
@@ -39,6 +40,21 @@ NEWTON_MAX_ITER = 20
 NEWTON_TOL = 1e-6             # W m^-2, surface energy-balance residual
 SPINUP_TOL_K = 0.01           # K, max |dT| between consecutive sols, all depths
 SPINUP_MAX_SOLS = 50
+
+# --- REMS training table (gale_rems_training.csv, checked Oct 27) --------
+# Bins are 15 minutes, bin start = bin / 4 h. Each REMS value is the mean of 1 Hz readings
+# in [start, start + 15 min), so the model is compared at the bin centre, start + 0.125 h.
+# ltst_bin_center_hr in the table is rounded to 0.01 h; the table's flux and sun_elev_deg
+# columns were computed at that rounded centre, with the rover latitude_deg.
+BIN_HOURS = 0.25              # h, REMS bin width
+TABLE_COLUMNS = {
+    "sol": int, "bin": int, "ltst_bin_start_hr": float, "ltst_bin_center_hr": float,
+    "ground_temp_k": float, "ls_deg": float, "row": int, "col": int, "pixel_id": int,
+    "slope_deg": float, "aspect_deg": float, "ti_themis_tiu": float, "albedo_mean": float,
+    "elev_dem_m": float, "sun_elev_deg": float, "flux_flat_wm2": float, "flux_tilted_wm2": float,
+    "tau": float, "tau_source": str, "tau_is_placeholder": bool, "ground_missing": bool,
+    "core_sol": bool, "block": int, "split_role": str,
+}
 
 
 # --- grid -----------------------------------------------------------------
@@ -289,3 +305,43 @@ def absorbed_flux(lat_deg, ls_deg, tau, slope_deg, aspect_deg, albedo, ltst_hr,
     albedo = np.asarray(albedo, dtype=np.float64)[:, None]
     l_sky = sky_ir(lat_deg, ls_deg, tau, slope_deg, f_ir, b_tau)[:, None]
     return (1.0 - albedo) * (direct_tilted + diffuse) + eps * l_sky
+
+
+# --- data loader ----------------------------------------------------------
+
+def _parse(values, kind):
+    if kind is bool:
+        assert set(values) <= {"True", "False"}, f"unexpected boolean values {set(values) - {'True', 'False'}}"
+        return np.array([v == "True" for v in values])
+    if kind is str:
+        return np.array(values)
+    if kind is int:
+        return np.array([int(v) for v in values], dtype=np.int64)
+    return np.array([float(v) if v != "" else np.nan for v in values], dtype=np.float64)
+
+
+def load_rems_table(path, allow_test=False):
+    """Load the columns in TABLE_COLUMNS as a dict of arrays, one entry per REMS bin.
+
+    Rows with split_role == "test" are dropped unless allow_test=True. Rows without ground
+    temperature are dropped, since nothing can be scored on them. Both counts are printed.
+    """
+    with open(path, newline="") as fh:
+        reader = csv.reader(fh)
+        header = next(reader)
+        missing = set(TABLE_COLUMNS) - set(header)
+        assert not missing, f"columns missing from {path}: {sorted(missing)}"
+        idx = {name: header.index(name) for name in TABLE_COLUMNS}
+        rows = list(reader)
+    data = {name: _parse([r[i] for r in rows], TABLE_COLUMNS[name]) for name, i in idx.items()}
+    assert set(np.unique(data["split_role"])) <= {"train", "test"}, "unexpected split_role values"
+    keep = np.ones(len(rows), dtype=bool)
+    n_test = int((data["split_role"] == "test").sum())
+    if not allow_test:
+        keep &= data["split_role"] != "test"
+    n_missing = int((keep & data["ground_missing"]).sum())
+    keep &= ~data["ground_missing"]
+    assert np.all(np.isfinite(data["ground_temp_k"][keep])), "ground temperature missing but not flagged"
+    print(f"loaded {len(rows)} rows; dropped {n_test if not allow_test else 0} sealed-test rows "
+          f"and {n_missing} rows without ground temperature; {int(keep.sum())} rows kept")
+    return {name: col[keep] for name, col in data.items()}
