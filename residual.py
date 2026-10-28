@@ -65,3 +65,51 @@ def benchmark(train, test):
     pred[empty] = by_bin.reindex(test.bin[empty]).to_numpy()
     assert np.all(np.isfinite(pred)), "benchmark has no value for some LTST bin"
     return pred, int(empty.sum())
+
+
+# --- second learner: FLANN-style ridge (basis fixed in docs/plan.md before the run, Oct 28) ---
+from sklearn.linear_model import Ridge
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+
+FLANN_DAILY_HARMONICS = 3     # LTST harmonics 1..3
+FLANN_SEASON_HARMONICS = 2    # Ls harmonics 1..2
+FLANN_RIDGE_ALPHA = 1.0       # on standardized basis columns; fixed, not tuned
+FLANN_STATIC = ["ti_themis_tiu", "slope_deg", "aspect_sin", "aspect_cos", "albedo_mean", "baseline_k"]
+
+
+def make_flann_basis(df):
+    """FLANN functional expansion. df as for make_features. Returns a DataFrame of basis columns.
+
+    Daily harmonics 1-3 of LTST and seasonal harmonics 1-2 of Ls, each times (1, tau); tau;
+    linear static terms and the baseline, each times (1, sin, cos of the first daily harmonic).
+    No elevation (Step 5 rule). Static terms enter linearly, so the model extrapolates
+    linearly in TI outside the training range.
+    """
+    f = make_features(df)
+    w = 2.0 * np.pi * df["ltst_hr"].to_numpy() / HOURS_PER_SOL
+    ls = np.radians(df["ls_deg"].to_numpy())
+    tau = f["tau"].to_numpy()
+    cols = {"tau": tau}
+    for k in range(1, FLANN_DAILY_HARMONICS + 1):
+        for fn, name in ((np.sin, "sin"), (np.cos, "cos")):
+            v = fn(k * w)
+            cols[f"ltst_{name}{k}"] = v
+            cols[f"ltst_{name}{k}_x_tau"] = v * tau
+    for m in range(1, FLANN_SEASON_HARMONICS + 1):
+        for fn, name in ((np.sin, "sin"), (np.cos, "cos")):
+            v = fn(m * ls)
+            cols[f"ls_{name}{m}"] = v
+            cols[f"ls_{name}{m}_x_tau"] = v * tau
+    for c in FLANN_STATIC:
+        v = f[c].to_numpy()
+        cols[c] = v
+        cols[f"{c}_x_ltst_sin1"] = v * np.sin(w)
+        cols[f"{c}_x_ltst_cos1"] = v * np.cos(w)
+    out = pd.DataFrame(cols, index=df.index)
+    assert np.all(np.isfinite(out.to_numpy())), "non-finite FLANN basis value"
+    return out
+
+
+def make_flann_learner():
+    return make_pipeline(StandardScaler(), Ridge(alpha=FLANN_RIDGE_ALPHA))

@@ -2,6 +2,34 @@
 
 The newest session goes at the top. What we learned goes in `discoveries.md`, what not to retry goes in `closed_ideas.md`, and the next step goes in `plan.md`.
 
+## Session 2c (Oct 28, 2026): second learner, FLANN-style ridge
+
+User request (plan option 1). `notebooks/residual_flann_lobo.ipynb` (about 1 min); basis and ridge in `residual.py` (39 columns, alpha 1.0 on standardized columns), fixed in `plan.md` before the run. Same fold baselines (reproduced exactly), training rows and benchmark as Step 5. Configuration 5.
+
+**Decision rule: adopt FLANN** (macro gain 0.42 K, need 0.2; better in 7 of 9 blocks, need 5). **But it is not safe for the map as it stands** (see the effects table).
+
+| | Baseline | Benchmark | `no_elev` (trees) | FLANN |
+|---|---|---|---|---|
+| Macro RMSE, 9 blocks | 6.72 | 5.38 | 5.28 | **4.86** |
+| Macro, without sols 3763-3778 | 6.65 | 5.37 | 5.43 | 4.95 |
+| Macro, without block 0 | 6.40 | 5.43 | 4.84 | 4.57 |
+| Pooled RMSE, main rows | 7.47 | 5.51 | 6.55 | 5.83 |
+| Placeholder-tau rows | 5.77 | 4.39 | 4.73 | 4.19 |
+| Block 0 RMSE | 9.24 | 5.04 | 8.79 | 7.23 |
+| Blocks beating the benchmark | 1 | - | 5 | 5 |
+
+Per block, FLANN vs `no_elev`: 0: 7.23 vs 8.79; 1: 2.99 vs 3.30; 2: 5.41 vs 5.99; 3: 2.77 vs 3.63; 5: 5.72 vs 5.08; 6: 5.48 vs 5.79; 7: 4.37 vs 4.64; 9: 5.67 vs 6.18; 10: 4.14 vs 4.12.
+
+Largest hourly spread of the predicted residual (all-blocks model):
+
+| Covariate | Rover range | Spread | Extended range | Spread |
+|---|---|---|---|---|
+| TI | 361-682 tiu | 10.2 K (23 h) | 300-750 tiu | 14.3 K |
+| Slope | 1.3-12.3 deg | 1.8 K | 0-30 deg | 5.0 K |
+| Albedo | 0.24-0.26 | 2.1 K | 0.10-0.35 | **29.3 K** (07 h) |
+
+Fold-0 model (no block 0) at night: +0.28 K at TI 450, -0.15 K at 514, -0.85 K at 620 tiu. Block 0 night bias +6.4 K (trees +9.2 K).
+
 ## Session 2b (Oct 28, 2026): `ti_scale` sensitivity run (lower bound 0.5)
 
 User request. `notebooks/ti_sensitivity_lobo.ipynb` (about 13 min) repeats the Step 4 fold fits with `ti_scale` in [0.5, 1.3], then the Step 5 residual model on the new fold baselines (configuration not re-selected). Outputs in `outputs/ti_sensitivity/`. Not the headline. `fit_global_params` gained a `bounds` argument (default: spec bounds); tests rerun: `13 passed in 101.81s`.

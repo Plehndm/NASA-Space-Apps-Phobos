@@ -8,19 +8,21 @@ The residual model (`no_elev`, gradient boosting) gives a macro RMSE of 5.28 K a
 
 ## Next: needs the user's choice
 
-Done Oct 28: the `ti_scale` >= 0.5 sensitivity run. It changes nothing (see `progress.md`), so a global TI change is closed.
+Done Oct 28: the `ti_scale` >= 0.5 sensitivity run (no change) and FLANN as the second learner (adopted by the rule, macro 4.86 K, but unsafe on the map as it stands). See `progress.md`.
 
-1. **Second learner: FLANN-style ridge regression** (recommended, numpy and scikit-learn only). Fixed basis chosen before running: daily harmonics 1-3 and seasonal harmonics 1-2 of LTST and Ls, each times (1, tau); plus linear TI, slope, sin/cos aspect, albedo and the baseline, each also times the first daily harmonic. One ridge strength, fixed. Adopt only if it beats `no_elev` by at least 0.2 K macro and in at least 5 of 9 blocks. Report fold 0 on its own: it is the only learner that extrapolates in TI, so fold 0 tests that assumption. Configurations: 5 after this.
-2. **SVR with an RBF kernel** (optional third): smooth map surfaces, but it reverts to a constant outside the training range, like trees. Each setting tried counts as a configuration.
-3. **Block 0 diagnostic:** what `ti_scale` block 0 alone would need (a diagnostic, never a fit for the baseline). It tells whether THEMIS TI or something else explains the +9 K night bias.
-4. **Clamp TI to the rover's 353-682 tiu range** before the residual model on the map (Step 6 work).
-5. **Air temperature** (separate model). Ask the user before starting.
+1. **Make FLANN map-safe** (recommended). Pick one before running, each is a new configuration:
+   - (a) clamp every static covariate to the rover's 1st-99th percentile before the residual model, on the map only (no LOBO change, since LOBO rows are inside the range by construction except block 0's TI);
+   - (b) drop the albedo terms from the basis (the rover's albedo spans only 0.24-0.26), and rerun LOBO with the same rule as configuration 6;
+   - (c) both.
+2. **Block 0 diagnostic:** what `ti_scale` block 0 alone would need (diagnostic only). It tells whether the 10 K night TI effect is THEMIS TI or something else at Bradbury.
+3. **SVR** (optional third learner). Lower priority now: it reverts to a constant off-range like trees.
+4. **Air temperature** (separate model). Ask the user before starting.
 
 ### Watch for (unchanged)
 
 - Spatial skill cannot be measured here: all rover positions lie within about 10 x 5 km.
-- The residual model must not undo the baseline's spatial terms. Current partial-dependence ranges are at most 1.8 K (TI, aspect).
-- Count every configuration tried: 4 so far, 1 learner setting (the sensitivity run re-scored the same 4 and selected nothing).
+- The residual model must not undo the baseline's spatial terms. Trees: partial-dependence ranges at most 1.8 K. FLANN: TI 10 K at night inside the rover range, albedo 29 K when extended to 0.10-0.35.
+- Count every configuration tried: 5 so far (4 tree configurations, 1 FLANN). The sensitivity run re-scored the same 4 and selected nothing.
 
 ### Open questions for the user
 

@@ -42,3 +42,10 @@ Each entry gives the evidence. Data and split findings from before Oct 27 are in
 
 - **One global TI scale cannot fix block 0, whatever its bound.** With the bound at 0.5 the fits stay at 0.69-0.88. Block 0 is warm at night (+9 K after the residual model), while the fitted baseline is already cold at night elsewhere (-3.2 K, 19-06 h). A lower global scale would cool every block's nights, so least squares refuses it. Block 0 needs something local: its THEMIS TI (566-682 tiu) looks too high for the Bradbury surface, or something else at block 0 (sky IR, early-mission data) differs.
 - **Correction to the Oct 28 closed-ideas note:** it said nights elsewhere sit near 0 to +4 K. That was the default-parameter diagnostic. After the fit, nights outside block 0 are -2 to -6 K (cold).
+
+## FLANN second learner (Oct 28)
+
+- **A smooth, extrapolating learner beats trees by 0.42 K macro** and beats the benchmark on macro with and without sols 3763-3778 (4.86 and 4.95 K vs 5.38 and 5.37 K). Pooled RMSE (5.83 K) is still worse than the benchmark (5.51 K) because of block 0.
+- **Linear TI extrapolation goes the right way at night, but only about 1 K of the 9 K.** The fold-0 model cools nights by about 1 K from TI 450 to 620 tiu. Block 0 night bias drops from +9.2 K (trees) to +6.4 K.
+- **Albedo is a hidden campaign ID for a linear learner.** The rover's albedo spans only 0.24-0.26 (1st-99th percentile), so its large coefficient (with an opposing baseline term, a sign of collinearity) is fitted on almost no spread. Extended to 0.10-0.35 it moves the residual by 29 K at 07 h. Trees are flat outside the range, so they never showed this.
+- **The all-blocks model learns a 10 K night TI effect inside the rover range,** almost all from block 0. On the map, every high-TI pixel would get colder nights. That is plausible if THEMIS TI is too high there, but nothing here can check it.
