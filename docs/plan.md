@@ -42,7 +42,21 @@ Ls 255 has the fewest sols (14). Recompute these values in the Step 6 notebook r
 
 1. **Grid.** Block-average the 100 m static table (`gale_dust_devil_features_100m.csv`, 1436 x 1477) 2 x 2 to about 200 m (718 x 738). Average aspect as a circular mean of sin and cos, never as raw degrees. 1477 is odd, so drop the last column, and state it in the metadata. Latitude per row comes from the transform in `gale_dust_devil_meta.json`, with the pixel size doubled for the 200 m grid. Read the CSV by columns, in chunks if needed.
 2. **Inputs per pixel.** Slope, aspect, THEMIS TI and `albedo_mean` from the table. Albedo still drives the physics; it is only absent from the residual model.
-3. **Baseline.** Run `thermal1d.simulate_sols` per Ls on chunks of pixels (for example 50,000 columns; a 37-layer float64 profile is about 15 MB per 50,000 columns). Runtime is about 2 h per Ls (measured about 0.015 s per column), so about 10 h for 5 Ls. Log progress to a file. Store results as float32.
+3. **Baseline: the 5 Ls values in parallel, one process each** (user decision, Oct 28).
+   - **Code.** A new module, `map_export.py`, holds `run_ls(ls, ...)`. A driver notebook, `notebooks/map_run.ipynb`, starts 5 workers with `concurrent.futures.ProcessPoolExecutor(max_workers=5)`. The worker function must live in a module, not the notebook, because Windows starts workers with spawn.
+   - **Workers.** Each worker sets `OMP_NUM_THREADS`, `MKL_NUM_THREADS` and `OPENBLAS_NUM_THREADS` to 1 before importing numpy, so 5 workers do not fight over the 6 cores. Each runs `thermal1d.simulate_sols` over chunks of pixels and writes its float32 master to `outputs/map/master/ls{LLL}.npy`. The encoding into A-D happens after all 5 finish.
+   - **Chunks and memory.** Use 10,000 columns per chunk. The flux input and the surface output are each about 77 MB per 10,000 columns as float64, so one worker needs about 250-300 MB, or about 1.5 GB for five. This laptop has 11.4 GB of RAM, but only 2.2 GB was free on Oct 28, so close other programs first. Measure the peak in the dry run, and halve the chunk size if needed.
+   - **Checkpoints.** Each worker saves every finished chunk (`outputs/map/master/ls{LLL}_chunk{NNN}.npy`) and skips chunks that already exist on restart. A crash, a reboot or sleep then costs at most one chunk. Merge the chunks after the last one.
+   - **Progress.** Each worker appends its chunk number, elapsed time and spin-up sols to `outputs/map/map_progress_ls{LLL}.log`. nbconvert shows nothing until the end.
+   - **Runtime.** Serial, it would take about 2.2 h per Ls (0.015 s per column, measured on a 294-column batch), or about 11 h. In parallel, the ideal is about 2.2 h of wall time. This machine is a Ryzen 5 7530U laptop (6 cores, 12 threads), and laptop chips slow down under long full load, so expect about 3-4 h. The dry run gives the real per-column time; re-estimate from it.
+   - **Before the full run.** Plug the laptop in, turn off sleep and hibernation, and keep it ventilated.
+   - **Cloud option** (assessed Oct 28, not chosen). A Claude Code cloud session works from the GitHub repo (`Ayawningp/MarsDataPipeline`) on a Linux machine. It would need:
+     - pushing the local commits (`main` was 6 commits ahead of `origin` on Oct 28);
+     - putting the inputs where the session can read them. `processed_data/` is git-ignored, and the 198 MB feature table is over GitHub's 100 MB file limit (72 MB gzipped), so it needs Git LFS or a compressed copy;
+     - a fresh Python setup there (`gale-env` is Windows-only), with versions matched to `gale-env`;
+     - getting about 1 GB of outputs back, which is too large for plain git.
+
+     The session's run-time limit and core count were not checked. Local parallel is the plan; use the cloud only if the laptop cannot stay on for about 4 h.
 4. **Residual.** Apply `flann_safe_no_ti` with clamping. Report the fraction of pixels clamped per covariate.
 5. **Time steps.** Output every 30 min of LTST (48 frames per Ls), at the step ending at each frame time. Say whether frames are instants or bin centres in the metadata.
 6. **Check (pass condition from the build steps):**
