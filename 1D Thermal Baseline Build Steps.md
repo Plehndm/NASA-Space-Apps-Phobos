@@ -12,9 +12,20 @@ The baseline is a custom 1D soil heat-conduction model that gives T\_base(x, t) 
 | Notebook execution | `jupyter nbconvert --execute` with an explicit kernel name and a long timeout, output to `executed/` | Already installed; the kernel name guarantees the clean environment; source notebooks stay unchanged |
 | Shell | Native Windows with Git Bash, not WSL | Reuses the working clean Python environment; WSL would mean rebuilding it |
 | Paths | Project root `MarsDataPipeline/`; code reads data through `paths.py` as `processed_data/` | Works from Git Bash, PowerShell and Jupyter alike; nbconvert's working-directory change cannot break it |
-| Libraries | numpy for the solver and the fit; pandas and matplotlib only in notebooks; nothing installed | Matches the brief and avoids touching the environment |
+| Libraries | numpy for the solver and the fit; pandas and matplotlib in notebooks; scikit-learn and xgboost for Step 5; rasterio and Pillow for the Step 6 export. Additions approved Oct 27-28; the list in CLAUDE.md is the rule | Keeps the solver dependency-free; each addition was approved by the user |
 
 The sealed test blocks (sols 1343-1360 and 3069-3110) stay unread until Step 7. The loader drops them unless a flag is set on purpose.
+
+## Status (updated Oct 28)
+
+| Step | State |
+| --- | --- |
+| 0-4 | Done. Gates 1 and 2 pass. The fitted baseline scores a macro RMSE of 6.72 K against the benchmark's 5.38 K, so it does not beat the benchmark. |
+| 5 | Done for ground temperature. The map uses `flann_safe_no_ti`, scoring a macro RMSE of 4.86 K against the benchmark's 5.38 K. Air temperature is not started. |
+| 6 | Designed, not run. The full design is in `docs/plan.md`. |
+| 7 | Not started. Run it only when the user says so. |
+
+Day-to-day notes live in `docs/` (`plan.md`, `progress.md`, `discoveries.md`, `closed_ideas.md`). Where this document and `CLAUDE.md` differ, `CLAUDE.md` holds the rule.
 
 ## Steps in order
 
@@ -36,7 +47,7 @@ Claude Code stops for your review after Steps 2, 3 and 4. Those are the points w
 **Goal:** a correct heat-conduction solver, tested before any Mars input.
 
 - The equation is ρc ∂T/∂t = ∂/∂z(k ∂T/∂z), with k = I² / ρc and a constant ρc = 1.2×10⁶ J m⁻³ K⁻¹.
-- The grid is scaled to each column's diurnal skin depth (about 5 to 10 cm for your thermal inertia range). The first layer is about δ/30, the stretch factor about 1.15, and the depth about 10δ, which gives roughly 30 to 40 layers.
+- The grid is scaled to each column's diurnal skin depth (about 5 to 10 cm for your thermal inertia range). The first layer is δ/30, the stretch factor 1.10, and the depth at least 10δ, which gives 37 layers. The original 1.15 failed Gate 1; the change was approved Oct 27.
 - Time stepping is fully implicit (backward Euler) with dt = one sol / 960, about 92 s. The surface energy balance is solved by Newton iteration each step, with zero flux at the bottom.
 - The tridiagonal solve is vectorized over a batch of columns, so the same code later runs about 530,000 map pixels in chunks.
 
@@ -89,9 +100,9 @@ Claude Code stops for your review after Steps 2, 3 and 4. Those are the points w
 
 **Goal:** learn what the physics misses.
 
-- Gradient boosting on REMS-minus-baseline residuals, with the planned covariates.
-- Repeat the Oct 27 feature ablation on these residuals.
-- Model air temperature separately, from predicted ground temperature, elevation and time of day.
+- Learn the REMS-minus-baseline residual with the planned covariates, and repeat the Oct 27 feature ablation on it.
+- Outcome (Oct 28): gradient boosting gave a macro RMSE of 5.28 K. A FLANN-style ridge did better, and the map uses its safe form without albedo or TI terms and with clamped covariates (4.86 K). Details are in `docs/progress.md`.
+- Model air temperature separately, from predicted ground temperature, elevation and time of day. Not started.
 
 **Pass:** leave-one-block-out shows the residual model improves on the baseline alone, with per-block results.
 
@@ -100,8 +111,9 @@ Claude Code stops for your review after Steps 2, 3 and 4. Those are the points w
 **Goal:** the heatmap the web map shows.
 
 - Block-average the static table to about 200 m (718 × 738).
-- Run baseline plus residual model for each chosen Ls value at every 30 minutes of LTST. Use a multi-year median tau per Ls and say so.
-- Write float16 arrays matching the `gale_dust_devil_meta.json` georeferencing, in the format agreed with the UI/UX team and the map developers.
+- Run baseline plus residual model at Ls 15, 75, 195, 255 and 340, every 30 minutes of LTST. Tau is the median per-sol tau within ±15° of each Ls, and the map says so.
+- Run the 5 Ls in parallel, one process each, locally, with a checkpoint per chunk. Expected time is about 3-4 h.
+- Write four formats, matching the `gale_dust_devil_meta.json` georeferencing at 200 m: a cloud-optimized GeoTIFF, a 16-bit PNG, a coloured PNG and raw uint16 binary, plus a manifest. The full specification is in `docs/plan.md`.
 
 **Pass:** the output loads in the map with the right orientation, and the rover pixel matches the model run from Step 4.
 
@@ -116,7 +128,7 @@ Claude Code stops for your review after Steps 2, 3 and 4. Those are the points w
 
 Three values in CLAUDE.md are marked TODO. Run these in Git Bash from inside `MarsDataPipeline/` and copy the output in:
 
-- [ ] `pwd` gives the absolute project path (`MarsDataPipeline/processed_data` alone is relative).
-- [ ] `python -c "import sys; print(sys.executable)"` gives the clean environment's Python.
-- [ ] `jupyter kernelspec list` gives the kernel name nbconvert must use.
-- [ ] Choose the Ls values for the map (proposal: 15, 75, 195, 255, 340). This is needed by Step 6 only.
+- [x] `pwd` gives the absolute project path (recorded in CLAUDE.md, Oct 27).
+- [x] `python -c "import sys; print(sys.executable)"` gives the clean environment's Python (`gale-env`, Oct 27).
+- [x] `jupyter kernelspec list` gives the kernel name nbconvert must use (`gale-env`, Oct 27).
+- [x] Choose the Ls values for the map: 15, 75, 195, 255 and 340 (Oct 28).

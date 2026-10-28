@@ -50,13 +50,7 @@ Ls 255 has the fewest sols (14). Recompute these values in the Step 6 notebook r
    - **Progress.** Each worker appends its chunk number, elapsed time and spin-up sols to `outputs/map/map_progress_ls{LLL}.log`. nbconvert shows nothing until the end.
    - **Runtime.** Serial, it would take about 2.2 h per Ls (0.015 s per column, measured on a 294-column batch), or about 11 h. In parallel, the ideal is about 2.2 h of wall time. This machine is a Ryzen 5 7530U laptop (6 cores, 12 threads), and laptop chips slow down under long full load, so expect about 3-4 h. The dry run gives the real per-column time; re-estimate from it.
    - **Before the full run.** Plug the laptop in, turn off sleep and hibernation, and keep it ventilated.
-   - **Cloud option** (assessed Oct 28, not chosen). A Claude Code cloud session works from the GitHub repo (`Ayawningp/MarsDataPipeline`) on a Linux machine. It would need:
-     - pushing the local commits (`main` was 6 commits ahead of `origin` on Oct 28);
-     - putting the inputs where the session can read them. `processed_data/` is git-ignored, and the 198 MB feature table is over GitHub's 100 MB file limit (72 MB gzipped), so it needs Git LFS or a compressed copy;
-     - a fresh Python setup there (`gale-env` is Windows-only), with versions matched to `gale-env`;
-     - getting about 1 GB of outputs back, which is too large for plain git.
-
-     The session's run-time limit and core count were not checked. Local parallel is the plan; use the cloud only if the laptop cannot stay on for about 4 h.
+   - **Where it runs: locally, on this laptop, in `gale-env`** (user decision, Oct 28). The Claude cloud is not used (see `closed_ideas.md`).
 4. **Residual.** Apply `flann_safe_no_ti` with clamping. Report the fraction of pixels clamped per covariate.
 5. **Time steps.** Output every 30 min of LTST (48 frames per Ls), at the step ending at each frame time. Say whether frames are instants or bin centres in the metadata.
 6. **Check (pass condition from the build steps):**
@@ -76,9 +70,9 @@ The numbers that drive the choice:
 
 | Format | What it is | Pros | Cons |
 |---|---|---|---|
-| **A. Cloud-optimized GeoTIFF (COG)**, one file per Ls with 48 bands | Standard georeferenced raster; int16 at 0.01 K or float32, with a nodata value | Opens in QGIS for checking. Carries georeferencing. Web maps can read it with geotiff.js, georaster-layer-for-leaflet or the OpenLayers GeoTIFF source. | Needs `rasterio` (installed 1.5.2, but not on the allowed list: needs user approval). Decoding in the browser is heavier. The Mars coordinate reference system (IAU 2015:49900) is not an EPSG code, so web maps treat it as plain degrees. |
-| **B. 16-bit PNG per frame** (grayscale, value = (T - 100 K) x 100) plus a JSON manifest | Lossless image with values encoded in the pixel | Every browser decodes PNG natively. The client applies the colour scale, so hover readouts and legend changes stay possible. Small after compression. | No georeferencing in the file (the manifest carries bounds). Needs Pillow (installed 13.0.0, not on the allowed list: needs approval). Value decoding is custom code in the web app. |
-| **C. Coloured PNG per frame** plus a legend | A ready-to-show picture (for example an image overlay in Leaflet with lat/lon bounds) | The simplest to display; no decoding. | Values are lost, so there is no hover temperature. The colour scale is fixed at export. Needs Pillow (approval). |
+| **A. Cloud-optimized GeoTIFF (COG)**, one file per Ls with 48 bands | Standard georeferenced raster; int16 at 0.01 K or float32, with a nodata value | Opens in QGIS for checking. Carries georeferencing. Web maps can read it with geotiff.js, georaster-layer-for-leaflet or the OpenLayers GeoTIFF source. | Needs `rasterio` (1.5.2, allowed Oct 28). Decoding in the browser is heavier. The Mars coordinate reference system (IAU 2015:49900) is not an EPSG code, so web maps treat it as plain degrees. |
+| **B. 16-bit PNG per frame** (grayscale, value = (T - 100 K) x 100) plus a JSON manifest | Lossless image with values encoded in the pixel | Every browser decodes PNG natively. The client applies the colour scale, so hover readouts and legend changes stay possible. Small after compression. | No georeferencing in the file (the manifest carries bounds). Needs Pillow (13.0.0, allowed Oct 28). Value decoding is custom code in the web app. |
+| **C. Coloured PNG per frame** plus a legend | A ready-to-show picture (for example an image overlay in Leaflet with lat/lon bounds) | The simplest to display; no decoding. | Values are lost, so there is no hover temperature. The colour scale is fixed at export. Needs Pillow (allowed). |
 | **D. Raw binary plus a JSON manifest** (uint16 at 0.01 K, little-endian, one file per Ls) | Bytes the browser reads straight into a typed array | numpy only (already allowed). Fastest to load in JavaScript. Exact values. | A custom format: no GIS tool opens it, and the web app needs a small loader. |
 | **E. float16 NumPy stack (`.npy`/`.npz`) plus `meta.json`** | The handover brief's original proposal | numpy only. Matches `gale_dust_devil_meta.json`. The quickest to write. | Browsers do not read `.npy` without a parser, and float16 needs decoding in JavaScript. Best as an internal or archive format. |
 | **F. XYZ map tiles** (z/x/y PNG) | Pyramid tiles for slippy maps | Standard for basemaps with deep zoom. | Overkill for a 718 x 738 grid, which fits in a few tiles. Web Mercator tiling on Mars adds projection questions. |

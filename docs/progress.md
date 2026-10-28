@@ -9,7 +9,9 @@ The newest session goes at the top. What we learned goes in `discoveries.md`, wh
 - **Tau: the median per-sol tau within +-15 deg of each Ls** (0.78, 0.49, 0.69, 1.09, 1.11), placeholder sols excluded.
 - **Output formats: all four web-ready options**, which are a cloud-optimized GeoTIFF, a 16-bit PNG, a coloured PNG and raw uint16 binary. The specification is in `plan.md`.
 - **`rasterio` 1.5.2 and Pillow 13.0.0 are allowed for Step 6** (both were already installed in `gale-env`). `CLAUDE.md` is updated: the residual model and full-grid export are in scope, and air temperature stays out.
-- **Frame spacing: every 30 min** (48 frames per Ls). Step 6 has not started: the user will run it later.
+- **Frame spacing: every 30 min** (48 frames per Ls).
+- **The 5 Ls values run in parallel, one process each, locally on this laptop.** The Claude cloud is not used (user decision). Expected wall time is about 3-4 h, against about 11 h serial; this is an estimate to confirm in the dry run.
+- Step 6 has not started: the user will run it later.
 
 ## Session 2f (Oct 28, 2026): residual with and without TI terms (map sensitivity, part 1)
 
@@ -209,5 +211,5 @@ Fitted parameters: `g_diff` 0.77-0.88, `f_ir` 0.027-0.034, `ti_scale` 0.70-0.87 
 
 ### Housekeeping
 
-- `1D Thermal Baseline Build Steps.md` still says stretch "about 1.15"; `CLAUDE.md` holds the rule.
+- `1D Thermal Baseline Build Steps.md` said stretch "about 1.15"; fixed to 1.10 on Oct 28.
 - The git author email in the user's config reads `aypeng2019#gmail.com` (`#` for `@`).

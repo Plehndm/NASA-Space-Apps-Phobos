@@ -64,6 +64,14 @@ Decided Oct 28: no bound changes or new parameters before Step 5.
 | NeuralGCM | Reasoned | Earth atmosphere model trained on Earth reanalysis; no Mars version; cells of hundreds of km against a 10 km area. Brings in atmospheric coupling (out of scope). | Never. |
 | xgboost as the second learner | Reasoned | Same tree family as the current learner, so the same failure outside the training TI range; monotone constraints already exist in HistGradientBoosting. Expected change under 0.1 K. | A tree-specific need appears (for example GPU speed for the map). |
 
+## Running the map (Oct 28)
+
+| Idea | Status | Why closed | Reopen if |
+|---|---|---|---|
+| Running Step 6 in a Claude Code cloud session | User decision | It would need the unpushed commits on GitHub, the 198 MB feature table (over GitHub's 100 MB limit) moved by LFS or as a compressed copy, a new Linux Python environment, and about 1 GB of outputs brought back. A local parallel run is about 3-4 h. | The laptop cannot stay on for the run, and the user asks. |
+| Running the 5 Ls serially | Reasoned | About 11 h, against about 3-4 h with one process per Ls. | - |
+| A larger time step to save run time | Spec | `dt` = P/960 is fixed in `CLAUDE.md`, and Gate 1 was checked against it. | Never. |
+
 ## Tooling
 
 | Idea | Status | Why closed |
