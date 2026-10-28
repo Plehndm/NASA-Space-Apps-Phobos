@@ -25,7 +25,7 @@ Decided Oct 28: no bound changes or new parameters before Step 5.
 
 | Idea | Status | Why closed | Reopen if |
 |---|---|---|---|
-| Lower `ti_scale` bound from 0.7 to 0.5 | Reasoned | One global scale cannot separate block 0 (TI too high) from the rest (nights already near 0 to +4 K bias). It would cool nights elsewhere, and a 0.5 fit would undermine the THEMIS map for the whole crater. | The residual model leaves a large night bias that a TI change would fix, and the user wants a sensitivity run. Report it beside the headline fit, never as the headline. |
+| Lower `ti_scale` bound from 0.7 to 0.5 | Tested (Oct 28) | Fits stay at 0.69-0.88, scores change by at most 0.04 K, block 0 night bias unchanged (+9 K). One global scale cannot cool block 0 without cooling nights that are already 3 K cold elsewhere. | Never as a global bound change; block 0 needs a local explanation. |
 | Thermal inertia fitted per rover pixel or per block | Reasoned | Cannot transfer to the map's unobserved pixels and leaks between LOBO folds. That correction belongs in the residual model. | Never for the baseline. |
 | Fitting albedo | Reasoned | Closing the midday gap by albedo alone needs a drop of about 0.15-0.2, to roughly 0.05-0.10, which is implausible for Gale. It also trades off against `g_diff` at midday. | An independent albedo source shows TES is badly off at the rover. |
 | `g_diff` above 1 | Reasoned | Unphysical (more diffuse light than was scattered). The midday deficit does not grow with tau, so more diffuse light also over-corrects the dusty season. | Never. |
@@ -41,6 +41,15 @@ Decided Oct 28: no bound changes or new parameters before Step 5.
 | Elevation as a residual predictor | Tested | 0.07 K macro gain, under the 0.2 K bar fixed before the run; it can act as a campaign ID. | A within-block test shows a real elevation effect. |
 | Model absorbed flux as a residual predictor | Tested | 0.04 K worse macro, better in 4 of 9 blocks. | Never on its own; time and tau already carry it. |
 | Static covariates dropped (`time_only`) | Tested | 0.34 K worse macro than `no_elev`. | - |
+
+## Second learners for the residual model (Oct 28, reasoned with the user)
+
+| Idea | Status | Why closed | Reopen if |
+|---|---|---|---|
+| Prophet | Reasoned | Built for one time series with Earth calendar cycles and a time trend. No notion of space; the map needs a function of terrain, not date. Not installed. | Never for this map. |
+| PINNs | Reasoned | The implicit solver already solves the heat equation to about 0.03 K; the error is in forcing and parameters, not the PDE. Cannot identify TI at unvisited pixels. Needs PyTorch or JAX (not installed). | A spatially resolved inverse problem with data at many pixels. |
+| NeuralGCM | Reasoned | Earth atmosphere model trained on Earth reanalysis; no Mars version; cells of hundreds of km against a 10 km area. Brings in atmospheric coupling (out of scope). | Never. |
+| xgboost as the second learner | Reasoned | Same tree family as the current learner, so the same failure outside the training TI range; monotone constraints already exist in HistGradientBoosting. Expected change under 0.1 K. | A tree-specific need appears (for example GPU speed for the map). |
 
 ## Tooling
 

@@ -37,3 +37,8 @@ Each entry gives the evidence. Data and split findings from before Oct 27 are in
 - **The 0.10 K macro win is inside the noise of a 4-way selection.** It disappears without sols 3763-3778 (5.43 K vs 5.37 K), and pooled RMSE stays 1 K worse than the benchmark because block 0 holds a quarter of the rows.
 - **Elevation helps a little (0.07 K macro, 6 of 9 blocks)** but below the 0.2 K bar set for a possible campaign ID. Its partial-dependence range is 1.06 K.
 - **The model's absorbed flux adds nothing** over sin/cos LTST, Ls, tau and the baseline (0.04 K worse).
+
+## `ti_scale` sensitivity (Oct 28)
+
+- **One global TI scale cannot fix block 0, whatever its bound.** With the bound at 0.5 the fits stay at 0.69-0.88. Block 0 is warm at night (+9 K after the residual model), while the fitted baseline is already cold at night elsewhere (-3.2 K, 19-06 h). A lower global scale would cool every block's nights, so least squares refuses it. Block 0 needs something local: its THEMIS TI (566-682 tiu) looks too high for the Bradbury surface, or something else at block 0 (sky IR, early-mission data) differs.
+- **Correction to the Oct 28 closed-ideas note:** it said nights elsewhere sit near 0 to +4 K. That was the default-parameter diagnostic. After the fit, nights outside block 0 are -2 to -6 K (cold).

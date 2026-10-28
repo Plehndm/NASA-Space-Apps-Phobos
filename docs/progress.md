@@ -2,6 +2,22 @@
 
 The newest session goes at the top. What we learned goes in `discoveries.md`, what not to retry goes in `closed_ideas.md`, and the next step goes in `plan.md`.
 
+## Session 2b (Oct 28, 2026): `ti_scale` sensitivity run (lower bound 0.5)
+
+User request. `notebooks/ti_sensitivity_lobo.ipynb` (about 13 min) repeats the Step 4 fold fits with `ti_scale` in [0.5, 1.3], then the Step 5 residual model on the new fold baselines (configuration not re-selected). Outputs in `outputs/ti_sensitivity/`. Not the headline. `fit_global_params` gained a `bounds` argument (default: spec bounds); tests rerun: `13 passed in 101.81s`.
+
+**Result: the 0.7 bound was not what held the fit back.** Fitted `ti_scale` is 0.69-0.88; only fold 5 goes below 0.7 (0.691, was on the bound at 0.700). No fold lands on the new bound.
+
+| | Headline | `ti_scale` >= 0.5 |
+|---|---|---|
+| Baseline macro RMSE | 6.72 K | 6.73 K |
+| `no_elev` macro RMSE | 5.28 K | 5.27 K |
+| `no_elev` macro, without sols 3763-3778 | 5.43 K | 5.39 K |
+| `no_elev` pooled RMSE, main rows | 6.55 K | 6.52 K |
+| Block 0, `no_elev` RMSE (benchmark 5.04 K) | 8.79 K | 8.77 K |
+| Block 0, `no_elev` night bias (19-06 h) | +9.13 K | +9.28 K |
+| Other blocks, baseline night bias (19-06 h) | -3.22 K | -3.28 K |
+
 ## Session 2 (Oct 28, 2026): Step 5, residual model
 
 `notebooks/residual_lobo.ipynb` (about 75 s) with `residual.py`; outputs in `outputs/residual/`. The learner is scikit-learn `HistGradientBoostingRegressor` with fixed settings (300 rounds, rate 0.05, 15 leaves, min 50 rows per leaf, L2 1.0), not tuned. The decision rule was written into the notebook before the run. 4 configurations were tried, 1 learner setting.

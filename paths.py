@@ -7,3 +7,4 @@ OUT_DIR = REPO_ROOT / "outputs" / "baseline"
 
 assert DATA_DIR.is_dir(), f"data folder not found: {DATA_DIR}"
 RESIDUAL_OUT_DIR = REPO_ROOT / "outputs" / "residual"
+TI_SENS_OUT_DIR = REPO_ROOT / "outputs" / "ti_sensitivity"

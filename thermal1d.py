@@ -28,6 +28,7 @@ F_IR = 0.04                  # sky-IR fraction of noon flat sunlight, fitted, bo
 TI_SCALE = 1.0               # thermal-inertia scale factor, fitted, bounds [0.7, 1.3]
 PARAM_NAMES = ("g_diff", "f_ir", "ti_scale")
 PARAM_BOUNDS = np.array([[0.0, 1.0], [0.0, 0.15], [0.7, 1.3]])
+TI_SCALE_LO_SENSITIVITY = 0.5  # ti_scale lower bound for the reported sensitivity run only (Oct 28, user request)
 
 # --- fitting --------------------------------------------------------------
 FIT_GRID_POINTS = 5           # coarse grid points per parameter, bounds included
@@ -416,15 +417,18 @@ def load_rems_table(path, allow_test=False):
 
 # --- fitting --------------------------------------------------------------
 
-def fit_global_params(evaluate, obs, use, grid_points=FIT_GRID_POINTS, gn_steps=FIT_GN_STEPS):
-    """Least-squares fit of (g_diff, f_ir, ti_scale) inside PARAM_BOUNDS on rows `use`.
+def fit_global_params(evaluate, obs, use, grid_points=FIT_GRID_POINTS, gn_steps=FIT_GN_STEPS,
+                      bounds=PARAM_BOUNDS):
+    """Least-squares fit of (g_diff, f_ir, ti_scale) inside `bounds` (3, 2) on rows `use`.
 
     A coarse grid over the bounds, then projected Gauss-Newton steps with a forward-difference
     Jacobian; a step that does not lower the SSE is halved up to FIT_MAX_HALVINGS times, and
     the fit stops when no halving helps. Returns (params, sse, at_bound): at_bound is a
     (3,) bool array, True where the parameter sits on a bound.
     """
-    lo, hi = PARAM_BOUNDS[:, 0], PARAM_BOUNDS[:, 1]
+    bounds = np.asarray(bounds, dtype=np.float64)
+    assert bounds.shape == (3, 2) and np.all(bounds[:, 0] < bounds[:, 1]), "bounds must be (3, 2) with lo < hi"
+    lo, hi = bounds[:, 0], bounds[:, 1]
     assert use.dtype == bool and use.shape == obs.shape and use.any(), "use must be a non-empty row mask"
     assert np.all(np.isfinite(obs[use])), "non-finite observations in fitting rows"
 
