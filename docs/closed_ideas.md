@@ -34,6 +34,14 @@ Decided Oct 28: no bound changes or new parameters before Step 5.
 | Two-layer soil (dust over denser ground) | Spec | Out of scope in `CLAUDE.md` and adds at least 2 parameters. Physically the best match for hot days with moderated nights. | The user brings it into scope after the heatmap ships. |
 | Tuning to beat the benchmark | Spec | `CLAUDE.md`: if the baseline does not beat the benchmark, that is the finding. | Never. |
 
+## Residual model
+
+| Idea | Status | Why closed | Reopen if |
+|---|---|---|---|
+| Elevation as a residual predictor | Tested | 0.07 K macro gain, under the 0.2 K bar fixed before the run; it can act as a campaign ID. | A within-block test shows a real elevation effect. |
+| Model absorbed flux as a residual predictor | Tested | 0.04 K worse macro, better in 4 of 9 blocks. | Never on its own; time and tau already carry it. |
+| Static covariates dropped (`time_only`) | Tested | 0.34 K worse macro than `no_elev`. | - |
+
 ## Tooling
 
 | Idea | Status | Why closed |

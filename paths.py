@@ -6,3 +6,4 @@ DATA_DIR = REPO_ROOT / "processed_data"
 OUT_DIR = REPO_ROOT / "outputs" / "baseline"
 
 assert DATA_DIR.is_dir(), f"data folder not found: {DATA_DIR}"
+RESIDUAL_OUT_DIR = REPO_ROOT / "outputs" / "residual"

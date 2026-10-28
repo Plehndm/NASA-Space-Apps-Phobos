@@ -2,6 +2,38 @@
 
 The newest session goes at the top. What we learned goes in `discoveries.md`, what not to retry goes in `closed_ideas.md`, and the next step goes in `plan.md`.
 
+## Session 2 (Oct 28, 2026): Step 5, residual model
+
+`notebooks/residual_lobo.ipynb` (about 75 s) with `residual.py`; outputs in `outputs/residual/`. The learner is scikit-learn `HistGradientBoostingRegressor` with fixed settings (300 rounds, rate 0.05, 15 leaves, min 50 rows per leaf, L2 1.0), not tuned. The decision rule was written into the notebook before the run. 4 configurations were tried, 1 learner setting.
+
+Checks: fold baselines reproduce Step 4's out-of-fold `baseline_k` within 0.019 K, and the benchmark matches Step 4 exactly.
+
+**Result: baseline + residual beats the benchmark only on the headline macro, by 0.10 K, and loses on every other aggregate.**
+
+| | Baseline | Benchmark | `no_elev` (chosen) | `full` | `time_only` | `no_elev_flux` |
+|---|---|---|---|---|---|---|
+| Macro RMSE, 9 blocks | 6.72 | 5.38 | **5.28** | 5.21 | 5.62 | 5.32 |
+| Macro, without sols 3763-3778 | 6.65 | 5.37 | 5.43 | 5.35 | 5.66 | 5.42 |
+| Pooled RMSE, main rows | 7.47 | 5.51 | 6.55 | 6.38 | 6.76 | 6.60 |
+| Placeholder-tau rows | 5.77 | 4.39 | 4.73 | 4.26 | 5.27 | 4.86 |
+| Blocks beating the benchmark | 1 | - | 5 | 6 | 5 | 5 |
+
+Decision rule outcome: static covariates adopted (0.34 K gain); elevation rejected (0.07 K gain, under the 0.2 K bar, though better in 6 of 9 blocks); flux term rejected (0.04 K worse). Rule 4 says a second learner is justified (gap -0.10 K, inside the 0.3 K window); not run, pending the user.
+
+| Held-out block | Baseline | Benchmark | `no_elev` | `no_elev` bias |
+|---|---|---|---|---|
+| 0 (1-170) | 9.24 | 5.04 | 8.79 | +4.76 |
+| 1 | 4.05 | 5.19 | 3.30 | +0.43 |
+| 2 | 6.69 | 5.59 | 5.99 | +1.37 |
+| 3 | 6.07 | 4.01 | 3.63 | -1.65 |
+| 5 | 7.62 | 5.54 | 5.08 | -1.39 |
+| 6 | 7.89 | 7.83 | 5.79 | -2.85 |
+| 7 | 4.71 | 4.33 | 4.64 | -2.13 |
+| 9 | 6.94 | 5.42 | 6.18 | +2.90 |
+| 10 (3763-3778) | 7.26 | 5.51 | 4.12 | +0.72 |
+
+Partial-dependence range of the residual over the rover's covariate values (`no_elev`): TI 1.76 K, aspect 1.80 K, albedo 1.04 K, slope 0.77 K. Night hours (17-23 h) gained a +1.5 to +2.2 K warm bias that the baseline did not have.
+
 ## Session 1 (Oct 27-28, 2026)
 
 Steps 0-4 of `1D Thermal Baseline Build Steps.md` are done and committed locally. Nothing from this session is pushed to GitHub; only `docs/` and `.vscode/` were pushed to `Plehndm/NASA-Space-Apps-Phobos` (`MarsDataPipline/`).

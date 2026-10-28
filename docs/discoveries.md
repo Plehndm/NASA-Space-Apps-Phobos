@@ -28,3 +28,12 @@ Each entry gives the evidence. Data and split findings from before Oct 27 are in
 - **pandas 3 returns read-only arrays from `.to_numpy()`.** Copy before writing into them. This crashed the first LOBO run after 25 minutes.
 - **nbconvert shows no output until a notebook finishes.** Long notebooks should append progress to a log file, as `baseline_fit_lobo.ipynb` does.
 - **Dry-run a long notebook with the expensive call stubbed** (for example, the fit returning defaults) before the real run. That caught nothing new here, but it costs 10 s against a 30-minute failure.
+
+## Residual model (Oct 28)
+
+- **Block 0 sits entirely outside the other blocks' thermal-inertia range.** Its TI is 566-682 tiu; every other block is at most 514 tiu. A tree model cannot extrapolate, so the residual model barely helps block 0 when it is held out (9.24 K to 8.79 K, against the benchmark's 5.04 K). Block 0 alone costs the macro about 0.4 K against the benchmark. The same failure will hit every map pixel whose THEMIS TI lies outside 353-682 tiu.
+- **The residual model fixes most of the midday and seasonal deficit elsewhere.** Ls 0-120 bias drops from -3.7 to -7.3 K to within 2 K, and blocks 3, 5, 6 and 10 drop 2-3 K in RMSE.
+- **It adds a warm night bias (+1.5 to +2.2 K at 17-23 h).** Night RMSE stays near the baseline's (about 7 K), while the benchmark is 4-6 K. Nights are where the model gains least.
+- **The 0.10 K macro win is inside the noise of a 4-way selection.** It disappears without sols 3763-3778 (5.43 K vs 5.37 K), and pooled RMSE stays 1 K worse than the benchmark because block 0 holds a quarter of the rows.
+- **Elevation helps a little (0.07 K macro, 6 of 9 blocks)** but below the 0.2 K bar set for a possible campaign ID. Its partial-dependence range is 1.06 K.
+- **The model's absorbed flux adds nothing** over sin/cos LTST, Ls, tau and the baseline (0.04 K worse).
