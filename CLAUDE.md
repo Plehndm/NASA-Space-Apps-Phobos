@@ -186,7 +186,7 @@ Only these three. Each must stay inside its bounds, and a fit that lands on a bo
 - **Skin depth:** `delta = sqrt(k * P / (pi * rho_c))`, per column.
 - **Grid:**
   - first layer thickness `delta / 30`
-  - geometric stretch factor 1.15
+  - geometric stretch factor 1.10 (1.15 gave 28 layers and failed the Gate 1 half-space amplitude at 2 delta by 1.18%; changed Oct 27 with user approval)
   - total depth at least `10 * delta`
   - expected 30 to 40 layers
 - **Time stepping:**
@@ -196,6 +196,7 @@ Only these three. Each must stay inside its bounds, and a fit that lands on a bo
 - **Spin-up:**
   - start from the radiative-equilibrium mean temperature
   - repeat sols until the maximum |dT| between consecutive sols is under 0.01 K at all depths
+  - after each unconverged sol, shift the whole column so the deepest node equals that sol's mean surface temperature (zero shift in the periodic state; without it spin-up took about 60 sols; added Oct 27 with user approval)
   - assert this happens within 50 sols
 - **Vectorization:**
   - vectorize the tridiagonal (Thomas) solve over a batch of columns, shape `(n_columns, n_layers)`
