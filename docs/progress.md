@@ -9,7 +9,7 @@ The newest session goes at the top. What we learned goes in `discoveries.md`, wh
 - **Tau: the median per-sol tau within +-15 deg of each Ls** (0.78, 0.49, 0.69, 1.09, 1.11), placeholder sols excluded.
 - **Output formats: all four web-ready options**, which are a cloud-optimized GeoTIFF, a 16-bit PNG, a coloured PNG and raw uint16 binary. The specification is in `plan.md`.
 - **`rasterio` 1.5.2 and Pillow 13.0.0 are allowed for Step 6** (both were already installed in `gale-env`). `CLAUDE.md` is updated: the residual model and full-grid export are in scope, and air temperature stays out.
-- Frame spacing is still open; the default is 30 min (48 frames per Ls). Step 6 has not started: the user will run it later.
+- **Frame spacing: every 30 min** (48 frames per Ls). Step 6 has not started: the user will run it later.
 
 ## Session 2f (Oct 28, 2026): residual with and without TI terms (map sensitivity, part 1)
 

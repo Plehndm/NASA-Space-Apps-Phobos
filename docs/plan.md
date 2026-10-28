@@ -115,9 +115,9 @@ DEFLATE and PNG compression shrink A, B and C a lot. Measure the real size in th
 - **Orientation.** The rover pixel (row 304, col 372 on the 100 m grid; row 152, col 186 on the 200 m grid) sits at the rover's lat/lon in A, read with rasterio, and in B and D, through the manifest transform.
 - **QGIS.** Open one A file in QGIS on the user's machine and confirm it lands on Gale. This is a manual step for the user.
 
-### Question before the full run
+- **Frame spacing: every 30 min** (user decision, Oct 28), so 48 frames per Ls and 240 in all.
 
-- **Frame spacing.** Every 30 min gives 48 per Ls, as in the handover brief and the default above. Every hour gives 24 per Ls and halves the size. The default stands unless the user changes it.
+No open questions remain before Step 6. Start with the dry run on a small window around the rover.
 
 ## Later items
 
