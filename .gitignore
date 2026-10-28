@@ -1,0 +1,8 @@
+gale-env/
+processed_data/
+executed/
+outputs/
+raw_data/
+out_tiles/
+dtm_src/
+DTMs.zip
