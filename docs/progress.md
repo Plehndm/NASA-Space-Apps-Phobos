@@ -2,6 +2,22 @@
 
 The newest session goes at the top. What we learned goes in `discoveries.md`, what not to retry goes in `closed_ideas.md`, and the next step goes in `plan.md`.
 
+## Session 2f (Oct 28, 2026): residual with and without TI terms (map sensitivity, part 1)
+
+User request (plan option: map with and without the residual's TI terms). The map itself (Step 6) was **not** produced: it needs the Ls values, a tau per map Ls and the output format (open questions), and about 2 h of solver time per Ls. Done instead: configuration 9, `flann_safe_no_ti` (sensitivity only, never selected), in `residual_flann_lobo.ipynb`, and a crater-wide estimate of the difference from the 100 m feature table's TI column (no solver run).
+
+| | `flann_safe` | `flann_safe_no_ti` | Benchmark |
+|---|---|---|---|
+| Macro RMSE, 9 blocks | 4.74 K | 4.86 K | 5.38 K |
+| Macro, without sols 3763-3778 | 4.87 K | 4.99 K | 5.37 K |
+| Pooled RMSE, main rows | 5.82 K | 5.83 K | 5.51 K |
+| Block 0 | 7.46 K | 7.34 K | 5.04 K |
+| Blocks 1 / 2 / 3 | 2.86 / 5.36 / 2.64 K | 3.30 / 5.56 / 3.12 K | |
+
+**Crater THEMIS TI vs the rover's range:** percentiles 1/5/25/50/75/95/99 = 171/197/234/281/336/451/541 tiu. **81.7% of the 2.12 million pixels lie below the clamp minimum (361 tiu)**; 0.1% above 682.
+
+`flann_safe` minus `flann_safe_no_ti` (TI part only, other inputs at the rover's distribution): night mean +3.3 K at 361 tiu, +0.4 K at 481, -4.5 K at 682 (largest at any hour 4.5 / 1.1 / 6.7 K). Over crater pixels: 92% differ by more than 2 K at night, none by more than 5 K at night, 0.2% by more than 5 K at some hour. Median pixel: +3.3 K at night (clamped at 361 tiu).
+
 ## Session 2e (Oct 28, 2026): block 0 diagnostic (does TI explain sols 1-170?)
 
 User request. `notebooks/block0_diagnostic.ipynb` (about 9 min), outputs in `outputs/block0_diagnostic/`. **A diagnostic, not a fit:** in-sample scans with `g_diff` at the all-blocks fit; nothing enters the baseline. Main rows only.

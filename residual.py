@@ -77,6 +77,7 @@ FLANN_SEASON_HARMONICS = 2    # Ls harmonics 1..2
 FLANN_RIDGE_ALPHA = 1.0       # on standardized basis columns; fixed, not tuned
 FLANN_STATIC = ["ti_themis_tiu", "slope_deg", "aspect_sin", "aspect_cos", "albedo_mean", "baseline_k"]
 FLANN_STATIC_NO_ALBEDO = [c for c in FLANN_STATIC if c != "albedo_mean"]   # Oct 28: rover albedo spans 0.24-0.26 only
+FLANN_STATIC_NO_ALBEDO_NO_TI = [c for c in FLANN_STATIC_NO_ALBEDO if c != "ti_themis_tiu"]   # Oct 28: TI sensitivity only
 
 # Clamping (Oct 28, user request): covariates held to the training rows' percentile range
 # before the residual model, so the map never extrapolates the residual. Aspect is circular
@@ -90,6 +91,7 @@ FLANN_VARIANTS = {
     "flann_clamped": (FLANN_STATIC, True),
     "flann_no_albedo": (FLANN_STATIC_NO_ALBEDO, False),
     "flann_safe": (FLANN_STATIC_NO_ALBEDO, True),
+    "flann_safe_no_ti": (FLANN_STATIC_NO_ALBEDO_NO_TI, True),   # sensitivity only, never selected
 }
 
 

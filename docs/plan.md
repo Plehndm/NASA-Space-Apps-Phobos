@@ -8,19 +8,20 @@ Ground temperature: **`flann_safe` is the chosen residual model** (FLANN ridge, 
 
 ## Next: needs the user's choice
 
-Done Oct 28: the block 0 diagnostic. TI explains block 0 (implied about 350 tiu vs THEMIS 637), and every block implies 330-400 tiu. The residual model's night TI effect points the right way along the traverse. See `discoveries.md`.
+Done Oct 28: the block 0 diagnostic (TI, not sky IR) and the with/without-TI-terms comparison at the rover and as a crater-wide estimate. The map itself is not made yet. See `progress.md`.
 
-1. **Decide how the map treats THEMIS TI** (a user decision, not a fit). Options: (a) keep `flann_safe` as is, which pulls high-THEMIS pixels toward about 360 tiu at night, up to 10 K; (b) report the map with and without the residual's TI terms as a sensitivity; (c) check REMS-derived TI along the traverse in the literature (Hamilton et al. 2014, Vasavada et al. 2017, both JGR/Icarus) against the implied 330-400 tiu before choosing. Recommended: (c) then (b).
-2. **Air temperature** (separate model). Ask the user before starting.
-3. **Step 6, the map:** needs the Ls values (proposal 15, 75, 195, 255, 340) and the output format. It applies `flann_safe` with the all-blocks clamp ranges and reports the fraction of pixels clamped per covariate.
-4. **Sealed test** (blocks 4 and 8): only when the user says so.
-5. **Proposal only (out of scope):** a two-layer soil would fit block 0's remaining shape error (too hot at 11-14 h, too cold at 18-19 h).
+1. **Choose the residual for the map: `flann_safe` or `flann_safe_no_ti`.** Recommended: `flann_safe_no_ti`. The TI terms earn 0.12 K at the rover (under the 0.2 K bar used for every other addition) but warm about 82% of the map by about 3.3 K at night through the clamp, in a TI range (below 361 tiu) the rover never saw. This is a user decision because the pre-set rule chose `flann_safe`.
+2. **Step 6, the map, both ways.** Needs from the user: the Ls values (proposal 15, 75, 195, 255, 340), a tau per map Ls (proposal: the training table's median tau in each Ls bin, never extrapolated), and the output format agreed with the map team. The baseline is shared, so both residual versions cost one solver run: about 2 h per Ls at 200 m (530,000 columns). Report the fraction of pixels clamped per covariate.
+3. **Literature check** of REMS-derived TI along the traverse (Hamilton et al. 2014, Vasavada et al. 2017; cited from memory, not checked) against the implied 330-400 tiu.
+4. **Air temperature** (separate model). Ask the user before starting.
+5. **Sealed test** (blocks 4 and 8): only when the user says so.
+6. **Proposals only (out of scope):** two-layer soil for block 0's shape error; a TI mapping that shrinks THEMIS variation instead of scaling it (every block implies 330-400 tiu).
 
 ### Watch for (unchanged)
 
 - Spatial skill cannot be measured here: all rover positions lie within about 10 x 5 km.
 - The residual model must not undo the baseline's spatial terms. `flann_safe`: TI 10.4 K at night (bounded by the clamp), slope 2.4 K, no albedo term.
-- Count every configuration tried: 8 so far (4 tree configurations, 4 FLANN variants). The sensitivity run re-scored the same 4 tree configurations and selected nothing.
+- Count every configuration tried: 9 so far (4 tree configurations, 5 FLANN variants; number 9 is sensitivity only). The sensitivity run re-scored the same 4 tree configurations and selected nothing.
 
 ### Open questions for the user
 

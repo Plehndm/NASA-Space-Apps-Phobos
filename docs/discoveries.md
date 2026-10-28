@@ -64,3 +64,10 @@ Each entry gives the evidence. Data and split findings from before Oct 27 are in
 - **So the residual model's 10 K night TI effect is physically right in direction:** it pulls high-THEMIS pixels toward about 360 tiu. Whether that holds for the rest of the crater (where high THEMIS TI may be real bedrock) cannot be checked with rover data.
 - **Blocks 3, 5 and 6 disagree between night (0.95-1.00) and day (0.60-0.75).** Their midday deficit (day bias -5 to -7 K at the best scale) is not a TI problem; it is the same midday shortfall seen since Step 3.
 - **A shape error remains at block 0 even at the right TI:** too hot at 11-14 h, too cold at 18-19 h. That pattern fits a low-TI dust layer over denser ground (two-layer soil, out of scope in `CLAUDE.md`).
+
+## The rover sees only the top of the crater's TI range (Oct 28)
+
+- **82% of crater pixels have THEMIS TI below the rover's 361 tiu minimum** (crater median 281 tiu, rover median 470 tiu). The rover's traverse samples the high end of the crater's TI distribution.
+- **So the residual's TI terms matter most at low-TI pixels, through the clamp.** Held at 361 tiu, `flann_safe` adds about +3.3 K at night relative to the no-TI version on most of the map. The high-TI pull toward about 360 tiu (block 0) touches only 0.1% of pixels beyond the range.
+- **At the rover, the TI terms earn 0.12 K macro.** That is below the 0.2 K bar every other addition had to clear (elevation was rejected at 0.07 K), while they shift about 92% of map pixels by more than 2 K at night. The selection rule was fixed before this was known, so `flann_safe` stays the chosen model until the user decides.
+- **The baseline's TI scale is multiplicative, but the evidence is not.** Every block implies about 330-400 tiu whatever THEMIS says (block 0 diagnostic). With `ti_scale` 0.74, a 281 tiu pixel runs at 208 tiu. Nothing in the rover data tests TI below about 330 tiu.
