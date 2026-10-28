@@ -42,6 +42,12 @@ Decided Oct 28: no bound changes or new parameters before Step 5.
 | Model absorbed flux as a residual predictor | Tested | 0.04 K worse macro, better in 4 of 9 blocks. | Never on its own; time and tau already carry it. |
 | Static covariates dropped (`time_only`) | Tested | 0.34 K worse macro than `no_elev`. | - |
 
+## Block 0 explanations (Oct 28)
+
+| Idea | Status | Why closed | Reopen if |
+|---|---|---|---|
+| Sky IR explains block 0's warm nights | Tested | Block 0's best `f_ir` (0.030) equals the global fit; fixing nights by sky IR alone leaves -8.8 K by day (RMSE 8.7 K vs 5.7 K with TI). | Never. |
+
 ## Residual model inputs (Oct 28)
 
 | Idea | Status | Why closed | Reopen if |

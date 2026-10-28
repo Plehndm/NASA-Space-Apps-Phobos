@@ -2,6 +2,30 @@
 
 The newest session goes at the top. What we learned goes in `discoveries.md`, what not to retry goes in `closed_ideas.md`, and the next step goes in `plan.md`.
 
+## Session 2e (Oct 28, 2026): block 0 diagnostic (does TI explain sols 1-170?)
+
+User request. `notebooks/block0_diagnostic.ipynb` (about 9 min), outputs in `outputs/block0_diagnostic/`. **A diagnostic, not a fit:** in-sample scans with `g_diff` at the all-blocks fit; nothing enters the baseline. Main rows only.
+
+**Result: yes, TI explains block 0, and sky IR does not.** Night, day and diurnal amplitude all point to the same scale (0.50, 0.60, 0.54), so block 0 behaves like ground with about 350 tiu, not THEMIS's 637 tiu.
+
+| Block | THEMIS TI mean (tiu) | Best scale, all hours | Night | Day | Amplitude match | Implied TI (tiu) | RMSE at best (K) |
+|---|---|---|---|---|---|---|---|
+| 0 | 637 | 0.55 | 0.50 | 0.60 | 0.54 | 350 | 5.59 |
+| 1 | 463 | 0.80 | 0.85 | 0.80 | 0.78 | 370 | 3.64 |
+| 2 | 458 | 0.80 | 0.75 | 0.85 | 0.77 | 367 | 6.35 |
+| 3 | 465 | 0.75 | 0.95 | 0.60 | 0.76 | 349 | 6.00 |
+| 5 | 386 | 0.85 | 1.00 | 0.75 | 0.77 | 328 | 6.64 |
+| 6 | 501 | 0.80 | 1.00 | 0.60 | 0.73 | 401 | 7.54 |
+| 7 | 473 | 0.80 | 0.80 | 0.75 | 0.75 | 378 | 4.48 |
+| 9 | 399 | 0.90 | 0.85 | 1.00 | 0.93 | 360 | 5.55 |
+| others pooled | | 0.85 | 0.85 | 0.80 | 0.79 | 382 | 6.12 |
+
+(Block 10 has no main rows.) Scan step 0.05.
+
+`ti_scale` x `f_ir` (step 0.1 x 0.01): block 0's best is `f_ir` 0.030, `ti_scale` 0.60 (RMSE 5.68 K); the other blocks' best is `f_ir` 0.030, `ti_scale` 0.80 (6.22 K). Both match the global `f_ir` (0.031). Fixing block 0's nights with sky IR alone (`f_ir` 0.01 at `ti_scale` 0.7) leaves a -8.8 K day bias and RMSE 8.7 K.
+
+At its best scale block 0 still has a shape error: +2 to +4 K at 11-14 h and -5 K at 18-19 h (the model peaks too hot and cools too fast in the evening).
+
 ## Session 2d (Oct 28, 2026): map-safe FLANN (no albedo terms, clamped covariates)
 
 User request (both fixes). `residual_flann_lobo.ipynb` now scores four variants; rules fixed in the notebook before the run. Clamping: TI, slope, albedo and the baseline (as a predictor) clipped to the fold's training-row 1st-99th percentiles in training and prediction, so the LOBO score is the map pipeline's score. Configurations tried: 8 in total.

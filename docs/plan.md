@@ -8,10 +8,13 @@ Ground temperature: **`flann_safe` is the chosen residual model** (FLANN ridge, 
 
 ## Next: needs the user's choice
 
-1. **Block 0 diagnostic** (recommended first): the `ti_scale` block 0 alone would need (a diagnostic, never a baseline fit). The chosen model carries a 10 K night TI effect learned almost entirely from block 0, which will be applied to every high-TI map pixel. This checks whether TI explains it.
-2. **Air temperature** (separate model): a function of predicted ground temperature, elevation and time of day. Ask the user before starting.
-3. **Step 6, the map:** needs the Ls values (proposal 15, 75, 195, 255, 340) and the output format. The map applies `flann_safe` with the all-blocks clamp ranges (`outputs/residual/flann_safe_clamp_ranges.csv`) and reports the fraction of pixels clamped per covariate.
-4. **Sealed test** (blocks 4 and 8): only when the user says so. Remember it is a time test within 1 km of training positions, not a spatial test.
+Done Oct 28: the block 0 diagnostic. TI explains block 0 (implied about 350 tiu vs THEMIS 637), and every block implies 330-400 tiu. The residual model's night TI effect points the right way along the traverse. See `discoveries.md`.
+
+1. **Decide how the map treats THEMIS TI** (a user decision, not a fit). Options: (a) keep `flann_safe` as is, which pulls high-THEMIS pixels toward about 360 tiu at night, up to 10 K; (b) report the map with and without the residual's TI terms as a sensitivity; (c) check REMS-derived TI along the traverse in the literature (Hamilton et al. 2014, Vasavada et al. 2017, both JGR/Icarus) against the implied 330-400 tiu before choosing. Recommended: (c) then (b).
+2. **Air temperature** (separate model). Ask the user before starting.
+3. **Step 6, the map:** needs the Ls values (proposal 15, 75, 195, 255, 340) and the output format. It applies `flann_safe` with the all-blocks clamp ranges and reports the fraction of pixels clamped per covariate.
+4. **Sealed test** (blocks 4 and 8): only when the user says so.
+5. **Proposal only (out of scope):** a two-layer soil would fit block 0's remaining shape error (too hot at 11-14 h, too cold at 18-19 h).
 
 ### Watch for (unchanged)
 

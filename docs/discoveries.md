@@ -56,3 +56,11 @@ Each entry gives the evidence. Data and split findings from before Oct 27 are in
 - **Clamping costs only block 0** (6.86 to 7.46 K, because its TI is clipped to 514 tiu in fold 0 and the night TI extrapolation is lost) **and helps block 10** (4.04 to 3.72 K, because its suspect 23.9 deg slope is clipped to 12.3 deg). Net macro cost 0.02 K.
 - **The remaining map risk is the TI night term** (about 10 K across 361-682 tiu, coefficient -9.2 K per standard deviation on TI x cos LTST). It comes almost entirely from block 0. Clamping bounds it but does not make it right.
 - **The baseline as a predictor carries a large term** (-10.6 K per standard deviation on baseline x sin LTST). Clamped to 183-284 K on the map.
+
+## Block 0 and thermal inertia (Oct 28, diagnostic)
+
+- **Block 0 is a TI error, not a sky-IR error.** Its best scale is the same by night (0.50), day (0.60) and diurnal amplitude (0.54), and its best `f_ir` (0.030) equals the global fit. Sky IR alone can fix its nights only by breaking its days (-8.8 K).
+- **REMS sees about 330-400 tiu in every block, whatever THEMIS says.** THEMIS block means span 386-637 tiu; implied TI (best scale x THEMIS) spans 328-401 tiu. THEMIS's variation along the traverse is mostly not seen at the rover's scale, and block 0 (Bradbury, highest THEMIS TI) is where the gap is largest.
+- **So the residual model's 10 K night TI effect is physically right in direction:** it pulls high-THEMIS pixels toward about 360 tiu. Whether that holds for the rest of the crater (where high THEMIS TI may be real bedrock) cannot be checked with rover data.
+- **Blocks 3, 5 and 6 disagree between night (0.95-1.00) and day (0.60-0.75).** Their midday deficit (day bias -5 to -7 K at the best scale) is not a TI problem; it is the same midday shortfall seen since Step 3.
+- **A shape error remains at block 0 even at the right TI:** too hot at 11-14 h, too cold at 18-19 h. That pattern fits a low-TI dust layer over denser ground (two-layer soil, out of scope in `CLAUDE.md`).
