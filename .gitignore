@@ -6,3 +6,5 @@ raw_data/
 out_tiles/
 dtm_src/
 DTMs.zip
+__pycache__/
+.pytest_cache/
