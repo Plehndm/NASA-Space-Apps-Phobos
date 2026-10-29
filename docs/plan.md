@@ -11,7 +11,7 @@ The long-range plan is `1D Thermal Baseline Build Steps.md`. This file holds onl
 ## Step 6 leftovers (optional, user's call)
 
 1. The `flann_safe` (with TI terms) ground sensitivity map. It reuses `outputs/map/master/ls{LLL}_base.npy`, so it takes minutes.
-2. Delete the 2,650 chunk files in `outputs/map/master/` (about 500 MB). A rerun reuses the merged baselines.
+2. ~~Delete the 2,650 chunk files~~ Done Oct 29 (487 MB; each season's chunks matched its merged baseline bit for bit).
 3. Find the source of the faint vertical band in the 14:00 frames (suspected: the coarse albedo grid).
 
 ## Later items

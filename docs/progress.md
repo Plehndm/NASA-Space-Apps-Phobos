@@ -6,6 +6,8 @@ The newest session goes at the top. What we learned goes in `discoveries.md`, wh
 
 **Air map colour scale changed to the ground scale, 150-320 K** (user decision). Rerun of `notebooks/air_map_run.ipynb`: all checks pass; nothing clipped; C within 0.333 K (half a 0.67 K step); C now 55 MB for 5 seasons. README updated.
 
+**Chunk files deleted** (user request): 2,650 files, 487 MB, from `outputs/map/master/`, after checking each season's chunks matched its `ls{LLL}_base.npy` exactly. `master/` is now 972 MB.
+
 **Sealed test, one look (user go-ahead Oct 29; defaults accepted: report only, `notebooks/sealed_test.ipynb`).** Blocks 4 (sols 1343-1360, 12 sols) and 8 (sols 3069-3110, 13 sols); 1,133 rows with ground (no placeholder tau), 1,132 with air. Models frozen as on the maps. Checks: baseline paths agree within 2e-8 K; ground clamp ranges match Step 5; no test row clipped; no benchmark fallback rows.
 
 | | Block 4 RMSE (bias) | Block 8 RMSE (bias) | Sealed macro | LOBO macro |
