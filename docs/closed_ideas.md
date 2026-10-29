@@ -81,6 +81,8 @@ Decided Oct 28: no bound changes or new parameters before Step 5.
 | A fixed near-surface lapse rate | User decision | A new physics term with no rover data to check it; would need a cited value. | The user approves it with a source. |
 | Training the air model on observed REMS ground | User decision | The map only has predicted ground; the score would overstate map skill. | - |
 | A purely ground-driven air model (the brief's plan) | Reasoned | The crude version scored 4.21 K against the benchmark's 4.06 K. Superseded by the hybrid, which keeps ground terms but can shrink them. | - |
+| Air from time, season and tau only (`air_time_only`, configuration 11) | Tested | Macro 4.35 K vs benchmark 4.04 K, better in 2 of 9 blocks. A 3-harmonic daily basis is too smooth. | - |
+| Adopting `air_hybrid` (configuration 10) under the 0.2 K / 5-block rule | Tested | Macro 4.05 vs 4.04 K, 4 of 9 blocks; fails. Published anyway as the better of the two, per the Oct 28 fallback. Do not tweak the basis or alpha to pass the rule. | - |
 
 ## Tooling
 

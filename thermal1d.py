@@ -63,6 +63,7 @@ TABLE_COLUMNS = {
     "elev_dem_m": float, "sun_elev_deg": float, "flux_flat_wm2": float, "flux_tilted_wm2": float,
     "tau": float, "tau_source": str, "tau_is_placeholder": bool, "ground_missing": bool,
     "core_sol": bool, "block": int, "split_role": str,
+    "air_temp_k": float, "air_missing": bool,   # Step 5b (Oct 29); not used for filtering here
 }
 
 

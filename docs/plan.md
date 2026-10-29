@@ -6,6 +6,7 @@ The long-range plan is `1D Thermal Baseline Build Steps.md`. This file holds onl
 
 - **Step 6 (ground-temperature map) is complete.** All four formats are in `outputs/map/`, every automated check passes, and the user confirmed the QGIS check. How to use the folder: `outputs/map/README.md`. Results: `progress.md`, Session 3. The Step 6 design text was replaced here; it is in git history (commit `4c18956`) and in `outputs/map/map_manifest.json`.
 - **Next: air temperature (Step 5b, the model; Step 6b, the map).** The design and decision rules below were fixed with the user on Oct 28, before any air model was scored. Then the sealed test, for ground and air together (Step 7).
+- **Step 5b done (Oct 29):** `air_hybrid` fails the adoption rule (macro 4.05 vs benchmark 4.04 K, 4 of 9 blocks) and is the published air model under the fallback (`air_time_only` 4.35 K). Scores: `progress.md`, Session 4; `outputs/air/air_decision.txt`. **Next: Step 6b (design item 7 below), after the user has seen the scores.** The manifest and README must state the shortfall, and that night air barely follows ground on the map (`discoveries.md`).
 
 ## Next: air temperature
 
@@ -98,4 +99,4 @@ The long-range plan is `1D Thermal Baseline Build Steps.md`. This file holds onl
 - **Spatial skill cannot be measured here.** All rover positions lie within about 10 x 5 km. Say so beside the map.
 - **Most of the map is outside the rover's TI range.** 82% of pixels are below 361 tiu, where the baseline runs at `ti_scale` x THEMIS (a 281 tiu pixel runs at 208 tiu). Nothing in the rover data tests TI below about 330 tiu.
 - **Slope is clamped to 1.25-12.27 deg in the residual only.** The physics still sees the true slope, so steep crater walls and Mount Sharp's flanks rest on the baseline alone.
-- **Count every configuration tried:** 9 so far (4 tree configurations and 5 FLANN variants; number 9 is a sensitivity run). Step 6 added none; Step 5b adds 2 (numbers 10 and 11).
+- **Count every configuration tried:** 11 so far (4 tree configurations, 5 FLANN variants, number 9 a sensitivity run; numbers 10 and 11 are the air models, Oct 29). Step 6 added none.

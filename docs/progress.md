@@ -2,6 +2,26 @@
 
 The newest session goes at the top. What we learned goes in `discoveries.md`, what not to retry goes in `closed_ideas.md`, and the next step goes in `plan.md`.
 
+## Session 4 (Oct 29, 2026): Step 5b, air temperature LOBO (configurations 10 and 11)
+
+Code: `notebooks/air_lobo.ipynb` (executed into `executed/air_lobo.ipynb`, outputs in `outputs/air/`); `residual.py` gained `FlannModel` (moved from the FLANN notebook), `AIR_VARIANTS`, `GROUND_VARIANT` and a `target` argument on `benchmark`; `thermal1d.TABLE_COLUMNS` gained `air_temp_k` and `air_missing` (filtering unchanged); `paths.AIR_OUT_DIR`. Gates re-run after the loader change: `13 passed in 77.86s`.
+
+Checks: recomputed out-of-fold `ground_pred` matches Step 5's `pred_flann_safe_no_ti` exactly (max difference 0.00 K). 31 rows dropped for `air_missing`; 13,695 rows remain (12,156 main, 957 placeholder tau, 582 suspect terrain). Basis sizes 24 (`air_hybrid`) and 21 (`air_time_only`), as planned. Benchmark fallback: 474 rows in all (213 in fold 0).
+
+| Model | Macro | Macro w/o 3763-3778 | Macro w/o block 0 | Pooled (main) | Placeholder tau | Suspect terrain | Blocks better than bench |
+|---|---|---|---|---|---|---|---|
+| benchmark | 4.04 | 4.15 | 4.05 | 4.20 | 5.01 | 3.13 | - |
+| `air_time_only` (11) | 4.35 | 4.43 | 4.32 | 4.50 | 4.92 | 3.69 | 2/9 |
+| `air_hybrid` (10) | 4.05 | 4.14 | 3.83 | 4.58 | 5.75 | 3.31 | 4/9 |
+
+(K, RMSE.) Per block, `air_hybrid` vs benchmark: block 0 5.80 vs 3.92; 1 4.05 vs 4.01; 2 4.45 vs 4.73; 3 3.41 vs 4.19; 5 3.85 vs 4.22; 6 4.58 vs 5.95; 7 3.17 vs 2.84; 9 3.85 vs 3.36; 10 3.31 vs 3.13.
+
+**Decision (rule fixed Oct 28): `air_hybrid` is not adopted** (gain -0.015 K, need +0.2 K; 4/9 blocks, need 5). Under the rule's fallback it is still the **published** air model, as the better of the two configurations (4.05 vs 4.35 K); the shortfall goes in the manifest and README. It is better than the benchmark without block 0 (3.83 vs 4.05 K), but pooled RMSE is 0.38 K worse because block 0 holds a quarter of the rows.
+
+Block 0: `ground_pred` is +6.9 K too warm at night there (-1.9 K by day); `air_hybrid` night bias +5.7 K. The ground term is what fails: `air_time_only` night bias is +2.9 K.
+
+Waiting for the user before Step 6b (the air map).
+
 ## Session 3b (Oct 28, 2026): map README, air-temperature design (user decisions)
 
 - `outputs/map/README.md` written: folder layout, seasons and frames, grid and coordinates, the four formats with decoding examples, caveats, regenerating. (`outputs/` is git-ignored.)

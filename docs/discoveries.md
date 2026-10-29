@@ -85,3 +85,13 @@ Each entry gives the evidence. Data and split findings from before Oct 27 are in
 - **Air is about 8 K warmer than the ground at night and about 26 K colder at 11-12 h** (REMS means by hour, main rows).
 - **Predicted-ground errors carry into air.** A crude least-squares model on out-of-fold predicted ground scored 4.21 K macro, worse than the benchmark; block 0 alone was 5.96 K against 3.92 K. Not a configuration; it informed the hybrid design in `plan.md`.
 - **Elevation cannot be learned from the rover:** 83% of the 200 m crater pixels lie above the rover's highest training position (-3,781 m).
+
+## Air temperature, LOBO (Oct 29)
+
+- **Predicted ground helps air in 6 of 8 blocks other than block 0, and ruins block 0.** Without block 0 the hybrid's macro is 3.83 K against the benchmark's 4.05 K. Block 0 goes from 3.92 K (benchmark) to 5.80 K.
+- **Block 0's ground error is a night error, and air inherits it only when block 0 is out of training.** Its `ground_pred` is +6.9 K at night (high TI; every other block is within +-2.8 K). Air-to-ground sensitivity (air change per +1 K of `ground_pred`, all hours shifted): the fold-0 model, trained without block 0, uses ground at 0.5-0.6 K/K at night; every model that includes block 0 (all-blocks, fold 6) uses 0.03-0.13 K/K at night and about 0.5 K/K at 12-16 h. The ridge learns to distrust night ground because of block 0.
+- **Consequence for the map:** the all-blocks model's night air hardly follows ground (0.02-0.08 K/K at 00-05 h), so night air on the map is close to the same everywhere at a given time. By day, air moves about 0.5 K per K of ground.
+- **Time and tau alone (`air_time_only`) lose to the benchmark** (4.35 vs 4.04 K, 2 of 9 blocks): the 3-harmonic daily basis is too smooth, with +3 K biases at 17-18 h and 05-06 h. The benchmark's 15-minute lookup has no such limit.
+- **The benchmark macro is 4.04 K** (feasibility check: 4.06 K; the 31 `air_missing` rows explain the difference).
+- **Rover range of `ground_pred` on fitting rows:** 184.9-282.5 K (1st-99th percentile); the ground map spans 152-313 K.
+

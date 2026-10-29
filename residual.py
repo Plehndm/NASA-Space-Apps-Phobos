@@ -53,13 +53,13 @@ def make_learner():
         early_stopping=False, random_state=HGB_SEED)
 
 
-def benchmark(train, test):
-    """Mean REMS ground temperature per (bin, ls_bin) from train; per-bin mean where a cell is empty.
+def benchmark(train, test, target="ground_temp_k"):
+    """Mean REMS target (ground by default) per (bin, ls_bin) from train; per-bin mean where a cell is empty.
 
     Same rule as Step 4 (baseline_fit_lobo.ipynb). Returns (prediction, number of fallback rows).
     """
-    cell = train.groupby(["bin", "ls_bin"]).ground_temp_k.mean()
-    by_bin = train.groupby("bin").ground_temp_k.mean()
+    cell = train.groupby(["bin", "ls_bin"])[target].mean()
+    by_bin = train.groupby("bin")[target].mean()
     pred = cell.reindex(pd.MultiIndex.from_arrays([test.bin, test.ls_bin])).to_numpy().copy()
     empty = np.isnan(pred)
     pred[empty] = by_bin.reindex(test.bin[empty]).to_numpy()
@@ -146,3 +146,34 @@ def apply_clamp(df, ranges):
         frac[c] = float(np.mean((v < lo) | (v > hi)))
         out[c] = np.clip(v, lo, hi)
     return out, frac
+
+
+class FlannModel:
+    """A fitted FLANN ridge: clamp ranges (or None), static terms and the ridge pipeline.
+
+    Same as the class in residual_flann_lobo.ipynb, moved here for Step 5b (Oct 29).
+    """
+
+    def __init__(self, static, clamp, frame, target):
+        self.static = static
+        self.ranges = clamp_ranges(frame) if clamp else None
+        self.pipe = make_flann_learner().fit(self.basis(frame)[0], target)
+
+    def basis(self, frame):
+        frac = {}
+        if self.ranges is not None:
+            frame, frac = apply_clamp(frame, self.ranges)
+        return make_flann_basis(frame, self.static), frac
+
+    def predict(self, frame):
+        B, frac = self.basis(frame)
+        return self.pipe.predict(B), frac
+
+
+# --- Step 5b: air temperature (design fixed with the user, Oct 28, before scoring) ---
+# The FLANN basis with baseline_k set to the predicted ground temperature; no clamp, no elevation.
+GROUND_VARIANT = "flann_safe_no_ti"   # the ground model on the map; its prediction is the air model's input
+AIR_VARIANTS = {
+    "air_hybrid": ["baseline_k"],      # configuration 10, the candidate
+    "air_time_only": [],               # configuration 11, attribution
+}
