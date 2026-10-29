@@ -78,3 +78,10 @@ Each entry gives the evidence. Data and split findings from before Oct 27 are in
 - **Spin-up takes 13-14 sols everywhere in the crater sample**, the same as at the rover, so chunk time does not depend on terrain.
 - **The feature table is missing 148 pixels as rows**, not as NaN values. Read it by `row`/`col`, never by position.
 - **The map runs hotter than the colour scale:** up to 312 K at Ls 195 in the afternoon on the crater sample (2.2% of pixel-frames above 300 K).
+
+## Air temperature, before modelling (Oct 28, feasibility check)
+
+- **Air is harder to beat than ground.** The per-(LTST, Ls) mean benchmark scores 4.06 K macro LOBO for air, against 5.38 K for ground, because air varies less.
+- **Air is about 8 K warmer than the ground at night and about 26 K colder at 11-12 h** (REMS means by hour, main rows).
+- **Predicted-ground errors carry into air.** A crude least-squares model on out-of-fold predicted ground scored 4.21 K macro, worse than the benchmark; block 0 alone was 5.96 K against 3.92 K. Not a configuration; it informed the hybrid design in `plan.md`.
+- **Elevation cannot be learned from the rover:** 83% of the 200 m crater pixels lie above the rover's highest training position (-3,781 m).
