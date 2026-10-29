@@ -94,4 +94,7 @@ Each entry gives the evidence. Data and split findings from before Oct 27 are in
 - **Time and tau alone (`air_time_only`) lose to the benchmark** (4.35 vs 4.04 K, 2 of 9 blocks): the 3-harmonic daily basis is too smooth, with +3 K biases at 17-18 h and 05-06 h. The benchmark's 15-minute lookup has no such limit.
 - **The benchmark macro is 4.04 K** (feasibility check: 4.06 K; the 31 `air_missing` rows explain the difference).
 - **Rover range of `ground_pred` on fitting rows:** 184.9-282.5 K (1st-99th percentile); the ground map spans 152-313 K.
+- **Real night air does follow ground, weakly (Oct 29 diagnostic, not a configuration).** The same basis with *observed* REMS ground gives 0.13-0.23 K/K at 00-05 h and 0.37-0.47 K/K at 12-15 h, with or without block 0; night anomalies across blocks give 0.19 K/K. So the map model's 0.03-0.08 K/K at night comes from block 0's ground error, not physics, and the fold-0 model's 0.5-0.6 K/K is too high. Even 0.2 K/K mostly reflects time (sol-to-sol weather) more than place. Night spatial structure in a crater (cold-air pooling, katabatic flow, elevation) is not represented at all.
+- **On the map, night air is flat:** spatial sd about 0.1 K at 02:00 vs 3.8-6.1 K for ground; at 14:00, 2.3-2.9 K vs 4.2-5.3 K.
+- **Ls 75 nights are the main extrapolation:** 24% of pixel-frames have ground below the rover's range; air bottoms at 190.5 K.
 

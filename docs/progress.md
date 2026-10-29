@@ -20,7 +20,26 @@ Checks: recomputed out-of-fold `ground_pred` matches Step 5's `pred_flann_safe_n
 
 Block 0: `ground_pred` is +6.9 K too warm at night there (-1.9 K by day); `air_hybrid` night bias +5.7 K. The ground term is what fails: `air_time_only` night bias is +2.9 K.
 
-Waiting for the user before Step 6b (the air map).
+### Step 6b, the air map (Oct 29)
+
+User decision: publish `air_hybrid` with its caveats (option 1 of 3 after the night-air physics question; see `discoveries.md`).
+
+Code: `map_export.py` gained `AIR_VARIANT`, `air_training_rows` and `add_air`; the encoders take a file name and colour range (defaults unchanged for ground). `notebooks/air_map_run.ipynb` (dry and full), executed into `executed/air_map_run_dry.ipynb` and `executed/air_map_run_full.ipynb`; output in `outputs/map/air/`, README section in `outputs/map/README.md`.
+
+Checks, all passed (dry and full): refit has 12,156 rows and 24 columns (as in LOBO); map path vs direct model prediction at the rover pixel 1.5e-5 K (limit 0.001 K); A, B, D decode within 0.005 K with the same nodata pattern; C within 0.176 K (half a colour step of 0.35 K); rover lands on (152, 186).
+
+Colour range for C: **190-280 K** (crater sample 191.0-276.4 K rounded outward to 10 K; full grid 190.5-277.2 K, nothing clipped).
+
+| Ls | Air min / max (K) | Ground outside rover's 184.9-282.5 K | Air sd at 02:00 / 14:00 (K) | Ground sd at 02:00 / 14:00 (K) |
+|---|---|---|---|---|
+| 15 | 198.7 / 261.1 | 5.1% (4.1% below) | 0.11 / 2.27 | 4.25 / 4.19 |
+| 75 | 190.5 / 249.9 | 24.3% (all below) | 0.16 / 2.65 | 6.07 / 4.91 |
+| 195 | 204.1 / 277.2 | 17.9% (17.5% above) | 0.10 / 2.87 | 3.91 / 5.31 |
+| 255 | 205.8 / 274.5 | 14.6% (above) | 0.10 / 2.85 | 3.76 / 5.27 |
+| 340 | 203.5 / 267.0 | 5.8% (above) | 0.10 / 2.42 | 3.77 / 4.47 |
+
+Rover pixel vs REMS mean air by hour (sols within 15 deg Ls; information only): mean difference -0.66 to +0.50 K, largest 3.2-7.0 K, mostly at 17 h (the model's known +3 K bias there). Run time about 45 s per Ls. Sizes: A 153 MB, B 141 MB, C 84 MB, D 243 MB.
+
 
 ## Session 3b (Oct 28, 2026): map README, air-temperature design (user decisions)
 

@@ -1,4 +1,4 @@
-"""Step 6: the full-grid surface-temperature map. Spec: docs/plan.md.
+"""Step 6: the full-grid surface-temperature map; Step 6b: the air-temperature map. Spec: docs/plan.md.
 
 T = T_base + f. The physics baseline (thermal1d) runs once per Ls in its own process, chunk
 by chunk with checkpoints (run_ls); the residual flann_safe_no_ti is added after, and the
@@ -49,6 +49,9 @@ THREAD_ENV = ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS")
 
 # --- residual -------------------------------------------------------------
 RESIDUAL_VARIANT = "flann_safe_no_ti"
+
+# --- air (Step 6b) ---------------------------------------------------------
+AIR_VARIANT = "air_hybrid"    # residual.AIR_VARIANTS; fails the adoption rule, published under the Oct 28 fallback
 
 # --- encodings (T = offset + scale * code) --------------------------------
 COG_OFFSET_K, COG_SCALE_K, COG_NODATA = 200.0, 0.01, -32768    # A: int16
@@ -345,6 +348,41 @@ def add_residual(base, inp, ls, tau, model):
     return T, clamped
 
 
+# --- air (Step 6b) ----------------------------------------------------------
+
+def air_training_rows(tbl, air_rows):
+    """Fitting rows for the map's air model, with each row's out-of-fold ground_pred as baseline_k.
+
+    tbl: the loaded training table; air_rows: outputs/air/air_rows.csv from air_lobo.ipynb (rows
+    without air already dropped). Returns (frame, target) on the main rows, as in that notebook.
+    """
+    tbl = tbl[~tbl.air_missing].reset_index(drop=True)
+    assert len(tbl) == len(air_rows), f"{len(tbl)} table rows with air vs {len(air_rows)} in air_rows"
+    assert (tbl.sol.to_numpy() == air_rows.sol.to_numpy()).all() and (tbl.bin.to_numpy() == air_rows.bin.to_numpy()).all(),         "row order differs from air_rows"
+    fit_ok = (air_rows.group == "main").to_numpy()
+    assert np.array_equal(fit_ok, ~tbl.tau_is_placeholder.to_numpy() & ~tbl.sol.between(*SUSPECT_SOLS).to_numpy()),         "air_rows groups disagree with the table"
+    frame = tbl.assign(baseline_k=air_rows.ground_pred_k.to_numpy(), ltst_hr=(tbl.bin + 0.5) * t.BIN_HOURS, q_abs_wm2=0.0)
+    return frame[fit_ok], tbl.air_temp_k.to_numpy()[fit_ok]
+
+
+def add_air(ground, ls, tau, model):
+    """Air temperature (N_FRAMES, n_pix) float32 from the ground map (N_FRAMES, n_pix) at the frame instants.
+
+    The air basis uses only LTST, Ls, tau and ground (as baseline_k); the static columns that
+    make_features needs are set to 0, since no air term reads them. No clamp.
+    """
+    n = ground.shape[1]
+    frame = pd.DataFrame({"ls_deg": np.full(n, float(ls)), "tau": np.full(n, float(tau)),
+                          **dict.fromkeys(["ti_themis_tiu", "slope_deg", "aspect_deg", "albedo_mean",
+                                           "elev_dem_m", "q_abs_wm2"], 0.0)})
+    assert not set(model.static) - {"baseline_k"}, f"air model reads static terms {model.static}"
+    A = np.empty_like(ground)
+    for j, hour in enumerate(FRAME_HOURS):
+        A[j] = model.predict(frame.assign(ltst_hr=hour, baseline_k=ground[j].astype(np.float64)))[0].astype(np.float32)
+    assert np.all(np.isfinite(A)), "non-finite air temperature"
+    return A
+
+
 # --- encodings ------------------------------------------------------------
 
 def quantize(T, offset, scale, nodata, dtype):
@@ -370,15 +408,15 @@ def color_lut():
     return lut
 
 
-def color_step_k():
-    return (COLOR_RANGE_K[1] - COLOR_RANGE_K[0]) / (COLOR_LEVELS - 1)
+def color_step_k(color_range=COLOR_RANGE_K):
+    return (color_range[1] - color_range[0]) / (COLOR_LEVELS - 1)
 
 
-def color_rgba(T, lut):
+def color_rgba(T, lut, color_range=COLOR_RANGE_K):
     """(..., 4) uint8 RGBA of T on the fixed scale; transparent where T is NaN."""
-    lo, hi = COLOR_RANGE_K
+    lo, hi = color_range
     ok = np.isfinite(T)
-    idx = np.round((np.clip(np.where(ok, T, lo), lo, hi) - lo) / color_step_k()).astype(np.intp)
+    idx = np.round((np.clip(np.where(ok, T, lo), lo, hi) - lo) / color_step_k(color_range)).astype(np.intp)
     rgba = np.zeros(T.shape + (4,), dtype=np.uint8)
     rgba[..., :3] = lut[idx]
     rgba[..., 3] = np.where(ok, 255, 0)
@@ -386,8 +424,11 @@ def color_rgba(T, lut):
     return rgba
 
 
-def export_ls(T, tag, out_dir, transform):
-    """Write A, B, C and D for one Ls. T: (N_FRAMES, n_rows, n_cols) float32. Returns {format: [paths]}."""
+def export_ls(T, tag, out_dir, transform, name="tsurf", color_range=COLOR_RANGE_K):
+    """Write A, B, C and D for one Ls. T: (N_FRAMES, n_rows, n_cols) float32. Returns {format: [paths]}.
+
+    name goes into the COG and raw file names (gale_{name}_{tag}); "tsurf" for ground, "tair" for air.
+    """
     import rasterio
     from PIL import Image
     from rasterio.crs import CRS
@@ -401,7 +442,7 @@ def export_ls(T, tag, out_dir, transform):
     with rasterio.Env() as env:
         assert "COG" in env.drivers(), "GDAL COG driver not available"
     (out_dir / "cog").mkdir(parents=True, exist_ok=True)
-    path = out_dir / "cog" / f"gale_tsurf_{tag}.tif"
+    path = out_dir / "cog" / f"gale_{name}_{tag}.tif"
     codes = quantize(T, COG_OFFSET_K, COG_SCALE_K, COG_NODATA, np.int16)
     profile = dict(driver="COG", width=T.shape[2], height=T.shape[1], count=N_FRAMES, dtype="int16",
                    crs=CRS.from_user_input(CRS_AUTHORITY), transform=Affine(*transform), nodata=COG_NODATA,
@@ -423,7 +464,7 @@ def export_ls(T, tag, out_dir, transform):
         Image.fromarray(codes[j]).save(path, optimize=True)
         files["B"].append(path)
     (out_dir / "raw").mkdir(parents=True, exist_ok=True)
-    path = out_dir / "raw" / f"gale_tsurf_{tag}.u16"
+    path = out_dir / "raw" / f"gale_{name}_{tag}.u16"
     np.ascontiguousarray(codes, dtype="<u2").tofile(path)
     files["D"].append(path)
 
@@ -432,12 +473,12 @@ def export_ls(T, tag, out_dir, transform):
     (out_dir / "png_color" / tag).mkdir(parents=True, exist_ok=True)
     for j, lab in enumerate(labels):
         path = out_dir / "png_color" / tag / f"ltst_{lab}.png"
-        Image.fromarray(color_rgba(T[j], lut)).save(path, optimize=True)
+        Image.fromarray(color_rgba(T[j], lut, color_range)).save(path, optimize=True)
         files["C"].append(path)
     return files
 
 
-def write_legend(out_dir):
+def write_legend(out_dir, color_range=COLOR_RANGE_K, label="Surface temperature (K)"):
     """png_color/legend.png: the fixed colour scale of format C."""
     import matplotlib
     matplotlib.use("Agg")
@@ -446,17 +487,17 @@ def write_legend(out_dir):
     (Path(out_dir) / "png_color").mkdir(parents=True, exist_ok=True)
     path = Path(out_dir) / "png_color" / "legend.png"
     fig, ax = plt.subplots(figsize=(4.0, 0.9))
-    norm = matplotlib.colors.Normalize(*COLOR_RANGE_K)
+    norm = matplotlib.colors.Normalize(*color_range)
     cmap = matplotlib.colormaps[COLOR_MAP].resampled(COLOR_LEVELS)
     cb = fig.colorbar(matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap), cax=ax, orientation="horizontal", extend="both")
-    cb.set_label("Surface temperature (K)")
+    cb.set_label(label)
     fig.tight_layout()
     fig.savefig(path, dpi=150)
     plt.close(fig)
     return path
 
 
-def check_exports(T, files, transform, rover_lonlat, rover_rowcol):
+def check_exports(T, files, transform, rover_lonlat, rover_rowcol, color_range=COLOR_RANGE_K):
     """Decode A, B, C and D and compare with the master T; check the rover pixel's position.
 
     Lossless formats must match within LOSSLESS_TOL_K with the same nodata pattern; C within one
@@ -492,7 +533,7 @@ def check_exports(T, files, transform, rover_lonlat, rover_rowcol):
     lut = color_lut()
     key = (lut[:, 0].astype(np.int64) << 16) | (lut[:, 1].astype(np.int64) << 8) | lut[:, 2]
     order = np.argsort(key)
-    lo, hi = COLOR_RANGE_K
+    lo, hi = color_range
     err = 0.0
     for j, p in enumerate(files["C"]):
         rgba = np.asarray(Image.open(p))
@@ -501,9 +542,9 @@ def check_exports(T, files, transform, rover_lonlat, rover_rowcol):
         k = (rgba[..., 0].astype(np.int64) << 16) | (rgba[..., 1].astype(np.int64) << 8) | rgba[..., 2]
         pos = np.searchsorted(key[order], k[~nan[j]])
         assert np.all(key[order][np.minimum(pos, COLOR_LEVELS - 1)] == k[~nan[j]]), "colour not in the colour map"
-        dec = lo + order[pos] * color_step_k()
+        dec = lo + order[pos] * color_step_k(color_range)
         err = max(err, float(np.max(np.abs(dec - np.clip(T[j][~nan[j]], lo, hi)))))
-    assert err <= color_step_k(), f"coloured PNG off by {err:.3f} K, more than one colour step"
+    assert err <= color_step_k(color_range), f"coloured PNG off by {err:.3f} K, more than one colour step"
     out["C_max_err_k"] = err
 
     assert lonlat_to_rowcol(transform, *rover_lonlat) == tuple(rover_rowcol), "rover pixel through the manifest transform"
