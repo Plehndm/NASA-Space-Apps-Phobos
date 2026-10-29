@@ -2,23 +2,11 @@
 
 The long-range plan is `1D Thermal Baseline Build Steps.md`. This file holds only the next step's concrete design. Replace it when the step is done, and move what happened to `progress.md`.
 
-## Where things stand (Oct 29, end of session 4)
+## Where things stand (Oct 29, end of session 4b)
 
-- **Ground map (Step 6) and air map (Step 6b) are complete,** in `outputs/map/` and `outputs/map/air/`; how to use them: `outputs/map/README.md`. Results: `progress.md`, Session 4. The air design text was replaced here; it is in git history (commit `1023104`) and in `outputs/map/air/map_manifest.json`.
-- **Air fails its adoption rule** (LOBO macro 4.05 vs benchmark 4.04 K, 4 of 9 blocks) and is published under the fallback, with the shortfall and the flat night air stated (user decision Oct 29).
-- **Next: the sealed test (Step 7), only on the user's explicit go.**
-
-## Next: the sealed test (Step 7), draft; confirm with the user before running
-
-Blocks 4 and 8 (sols 1343-1360, 3069-3110). One look, ground and air together. Nothing gets tuned afterwards.
-
-1. **Models, frozen as on the maps:** the all-blocks baseline parameters plus the `flann_safe_no_ti` residual, refit on all fitting rows (ground); the all-blocks `air_hybrid` fed with that ground prediction (air). The test rows' ground input is the all-blocks ground prediction, which is the map's situation.
-2. **Benchmarks:** the per-(LTST bin, 30-deg Ls bin) means of REMS ground and air from all training rows, with the same fallback.
-3. **Loader:** `allow_test=True` only in that notebook, and only its test rows are scored. Placeholder-tau test rows are scored separately.
-4. **Report:** per-block RMSE and bias for model and benchmark, ground and air; bias by LTST hour. Write the numbers to `progress.md` whatever they show.
-5. **Framing:** a time test within 1 km of training positions, not a spatial test.
-
-To settle with the user first: whether a test result can change anything (proposed: no; it is reported only), and the notebook name (proposed `notebooks/sealed_test.ipynb`).
+- **All in-scope steps are done:** ground map (Step 6), air map (Step 6b, ground colour scale 150-320 K), sealed test (Step 7, one look). Scores: `progress.md`, Sessions 4 and 4b. The Step 7 draft design was carried out as written; it is in git history.
+- **Sealed test:** ground model 5.25 K vs benchmark 5.06 K; air 4.10 vs 4.19 K. Reported only; the test blocks are now spent and must not be used to choose or tune anything.
+- **Nothing further is scheduled.** Options for the user: the Step 6 leftovers and later items below, or proposals that need scope changes.
 
 ## Step 6 leftovers (optional, user's call)
 
@@ -29,7 +17,7 @@ To settle with the user first: whether a test result can change anything (propos
 ## Later items
 
 1. **Literature check** of REMS-derived TI along the traverse (Hamilton et al. 2014, Vasavada et al. 2017; cited from memory, not checked) against the implied 330-400 tiu.
-2. **Sealed test** (blocks 4 and 8): Step 7 above, only when the user says so.
+2. **Sealed test** (blocks 4 and 8): done Oct 29 (Step 7). The blocks are spent.
 3. **Proposals only (out of scope):**
    - a two-layer soil, for block 0's remaining shape error;
    - a TI mapping that shrinks THEMIS variation instead of scaling it, since every block implies 330-400 tiu;

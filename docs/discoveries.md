@@ -98,3 +98,9 @@ Each entry gives the evidence. Data and split findings from before Oct 27 are in
 - **On the map, night air is flat:** spatial sd about 0.1 K at 02:00 vs 3.8-6.1 K for ground; at 14:00, 2.3-2.9 K vs 4.2-5.3 K.
 - **Ls 75 nights are the main extrapolation:** 24% of pixel-frames have ground below the rover's range; air bottoms at 190.5 K.
 
+## Sealed test (Oct 29, one look)
+
+- **The ground model's LOBO lead over the benchmark did not hold on the sealed blocks** (5.25 vs 5.06 K macro; LOBO 4.86 vs 5.38 K). Block 8 (sols 3069-3110) drives it: afternoon (13-15 h) bias -2.7 to -3.3 K, RMSE up to 7.7 K. Block 4 is won (4.33 vs 4.79 K).
+- **Air holds roughly level with the benchmark** (4.10 vs 4.19 K), as in LOBO (4.05 vs 4.04 K). Block 8 air is 3.2 K too cold, mostly at night (02-03 h, 20-21 h: -2.6 to -3.8 K), where the model barely uses ground; so the cause is in the time/season/tau terms, not the ground input.
+- **Two blocks and 25 sols are too few to rank models.** The sealed result says the models are about as good as a seasonal lookup at the rover, in time; it says nothing about space.
+

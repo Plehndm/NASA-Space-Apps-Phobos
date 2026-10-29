@@ -2,6 +2,21 @@
 
 The newest session goes at the top. What we learned goes in `discoveries.md`, what not to retry goes in `closed_ideas.md`, and the next step goes in `plan.md`.
 
+## Session 4b (Oct 29, 2026): air colour scale, sealed test (Step 7)
+
+**Air map colour scale changed to the ground scale, 150-320 K** (user decision). Rerun of `notebooks/air_map_run.ipynb`: all checks pass; nothing clipped; C within 0.333 K (half a 0.67 K step); C now 55 MB for 5 seasons. README updated.
+
+**Sealed test, one look (user go-ahead Oct 29; defaults accepted: report only, `notebooks/sealed_test.ipynb`).** Blocks 4 (sols 1343-1360, 12 sols) and 8 (sols 3069-3110, 13 sols); 1,133 rows with ground (no placeholder tau), 1,132 with air. Models frozen as on the maps. Checks: baseline paths agree within 2e-8 K; ground clamp ranges match Step 5; no test row clipped; no benchmark fallback rows.
+
+| | Block 4 RMSE (bias) | Block 8 RMSE (bias) | Sealed macro | LOBO macro |
+|---|---|---|---|---|
+| Ground model (map) | 4.33 (+2.09) | 6.18 (-0.84) | **5.25** | 4.86 |
+| Ground benchmark | 4.79 (+1.28) | 5.32 (+0.07) | **5.06** | 5.38 |
+| Air model (map) | 3.30 (+0.67) | 4.90 (-3.18) | **4.10** | 4.05 |
+| Air benchmark | 3.92 (+1.56) | 4.46 (-1.16) | **4.19** | 4.04 |
+
+(K.) **Ground: the map model loses to the benchmark on the sealed test** (5.25 vs 5.06 K), reversing its LOBO lead (4.86 vs 5.38 K). It wins block 4 and loses block 8 (13-15 h RMSE 6.4-7.7 K, bias -2.7 to -3.3 K). **Air: the model edges the benchmark** (4.10 vs 4.19 K), winning block 4 and losing block 8, where it is 3.2 K too cold. Two blocks and 25 sols: neither difference is beyond noise. Nothing is refit or tuned on these numbers.
+
 ## Session 4 (Oct 29, 2026): Step 5b, air temperature LOBO (configurations 10 and 11)
 
 Code: `notebooks/air_lobo.ipynb` (executed into `executed/air_lobo.ipynb`, outputs in `outputs/air/`); `residual.py` gained `FlannModel` (moved from the FLANN notebook), `AIR_VARIANTS`, `GROUND_VARIANT` and a `target` argument on `benchmark`; `thermal1d.TABLE_COLUMNS` gained `air_temp_k` and `air_missing` (filtering unchanged); `paths.AIR_OUT_DIR`. Gates re-run after the loader change: `13 passed in 77.86s`.
