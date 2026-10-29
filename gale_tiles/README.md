@@ -1,6 +1,6 @@
 # **Gale Crater map tiles: how the notebook works and how to read its output** 
 
-> **In this project (Oct 29):** this folder holds `gale_tiles.ipynb`, its output `out_tiles/` and the unzipped DTMs `dtm_src/`. `DTMs.zip` was set aside in `../_Trash_Review/`; to rerun cell 8, move it back into this folder or download it again (see below). The previews on disk are at zoom 11 (`imagery_preview_z11.png`, `topo_preview_z11.png`).
+> **In this project:** this folder holds `gale_tiles.ipynb`, its output `out_tiles/` and the unzipped DTMs `dtm_src/`. `DTMs.zip` was set aside in `../_Trash_Review/`; to rerun cell 8, move it back into this folder or download it again (see below). The previews on disk are at zoom 11 (`imagery_preview_z11.png`, `topo_preview_z11.png`).
 
 # **Reading the output** 
 

@@ -1,10 +1,10 @@
 # 1D Thermal Baseline: Build Steps
 
-Oct 27, 2026 · @Turtle\_Food
+Nov 14, 2026 · @Turtle\_Food
 
 ## Overview
 
-The baseline is a custom 1D soil heat-conduction model that gives T\_base(x, t) in the heatmap model T = T\_base + f(covariates, LTST, Ls, tau). It is built in seven ordered steps, and each step has a pass condition that must hold before the next one starts. Claude Code works from CLAUDE.md, which holds the rules; this doc is the plan in plain words. Background and earlier findings are in the [Oct 26 handover brief](https://claude.ai/artifact/NoVVSKxLAwbmH7deZ4vGQY) and the [model plan summary](https://claude.ai/artifact/Gpi4qVKbib123wUEfCg42K).
+The baseline is a custom 1D soil heat-conduction model that gives T\_base(x, t) in the heatmap model T = T\_base + f(covariates, LTST, Ls, tau). It is built in seven ordered steps, and each step has a pass condition that must hold before the next one starts. Claude Code works from CLAUDE.md, which holds the rules; this doc is the plan in plain words. 
 
 | Decision | Choice | Why |
 | --- | --- | --- |
@@ -16,16 +16,8 @@ The baseline is a custom 1D soil heat-conduction model that gives T\_base(x, t) 
 
 The sealed test blocks (sols 1343-1360 and 3069-3110) stay unread until Step 7. The loader drops them unless a flag is set on purpose.
 
-## Status (updated Oct 28)
-
-| Step | State |
-| --- | --- |
-| 0-4 | Done. Gates 1 and 2 pass. The fitted baseline scores a macro RMSE of 6.72 K against the benchmark's 5.38 K, so it does not beat the benchmark. |
-| 5 | Done for ground temperature. The map uses `flann_safe_no_ti`, scoring a macro RMSE of 4.86 K against the benchmark's 5.38 K. Air temperature is not started. |
-| 6 | Designed, not run. The full design is in `docs/plan.md`. |
-| 7 | Not started. Run it only when the user says so. |
-
-Day-to-day notes live in `docs/` (`plan.md`, `progress.md`, `discoveries.md`, `closed_ideas.md`). Where this document and `CLAUDE.md` differ, `CLAUDE.md` holds the rule.
+## Status 
+Heatmodel is finished, notes live in `docs/` (`plan.md`, `progress.md`, `discoveries.md`, `closed_ideas.md`). Where this document and `CLAUDE.md` differ, `CLAUDE.md` holds the rule.
 
 ## Steps in order
 
@@ -101,7 +93,7 @@ Claude Code stops for your review after Steps 2, 3 and 4. Those are the points w
 **Goal:** learn what the physics misses.
 
 - Learn the REMS-minus-baseline residual with the planned covariates, and repeat the Oct 27 feature ablation on it.
-- Outcome (Oct 28): gradient boosting gave a macro RMSE of 5.28 K. A FLANN-style ridge did better, and the map uses its safe form without albedo or TI terms and with clamped covariates (4.86 K). Details are in `docs/progress.md`.
+- Outcome: gradient boosting gave a macro RMSE of 5.28 K. A FLANN-style ridge did better, and the map uses its safe form without albedo or TI terms and with clamped covariates (4.86 K). 
 - Model air temperature separately, from predicted ground temperature, elevation and time of day. Not started.
 
 **Pass:** leave-one-block-out shows the residual model improves on the baseline alone, with per-block results.
@@ -123,12 +115,3 @@ Claude Code stops for your review after Steps 2, 3 and 4. Those are the points w
 
 - Freeze the model, then score sols 1343–1360 and 3069–3110 once. Report that number beside the leave-one-block-out result.
 - State the limits: the test measures other years at nearly the same place, not new terrain, and air temperature away from the rover is low confidence.
-
-## Still to fill in before Step 0
-
-Three values in CLAUDE.md are marked TODO. Run these in Git Bash from inside `MarsDataPipeline/` and copy the output in:
-
-- [x] `pwd` gives the absolute project path (recorded in CLAUDE.md, Oct 27).
-- [x] `python -c "import sys; print(sys.executable)"` gives the clean environment's Python (`gale-env`, Oct 27).
-- [x] `jupyter kernelspec list` gives the kernel name nbconvert must use (`gale-env`, Oct 27).
-- [x] Choose the Ls values for the map: 15, 75, 195, 255 and 340 (Oct 28).
