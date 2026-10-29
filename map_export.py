@@ -54,7 +54,7 @@ RESIDUAL_VARIANT = "flann_safe_no_ti"
 COG_OFFSET_K, COG_SCALE_K, COG_NODATA = 200.0, 0.01, -32768    # A: int16
 U16_OFFSET_K, U16_SCALE_K, U16_NODATA = 100.0, 0.01, 0         # B and D: uint16
 COLOR_MAP = "inferno"         # C
-COLOR_RANGE_K = (150.0, 300.0)
+COLOR_RANGE_K = (150.0, 320.0)   # user decision Oct 28: 150-300 K clipped 2.2% at Ls 195 in the dry run (max 312 K)
 COLOR_LEVELS = 256
 LOSSLESS_TOL_K = 0.005        # decoded A, B, D vs the float32 master
 
