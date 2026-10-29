@@ -20,7 +20,7 @@ Earlier entries and the notebooks in `executed/` use the old paths. Old to new:
 
 Code: `paths.py` (new constants `SCORES_DIR`, `MAPS_DIR`, `AIR_MAP_OUT_DIR`), `map_export.WORK_SUBDIR`, `map_run.ipynb`, `air_map_run.ipynb`. New `outputs/README.md` (index with headline numbers).
 
-Verification: tests `13 passed in 71.22s`; every `paths.py` folder exists. Both maps regenerated from the new paths (`map_run` reused the saved baselines, 7 min; `air_map_run` 7 min); all decode checks pass. **All 35 rewritten files are bit-identical to before** (SHA-256: ground and air master arrays, physics baselines, raw files, GeoTIFFs). The ground manifest records commit `94e95f4` with `git_dirty: true`, because documentation edits were uncommitted during that run (no code); the air manifest records `c3ec8b7`, clean.
+Verification: tests `13 passed in 71.22s`; every `paths.py` folder exists. Both maps regenerated from the new paths (`map_run` reused the saved baselines, 7 min; `air_map_run` 7 min); all decode checks pass. **All 35 rewritten files are bit-identical to before** (SHA-256: ground and air master arrays, physics baselines, raw files, GeoTIFFs). Both maps were then regenerated once more from a clean tree (user request, to clear a `git_dirty` flag caused by uncommitted documentation edits): both manifests now record commit `5784569`, `git_dirty: false`, and the air manifest's ground reference matches; the 35 files are still bit-identical.
 
 ## Session 4c (Oct 29, 2026): folder reorganized for the team (user-approved actions 1-11)
 
