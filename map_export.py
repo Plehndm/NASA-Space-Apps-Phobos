@@ -204,8 +204,9 @@ def peak_memory_mb():
 def run_ls(ls, tau, params, static_path, out_dir, window, chunk_cols=CHUNK_COLS):
     """Worker: the baseline at one Ls over a window, saved chunk by chunk, then merged.
 
-    Chunks already on disk are skipped, so a restart costs at most one chunk; a config file
-    makes sure they come from the same run. Writes out_dir/master/{tag}_base.npy,
+    A merged baseline already on disk is reused as is. Otherwise chunks already on disk are
+    skipped, so a restart costs at most one chunk; a config file makes sure both come from
+    the same run. Writes out_dir/master/{tag}_base.npy,
     (N_FRAMES, n_rows, n_cols) float32 with NaN nodata, and appends one line per chunk to
     out_dir/map_progress_{tag}.log. Returns a summary dict.
     """
@@ -231,6 +232,12 @@ def run_ls(ls, tau, params, static_path, out_dir, window, chunk_cols=CHUNK_COLS)
         with open(log, "a") as fh:
             fh.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} {line}\n")
 
+    final = master / f"{tag}_base.npy"
+    if final.exists():
+        assert np.load(final, mmap_mode="r").shape == (N_FRAMES,) + valid.shape, f"{final} has the wrong shape"
+        note(f"{final.name} on disk, reused")
+        return {"ls_deg": float(ls), "n_pix": n_pix, "n_chunks": n_chunks, "cols_run": 0, "elapsed_s": 0.0,
+                "ms_per_col": np.nan, "max_spinup_sols": 0, "peak_memory_mb": peak_memory_mb()}
     note(f"start {tag} tau {tau:.4f} pixels {n_pix} chunks {n_chunks} pid {os.getpid()}")
     t_start = time.time()
     run_cols, max_sols = 0, 0
@@ -255,7 +262,7 @@ def run_ls(ls, tau, params, static_path, out_dir, window, chunk_cols=CHUNK_COLS)
     assert np.all(np.isfinite(frames)), "non-finite baseline in the merged chunks"
     base = np.full((N_FRAMES,) + valid.shape, np.nan, dtype=np.float32)
     base[:, valid] = frames.T
-    np.save(master / f"{tag}_base.npy", base)
+    np.save(final, base)
     elapsed = time.time() - t_start
     note(f"done {tag}: {run_cols} columns run this session in {elapsed:.0f} s")
     return {"ls_deg": float(ls), "n_pix": n_pix, "n_chunks": n_chunks, "cols_run": run_cols,

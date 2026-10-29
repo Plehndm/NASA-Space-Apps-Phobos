@@ -7,14 +7,14 @@ The long-range plan is `1D Thermal Baseline Build Steps.md`. This file holds onl
 **The full map is done (Oct 28, 2.16 h), and every automated check passes** (`progress.md`, Session 3). All four formats are in `outputs/map/`, with `map_manifest.json`.
 
 Remaining, in order:
-1. **The user opens one COG in QGIS** (for example `outputs/map/cog/gale_tsurf_ls195.tif`) and confirms it lands on Gale. The last check of the build steps; manual.
+1. ~~QGIS check~~ **Passed** (user, Oct 28): `gale_tsurf_ls195.tif` lands on Gale. Step 6 is complete.
 2. **Optional, user's call:** the `flann_safe` (with TI terms) sensitivity map. The baselines in `outputs/map/master/ls{LLL}_base.npy` are reusable, so it costs only the residual and export pass (minutes).
 3. **Optional:** delete the 2,650 chunk files in `outputs/map/master/` (about 500 MB). They are only needed to resume an interrupted run.
 4. Optional: find the source of the faint vertical band in the 14:00 frames (suspected coarse albedo grid).
 
 To rerun: set `MODE = "full"` in `notebooks/map_run.ipynb` and run
 `gale-env/Scripts/jupyter.exe nbconvert --to notebook --execute notebooks/map_run.ipynb --output map_run_full --output-dir executed --ExecutePreprocessor.timeout=-1 --ExecutePreprocessor.kernel_name=gale-env`.
-Finished chunks and merged baselines on disk are reused; delete `outputs/map/master/` to recompute.
+A merged baseline (`master/ls{LLL}_base.npy`) on disk is reused as is (fixed Oct 28; before, only chunk files were), otherwise finished chunks are; delete `outputs/map/master/` to recompute.
 
 **Changes from the design below, made in the dry run:**
 - Chunks are 1,000 columns, not 10,000 (13.4 vs 38 ms/col with 5 workers).

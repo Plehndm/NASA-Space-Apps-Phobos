@@ -55,6 +55,11 @@ Sizes: COG 206 MB, 16-bit PNG 178 MB, coloured PNG 134 MB, raw 243 MB (761 MB in
 
 The 14:00 preview shows a faint vertical band near the middle columns. Column means show no sharp jump in the map (largest 0.66 K between neighbouring columns, typical 0.12 K) or in TI, slope or albedo. It may come from the coarse native albedo grid; not checked.
 
+### After the run (Oct 28)
+
+- **QGIS check passed** (user): `gale_tsurf_ls195.tif` lands on Gale. Step 6 is complete.
+- **Fix:** `run_ls` now reuses a merged `master/ls{LLL}_base.npy` instead of relying on the chunk files, so the chunk files can be deleted without forcing a 2 h rerun. Checked: rerunning Ls 15 returned at once and logged the reuse.
+
 ## Session 2g (Oct 28, 2026): Step 6 decisions (user)
 
 - **Residual for the map: `flann_safe_no_ti`** (TI terms dropped; see Session 2f).
