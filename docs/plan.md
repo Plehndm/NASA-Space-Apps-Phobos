@@ -1,6 +1,6 @@
 # Plan: What We Try Next
 
-The long-range plan is `1D Thermal Baseline Build Steps.md`. This file holds only the next step's concrete design. Replace it when the step is done, and move what happened to `progress.md`.
+The long-range plan is `docs/1D Thermal Baseline Build Steps.md`. This file holds only the next step's concrete design. Replace it when the step is done, and move what happened to `progress.md`.
 
 ## Where things stand (Oct 29, end of session 4b)
 

@@ -1,28 +1,28 @@
-# Gale Crater dust devil pipeline (`dust_devil_pipeline.ipynb`) and Mastcam tau table (`build_mastcam_tau_table.ipynb`)
+# Gale Crater dust devil pipeline (`dust_devil_pipeline.ipynb`) and Mastcam tau table (`../data_prep/build_mastcam_tau_table.ipynb`)
 
 Two notebooks for the dust devil layer of the NASA Space Apps 2026 entry "Interplanetary Survival Guide: Martian Map".
 
 - `dust_devil_pipeline.ipynb` runs the whole layer in one kernel: dust opacity table, per-pixel feature table, one-sol likelihood, GeoTIFF and overlay previews.
-- `build_mastcam_tau_table.ipynb` is stage 0 of the pipeline as a standalone notebook. Use it only to build or inspect the tau table on its own; the pipeline already contains the same code.
+- `../data_prep/build_mastcam_tau_table.ipynb` is stage 0 of the pipeline as a standalone notebook. Use it only to build or inspect the tau table on its own; the pipeline already contains the same code.
 
 **What the layer is.** A per-pixel, one-sol *heuristic* likelihood (0 to 1) on the 100 m THEMIS grid (1436 x 1477 pixels, 136.75 to 139.24 E, 6.57 to 4.15 S). It is a relative score, not a calibrated probability and not a set of detected dust devils. All weights are assumptions, not fitted.
 
 ## Quick start
 
-1. Put the inputs below in `processed_data/`.
+1. The inputs below are in the project's `processed_data/` (the notebooks read `../processed_data/`), except the two Mastcam tau tables, which are in `../raw_data/`. The zoom-11 previews are in `../gale_tiles/out_tiles/`.
 2. Open `dust_devil_pipeline.ipynb`, edit the config cell (at least `DEMO_SOL`, `IMAGERY_PREVIEW`, `HILLSHADE_PREVIEW`).
 3. Run all cells top to bottom in one kernel.
 
-## Inputs (all in `processed_data/`)
+## Inputs (in `../processed_data/` unless noted)
 
 | File | Used by | Notes |
 |---|---|---|
-| `msl-tau-880-arch-3953.txt`, `msl-tau-440-arch-3953.txt` | stage 0 | Mastcam aerosol optical depth tables (Lemmon), latest version through sol 3953. Place the two .txt files directly in the folder; no zip or subfolder. |
+| `msl-tau-880-arch-3953.txt`, `msl-tau-440-arch-3953.txt` | stage 0 | In `../raw_data/`. Mastcam aerosol optical depth tables (Lemmon), latest version through sol 3953. Place the two .txt files directly in the folder; no zip or subfolder. |
 | `rems_binned_all_sols.csv` | stages 0, 1, 2 | REMS 15-minute bins (bin = LTST x 4, up to 96 per day). |
 | `gale_ti_night_themis100m_native.tif` | stages 1, 3 | The output grid (THEMIS 100 m thermal inertia). |
 | `gale_dem_20m.tif`, `gale_slope_20m.tif`, `gale_aspect_20m.tif` | stage 1 | 20 m rasters; large, so stage 1 runs locally. |
 | `gale_albedo_my24_native.tif`, `..._my25_...`, `..._my26_...` | stage 1 | TES albedo (about 3 km), bilinearly smoothed. |
-| two zoom-11 previews (.png or .jpg) | stage 4 | CTX imagery and hillshade, covering exactly the template area unless `PREVIEW_BOUNDS` is set. |
+| two zoom-11 previews (.png or .jpg), in `../gale_tiles/out_tiles/` | stage 4 | CTX imagery and hillshade, covering exactly the template area unless `PREVIEW_BOUNDS` is set. |
 
 ## Stages
 

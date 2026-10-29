@@ -10,7 +10,7 @@ This repo builds the physics baseline `T_base(x, t)` for the Gale Crater tempera
 `T_base` is a custom 1D soil heat-conduction model, run per pixel. The residual model `f` comes later.
 The only in-situ truth is Curiosity's REMS ground temperature at the rover's position.
 
-Background, decisions and past mistakes: `docs/Handover Brief Gale Crater Temperature Heatmap (Oct 26).md` and `Gale Crater Diurnal Temperature Model Plan Summary.pdf` (project root).
+Background, decisions and past mistakes: `docs/Handover Brief Gale Crater Temperature Heatmap (Oct 26).md` and `docs/Gale Crater Diurnal Temperature Model Plan Summary.pdf`.
 Read the relevant section there before changing a rule in this file.
 
 ## Current status
@@ -78,22 +78,29 @@ gale-env/Scripts/jupyter.exe nbconvert --to notebook --execute notebooks/<name>.
 
 ```
 MarsDataPipeline/
+  README.md              # team guide: what each folder holds, where the maps are
   CLAUDE.md
   paths.py               # REPO_ROOT, DATA_DIR = REPO_ROOT / "processed_data", OUT_DIR = REPO_ROOT / "outputs" / "baseline", RESIDUAL_OUT_DIR = .../outputs/residual
   thermal1d.py           # grid, solver, surface energy balance, solar geometry, data loader
-  tests/test_thermal1d.py
   residual.py            # Step 5: residual-model predictors, learner, benchmark
   map_export.py          # Step 6: static grid, per-Ls worker, residual, map encoders
+  tests/                 # test_thermal1d.py, test_forcing.py (Gates 1 and 2)
   notebooks/             # baseline_diagnostic, baseline_fit_lobo, residual_lobo, residual_flann_lobo, ti_sensitivity_lobo, block0_diagnostic, map_run, air_lobo, air_map_run, sealed_test
   executed/              # nbconvert output (git-ignored)
   outputs/baseline/      # CSVs and PNGs (git-ignored)
   outputs/residual/      # Step 5 outputs (git-ignored)
-  outputs/map/           # Step 6 map export (git-ignored); formats in docs/plan.md
+  outputs/map/           # Step 6 map export (git-ignored); outputs/map/README.md explains it
+  outputs/map/air/       # Step 6b air map (git-ignored)
   outputs/air/           # Step 5b air LOBO outputs (git-ignored)
   outputs/sealed_test/   # Step 7 outputs (git-ignored)
   processed_data/        # inputs, read-only (git-ignored)
+  raw_data/              # downloads the data_prep notebooks read (git-ignored)
+  data_prep/             # notebooks that built processed_data/ (REMS table, tau, THEMIS, albedo, feature table); paths are relative to data_prep/
+  dust_devil/            # the parked dust devil layer: pipeline notebooks and README
+  gale_tiles/            # map-tile notebook, README, out_tiles/ and dtm_src/ (both git-ignored)
+  docs/                  # plan, progress, discoveries, closed ideas, handover brief, build steps, plan summary PDF
+  _Trash_Review/         # files set aside for deletion on Oct 29, pending the user's review (git-ignored)
   gale-env/              # virtual environment (git-ignored, never edit)
-  docs/                  # the two briefs
 ```
 
 - Every path comes from `paths.py`. No hard-coded absolute paths, and no paths relative to the working directory. nbconvert runs notebooks with the notebook's own folder as the working directory.
@@ -105,7 +112,7 @@ MarsDataPipeline/
 
 Main input: `processed_data/gale_rems_training.csv`. It has 15,523 rows, 50 columns, 319 sols and 11 blocks, one row per REMS 15-minute bin. It is frozen: never hand-edit or hand-join it.
 
-Before writing the loader, read the CSV header and `build_rems_training_table.ipynb`, and record the exact names of:
+Before writing the loader, read the CSV header and `data_prep/build_rems_training_table.ipynb`, and record the exact names of:
 - the sol column
 - the ground-temperature column
 - the LTST or bin column
@@ -113,7 +120,7 @@ Before writing the loader, read the CSV header and `build_rems_training_table.ip
 
 Do not guess these names.
 
-Recorded Oct 27 (from the header, `build_rems_training_table.ipynb` and `rems_batch.ipynb`):
+Recorded Oct 27 (from the header, `data_prep/build_rems_training_table.ipynb` and `data_prep/rems_batch.ipynb`):
 - sol: `sol`; ground temperature: `ground_temp_k`; time: `bin`, with `ltst_bin_start_hr = bin / 4`.
 - Each REMS value is the mean of 1 Hz readings over [start, start + 15 min), so the model is compared at the bin **centre**, `ltst_bin_start_hr + 0.125`.
 - `ltst_bin_center_hr` is rounded to 0.01 h (up to 0.005 h off). The table's `flux_*` and `sun_elev_deg` columns were computed at that rounded value and the rover `latitude_deg`; Gate 2 uses the same LTST so the check isolates the formulas.

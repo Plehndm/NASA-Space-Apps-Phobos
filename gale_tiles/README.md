@@ -1,11 +1,13 @@
 # **Gale Crater map tiles: how the notebook works and how to read its output** 
 
+> **In this project (Oct 29):** this folder holds `gale_tiles.ipynb`, its output `out_tiles/` and the unzipped DTMs `dtm_src/`. `DTMs.zip` was set aside in `../_Trash_Review/`; to rerun cell 8, move it back into this folder or download it again (see below). The previews on disk are at zoom 11 (`imagery_preview_z11.png`, `topo_preview_z11.png`).
+
 # **Reading the output** 
 
 ## **The folder** 
 
 ```
-out/
+out_tiles/
   imagery/
     manifest.json
     7/66/225.png        <- zoom 7, row 66, column 225
@@ -26,7 +28,7 @@ dtm_src/                <- the unzipped DTMs, next to the notebook
 ## **What the three numbers in a path mean** 
 
 ```
-out/<layer>/<zoom>/<row>/<col>.png
+out_tiles/<layer>/<zoom>/<row>/<col>.png
 ```
 
 **layer:** Imagery or Topographic layer. 
@@ -94,7 +96,7 @@ def tile_bounds(z, row, col):
 
 - Inside a **topo** tile, pixels with no elevation data are **transparent** . Topo tiles are grey plus transparency (PNG mode `LA` ), so lay them over the imagery with some opacity. There are no colours in them. 
 
-- Brightness in a topo tile is light on the slope with the sun in the northwest (azimuth 315) at 45 degrees up, heights exaggerated 2x. It is not elevation. Use `out/dem/gale_dem_20m.tif` for numbers. 
+- Brightness in a topo tile is light on the slope with the sun in the northwest (azimuth 315) at 45 degrees up, heights exaggerated 2x. It is not elevation. Use `out_tiles/dem/gale_dem_20m.tif` for numbers. 
 
 ## **The manifests** 
 
@@ -111,18 +113,18 @@ Each layer has `manifest.json` , which tells you what the folder holds:
 
 ## **The other files** 
 
-- `out/imagery_preview_z11.png` and `out/topo_preview_z11.png` are single stitched pictures of the whole box at zoom 11 (missing 
+- `out_tiles/imagery_preview_z11.png` and `out_tiles/topo_preview_z11.png` are single stitched pictures of the whole box at zoom 11 (missing 
 
 - tiles are blank). Look at these first. 
 
-- `out/dem/gale_dem_20m.tif` is a float32 GeoTIFF in metres (no data = NaN) in the Mars longitude/latitude system, 7,680 x 7,168 
+- `out_tiles/dem/gale_dem_20m.tif` is a float32 GeoTIFF in metres (no data = NaN) in the Mars longitude/latitude system, 7,680 x 7,168 
 
 - pixels on the zoom 11 grid. Open it in QGIS or rasterio. It is for the data pipeline (slope, route cost), not for the web map. `gale_tiles.ipynb` builds two sets of map tiles for Gale Crater (NASA Space Apps 2026, "Interplanetary Survival Guide: Martian Map") 
 
 |**Layer**|**Folder**|**What it is**|**Where it comes from**|**Zooms**|
 |---|---|---|---|---|
-|Surface<br>imagery|`out/imagery/`|MRO CTX grayscale photo<br>mosaic (base layer)|Downloaded from NASA Mars Trek,<br>product<br>`Gale_CTX_BlockAdj_dd`|7 to 12|
-|Topography|`out/topo/`|Grey hillshade with a<br>transparent background, no<br>colours (the UI team adds<br>colour)|Built locally from the NHM Gale Crater<br>CTX stereo DTMs (<br>`DTMs.zip` , 20 m per<br>pixel)|7 to 11|
+|Surface<br>imagery|`out_tiles/imagery/`|MRO CTX grayscale photo<br>mosaic (base layer)|Downloaded from NASA Mars Trek,<br>product<br>`Gale_CTX_BlockAdj_dd`|7 to 12|
+|Topography|`out_tiles/topo/`|Grey hillshade with a<br>transparent background, no<br>colours (the UI team adds<br>colour)|Built locally from the NHM Gale Crater<br>CTX stereo DTMs (<br>`DTMs.zip` , 20 m per<br>pixel)|7 to 11|
 
 
 
@@ -147,19 +149,19 @@ Run the cells from top to bottom. Cells are numbered from 0.
 |**Cell**|**Type**|**What it does**|
 |---|---|---|
 |0|Markdown|Title, the two layers and the steps. Nothing runs.|
-|1<br>2|Markdown<br>Code|Explains the Trek grid (see "Reading the output" below).<br>**Configuration, the only cell you normally edit.**Sets<br>`BASE`(Trek server),<br>`OUT`(output folder,<br>`out` ),<br>`BBOX` ,<br>`ZMIN`= 7,<br>`IMAGERY_ZMAX`= 12,<br>`TOPO_ZMAX`= 11,<br>`LAYERS`(the CTX product and its zoom range),<br>`TOPO`(zip name,<br>`dtm_src`folder, zoom range, valid elevation range -6000 to 2000 m, sun azimuth 315,<br>sun altitude 45, vertical exaggeration<br>`z_factor`2.0, whether to save the DEM), the Mars radius<br>3,396,190 m and the Mars map projection, and<br>`PREVIEW_Z`= 9.|
+|1<br>2|Markdown<br>Code|Explains the Trek grid (see "Reading the output" below).<br>**Configuration, the only cell you normally edit.**Sets<br>`BASE`(Trek server),<br>`OUT`(output folder,<br>`out_tiles` ),<br>`BBOX` ,<br>`ZMIN`= 7,<br>`IMAGERY_ZMAX`= 12,<br>`TOPO_ZMAX`= 11,<br>`LAYERS`(the CTX product and its zoom range),<br>`TOPO`(zip name,<br>`dtm_src`folder, zoom range, valid elevation range -6000 to 2000 m, sun azimuth 315,<br>sun altitude 45, vertical exaggeration<br>`z_factor`2.0, whether to save the DEM), the Mars radius<br>3,396,190 m and the Mars map projection, and<br>`PREVIEW_Z`= 9.|
 |3|Code|**Helper functions, plus a self-check.**<br>`fetch`downloads a URL with 3 retries and treats a 404 as "no<br>data".<br>`capabilities`reads a product's WMTS capabilities XML (file type, style, tile matrix set, bounding<br>box, zoom list).<br>`tile_range`turns a lon/lat box into the tile columns and rows covering it.<br>`tile_bounds`and<br>`tile_for`convert between tiles and coordinates. The self-check confirms the centre<br>of Gale falls inside the computed range at every zoom from 7 to 12 and prints<br>`tile math ok` .|
 |4|Code|Asks Trek what the CTX product really offers and lowers<br>`zmax`if you asked for a zoom that does not<br>exist. Needs the internet.|
 |5|Code|**Dry run.**Prints tiles per zoom for each layer, metres per pixel, and the memory the DTM mosaic needs.<br>Downloads nothing.|
 |||**Downloads the CTX tiles.**<br>`download_layer`lists every<br>`(zoom, row, col)`in the box, fetches them 6 at a|
-|6|Code|time into<br>`out/imagery/<z>/<row>/<col>.png` , skips tiles already on disk (so re-running resumes), counts<br>results as<br>`ok` ,<br>`cached` ,<br>`no_coverage`(404) or<br>`error_<code>` , and writes<br>`out/imagery/manifest.json` .|
+|6|Code|time into<br>`out_tiles/imagery/<z>/<row>/<col>.png` , skips tiles already on disk (so re-running resumes), counts<br>results as<br>`ok` ,<br>`cached` ,<br>`no_coverage`(404) or<br>`error_<code>` , and writes<br>`out_tiles/imagery/manifest.json` .|
 |7|Markdown|Explains Part 2: Trek only serves display images, so the topographic layer is built from real elevation<br>data.|
 |8|Code|**Unzips**<br>**`DTMs.zip` into**<br>**`dtm_src/`**(it refuses any path that would escape that folder) and opens each<br>DTM with rasterio, printing its size, projection, resolution and no-data value so you can check them.|
-|9|Code|**Builds one elevation mosaic.**Reprojects all DTMs onto the zoom 11 tile grid in the Mars<br>longitude/latitude system, so every 256 x 256 block is exactly one tile. Where DTMs overlap, the first<br>file wins. Values outside the valid range are removed. It reports coverage and warns about holes, and<br>saves<br>`out/dem/gale_dem_20m.tif` .|
+|9|Code|**Builds one elevation mosaic.**Reprojects all DTMs onto the zoom 11 tile grid in the Mars<br>longitude/latitude system, so every 256 x 256 block is exactly one tile. Where DTMs overlap, the first<br>file wins. Values outside the valid range are removed. It reports coverage and warns about holes, and<br>saves<br>`out_tiles/dem/gale_dem_20m.tif` .|
 |||**Hillshade.**<br>`shade_block`computes light on the slope from the sun direction, using true metres per|
 |10|Code|degree on Mars and the cosine of latitude per row.<br>`render_hillshade`runs it block by block and<br>produces the grey image plus an alpha (transparency) channel, transparent where there is no data.|
-|11|Code|**Cuts and builds the topo tiles.**Cuts the hillshade into zoom 11 tiles, then makes each lower zoom by<br>shrinking its four child tiles 2x2 into one (LANCZOS). Fully empty tiles are skipped. Writes<br>`out/topo/manifest.json` .|
-|12<br>13|Code<br>Markdown|**Preview.**Stitches both layers at<br>`PREVIEW_Z`= 11 into<br>`out/imagery_preview_z11.png`and<br>`out/topo_preview_z11.png`so you can check coverage, seams and alignment by eye.<br>Hand-off notes for the UI/UX team: layer list, a Leaflet example, things to check before shipping.|
+|11|Code|**Cuts and builds the topo tiles.**Cuts the hillshade into zoom 11 tiles, then makes each lower zoom by<br>shrinking its four child tiles 2x2 into one (LANCZOS). Fully empty tiles are skipped. Writes<br>`out_tiles/topo/manifest.json` .|
+|12<br>13|Code<br>Markdown|**Preview.**Stitches both layers at<br>`PREVIEW_Z`= 11 into<br>`out_tiles/imagery_preview_z11.png`and<br>`out_tiles/topo_preview_z11.png`so you can check coverage, seams and alignment by eye.<br>Hand-off notes for the UI/UX team: layer list, a Leaflet example, things to check before shipping.|
 
 
 # **For the UI/UX team** 

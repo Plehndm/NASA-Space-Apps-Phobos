@@ -11,7 +11,7 @@ Each entry gives the evidence. Data and split findings from before Oct 27 are in
 
 ## Forcing (Oct 27)
 
-- **Gate 2 is a consistency check, not independent validation.** The table's flux and sun-elevation columns come from `insolation()` in `build_rems_training_table.ipynb`, which uses the same orbit constants and formulas. Diffuse light and sky infrared have no table columns and meet data only in the diagnostic.
+- **Gate 2 is a consistency check, not independent validation.** The table's flux and sun-elevation columns come from `insolation()` in `data_prep/build_rems_training_table.ipynb`, which uses the same orbit constants and formulas. Diffuse light and sky infrared have no table columns and meet data only in the diagnostic.
 - **Compare at the bin centre, but check Gate 2 at the table's rounded `ltst_bin_center_hr`.** A 0.005 h shift moves direct flux by several percent near sunrise and sunset at high tau.
 
 ## Physics vs REMS (Oct 27-28)

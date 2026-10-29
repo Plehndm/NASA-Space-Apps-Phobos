@@ -2,6 +2,13 @@
 
 The newest session goes at the top. What we learned goes in `discoveries.md`, what not to retry goes in `closed_ideas.md`, and the next step goes in `plan.md`.
 
+## Session 4c (Oct 29, 2026): folder reorganized for the team (user-approved actions 1-11)
+
+- Moved by topic: `data_prep/` (7 notebooks that built `processed_data/`), `dust_devil/` (4 notebooks + README), `gale_tiles/` (notebook, README, `out_tiles/`, `dtm_src/`); the build-steps file and the plan-summary PDF into `docs/`. Core code, `notebooks/`, `tests/`, `outputs/`, `processed_data/`, `raw_data/` unchanged.
+- Paths inside the moved notebooks now resolve from their own folder (`../processed_data`, `../raw_data`, `../gale_tiles/out_tiles`); every input path checked to exist. Not re-run. Pre-existing stale paths fixed at the same time: `sharad_bin_to_rasters` and `themis_100m_thermal_inertia` pointed at `Heatmapdata/` and `processed_albedo_inertia/` (now `../raw_data`, `../processed_data`); `ode_gale_themis` wrote its CSVs beside itself (now where they live); `dust_devil_pipeline` read the Mastcam tau tables from `processed_data/` (they are in `raw_data/`).
+- Set aside in `_Trash_Review/` (git-ignored, nothing deleted): `DTMs.zip` (355 MB, already unzipped in `gale_tiles/dtm_src/`), both map dry-run folders (98 MB), Python caches.
+- New top-level `README.md`; references updated in `CLAUDE.md`, the docs and the moved READMEs; `.gitignore` updated. Tests after the move: `13 passed in 68.27s`.
+
 ## Session 4b (Oct 29, 2026): air colour scale, sealed test (Step 7)
 
 **Air map colour scale changed to the ground scale, 150-320 K** (user decision). Rerun of `notebooks/air_map_run.ipynb`: all checks pass; nothing clipped; C within 0.333 K (half a 0.67 K step); C now 55 MB for 5 seasons. README updated.
@@ -272,7 +279,7 @@ Partial-dependence range of the residual over the rover's covariate values (`no_
 
 ## Session 1 (Oct 27-28, 2026)
 
-Steps 0-4 of `1D Thermal Baseline Build Steps.md` are done and committed locally. Nothing from this session is pushed to GitHub; only `docs/` and `.vscode/` were pushed to `Plehndm/NASA-Space-Apps-Phobos` (`MarsDataPipline/`).
+Steps 0-4 of `docs/1D Thermal Baseline Build Steps.md` are done and committed locally. Nothing from this session is pushed to GitHub; only `docs/` and `.vscode/` were pushed to `Plehndm/NASA-Space-Apps-Phobos` (`MarsDataPipline/`).
 
 | Step | Result | Commit |
 |---|---|---|
@@ -332,5 +339,5 @@ Fitted parameters: `g_diff` 0.77-0.88, `f_ir` 0.027-0.034, `ti_scale` 0.70-0.87 
 
 ### Housekeeping
 
-- `1D Thermal Baseline Build Steps.md` said stretch "about 1.15"; fixed to 1.10 on Oct 28.
+- `docs/1D Thermal Baseline Build Steps.md` said stretch "about 1.15"; fixed to 1.10 on Oct 28.
 - The git author email in the user's config reads `aypeng2019#gmail.com` (`#` for `@`).
