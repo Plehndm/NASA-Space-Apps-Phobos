@@ -46,6 +46,7 @@ FRAME_HOURS = np.arange(N_FRAMES) * FRAME_MINUTES / 60.0
 CHUNK_COLS = 1000             # columns per solver call and per checkpoint file; dry run (Oct 28), 5 workers:
                               # 13.4 ms/col at 1000, 16.7 at 500, 18.3 at 2000, 38 at 10000 (cache-bound)
 THREAD_ENV = ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS")
+WORK_SUBDIR = "_working"      # per map folder: master/ arrays, static grid, run logs (Oct 29); deliverables sit beside it
 
 # --- residual -------------------------------------------------------------
 RESIDUAL_VARIANT = "flann_safe_no_ti"
@@ -209,14 +210,14 @@ def run_ls(ls, tau, params, static_path, out_dir, window, chunk_cols=CHUNK_COLS)
 
     A merged baseline already on disk is reused as is. Otherwise chunks already on disk are
     skipped, so a restart costs at most one chunk; a config file makes sure both come from
-    the same run. Writes out_dir/master/{tag}_base.npy,
+    the same run. Writes out_dir/_working/master/{tag}_base.npy,
     (N_FRAMES, n_rows, n_cols) float32 with NaN nodata, and appends one line per chunk to
-    out_dir/map_progress_{tag}.log. Returns a summary dict.
+    out_dir/_working/map_progress_{tag}.log. Returns a summary dict.
     """
     for v in THREAD_ENV:
         assert os.environ.get(v) == "1", f"{v} must be 1 in the worker (set by run_all_ls)"
     out_dir = Path(out_dir)
-    master = out_dir / "master"
+    master = out_dir / WORK_SUBDIR / "master"
     master.mkdir(parents=True, exist_ok=True)
     tag = ls_tag(ls)
     inp, valid = window_inputs(dict(np.load(static_path)), window)
@@ -229,7 +230,7 @@ def run_ls(ls, tau, params, static_path, out_dir, window, chunk_cols=CHUNK_COLS)
         assert json.loads(cfg_path.read_text()) == config, f"{cfg_path} is from a different run; delete {master} to start over"
     else:
         cfg_path.write_text(json.dumps(config, indent=1))
-    log = out_dir / f"map_progress_{tag}.log"
+    log = out_dir / WORK_SUBDIR / f"map_progress_{tag}.log"
 
     def note(line):
         with open(log, "a") as fh:
@@ -353,7 +354,7 @@ def add_residual(base, inp, ls, tau, model):
 def air_training_rows(tbl, air_rows):
     """Fitting rows for the map's air model, with each row's out-of-fold ground_pred as baseline_k.
 
-    tbl: the loaded training table; air_rows: outputs/air/air_rows.csv from air_lobo.ipynb (rows
+    tbl: the loaded training table; air_rows: air_rows.csv in paths.AIR_OUT_DIR, from air_lobo.ipynb (rows
     without air already dropped). Returns (frame, target) on the main rows, as in that notebook.
     """
     tbl = tbl[~tbl.air_missing].reset_index(drop=True)
