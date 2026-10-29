@@ -15,7 +15,7 @@ Read the relevant section there before changing a rule in this file.
 
 ## Current status
 
-Steps 0-4 are done (Oct 28): Gates 1 and 2 pass, and the fitted baseline does not beat the benchmark in leave-one-block-out scoring (macro RMSE 6.72 K vs 5.38 K). Step 5 (residual model) is done for ground temperature (Oct 28). The map uses `flann_safe_no_ti` (user decision Oct 28: FLANN ridge without albedo or TI terms, clamped covariates; LOBO macro 4.86 K against the benchmark's 5.38 K), from `notebooks/residual_flann_lobo.ipynb`. Step 6 (the map) is done (Oct 28): full grid exported in all four formats to `outputs/map/`, all automated checks pass (`map_export.py`, `notebooks/map_run.ipynb`). The user's QGIS check passed. Step 5b (air model) was scored on Oct 29 (`notebooks/air_lobo.ipynb`): `air_hybrid` fails the adoption rule (macro 4.05 K vs benchmark 4.04 K, 4 of 9 blocks) and is published under the fallback. Step 6b (air map) is done (Oct 29): `outputs/map/air/`, all checks pass (`notebooks/air_map_run.ipynb`); the user chose to publish with the caveats stated (night air is nearly uniform, from a ground-model error, not physics). The air map uses the ground colour scale (150-320 K; user decision Oct 29). Step 7 (sealed test) is done (Oct 29, user go-ahead, `notebooks/sealed_test.ipynb`): ground model 5.25 K vs benchmark 5.06 K, air 4.10 K vs 4.19 K, macro over blocks 4 and 8. The test blocks are spent: never use them to choose or tune anything. Nothing further is scheduled; see `docs/plan.md`.
+Steps 0-4 are done (Oct 28): Gates 1 and 2 pass, and the fitted baseline does not beat the benchmark in leave-one-block-out scoring (macro RMSE 6.72 K vs 5.38 K). Step 5 (residual model) is done for ground temperature (Oct 28). The map uses `flann_safe_no_ti` (user decision Oct 28: FLANN ridge without albedo or TI terms, clamped covariates; LOBO macro 4.86 K against the benchmark's 5.38 K), from `notebooks/residual_flann_lobo.ipynb`. Step 6 (the map) is done (Oct 28): full grid exported in all four formats to `outputs/maps/ground/`, all automated checks pass (`map_export.py`, `notebooks/map_run.ipynb`). The user's QGIS check passed. Step 5b (air model) was scored on Oct 29 (`notebooks/air_lobo.ipynb`): `air_hybrid` fails the adoption rule (macro 4.05 K vs benchmark 4.04 K, 4 of 9 blocks) and is published under the fallback. Step 6b (air map) is done (Oct 29): `outputs/maps/air/`, all checks pass (`notebooks/air_map_run.ipynb`); the user chose to publish with the caveats stated (night air is nearly uniform, from a ground-model error, not physics). The air map uses the ground colour scale (150-320 K; user decision Oct 29). Step 7 (sealed test) is done (Oct 29, user go-ahead, `notebooks/sealed_test.ipynb`): ground model 5.25 K vs benchmark 5.06 K, air 4.10 K vs 4.19 K, macro over blocks 4 and 8. The test blocks are spent: never use them to choose or tune anything. Nothing further is scheduled; see `docs/plan.md`.
 
 Project notes in `docs/`, read before starting work:
 - `plan.md`: the next step's concrete design.
@@ -80,19 +80,22 @@ gale-env/Scripts/jupyter.exe nbconvert --to notebook --execute notebooks/<name>.
 MarsDataPipeline/
   README.md              # team guide: what each folder holds, where the maps are
   CLAUDE.md
-  paths.py               # REPO_ROOT, DATA_DIR = REPO_ROOT / "processed_data", OUT_DIR = REPO_ROOT / "outputs" / "baseline", RESIDUAL_OUT_DIR = .../outputs/residual
+  paths.py               # every folder path: DATA_DIR = REPO_ROOT / "processed_data", OUT_DIR = .../outputs/model_scores/1_physics_baseline, MAP_OUT_DIR = .../outputs/maps/ground, ...
   thermal1d.py           # grid, solver, surface energy balance, solar geometry, data loader
   residual.py            # Step 5: residual-model predictors, learner, benchmark
   map_export.py          # Step 6: static grid, per-Ls worker, residual, map encoders
   tests/                 # test_thermal1d.py, test_forcing.py (Gates 1 and 2)
   notebooks/             # baseline_diagnostic, baseline_fit_lobo, residual_lobo, residual_flann_lobo, ti_sensitivity_lobo, block0_diagnostic, map_run, air_lobo, air_map_run, sealed_test
   executed/              # nbconvert output (git-ignored)
-  outputs/baseline/      # CSVs and PNGs (git-ignored)
-  outputs/residual/      # Step 5 outputs (git-ignored)
-  outputs/map/           # Step 6 map export (git-ignored); outputs/map/README.md explains it
-  outputs/map/air/       # Step 6b air map (git-ignored)
-  outputs/air/           # Step 5b air LOBO outputs (git-ignored)
-  outputs/sealed_test/   # Step 7 outputs (git-ignored)
+  outputs/               # git-ignored; outputs/README.md is the index (reorganized Oct 29)
+    maps/ground/         # Step 6 ground map; maps/README.md explains both maps; working arrays and logs in _working/
+    maps/air/            # Step 6b air map (same layout)
+    model_scores/1_physics_baseline/   # Steps 3-4 (paths.OUT_DIR)
+    model_scores/2_ground_correction/  # Step 5 (paths.RESIDUAL_OUT_DIR)
+    model_scores/3_ti_sensitivity/     # TI-scale sensitivity run
+    model_scores/4_block0_diagnostic/  # block 0 diagnostic
+    model_scores/5_air_model/          # Step 5b (paths.AIR_OUT_DIR)
+    model_scores/6_sealed_test/        # Step 7 (paths.SEALED_OUT_DIR)
   processed_data/        # inputs, read-only (git-ignored)
   raw_data/              # downloads the data_prep notebooks read (git-ignored)
   data_prep/             # notebooks that built processed_data/ (REMS table, tau, THEMIS, albedo, feature table); paths are relative to data_prep/
@@ -291,7 +294,7 @@ Reference yardstick, not a target: a simple tree model scored 4.3-6.7 K per bloc
 
 ### Outputs
 
-Write CSVs and PNGs to `outputs/baseline/`, and the fitted parameters per fold to `outputs/baseline/fit_params.csv`.
+Write CSVs and PNGs to `paths.OUT_DIR` (`outputs/model_scores/1_physics_baseline/`), and the fitted parameters per fold to `fit_params.csv` there.
 
 If the baseline does not beat the benchmark, say so plainly. The response is never to add parameters or tune toward the score.
 

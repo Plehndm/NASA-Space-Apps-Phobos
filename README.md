@@ -6,7 +6,8 @@ Modelled ground and near-surface air temperature for Gale Crater, Mars, for the 
 
 | Goal | Go to |
 |---|---|
-| Look at or use the maps | `outputs/map/README.md`: ground temperature in `outputs/map/`, air temperature in `outputs/map/air/` |
+| Look at or use the maps | `outputs/maps/README.md`: ground temperature in `outputs/maps/ground/`, air temperature in `outputs/maps/air/` |
+| Find a model score or figure | `outputs/README.md`: headline numbers and where each one lives |
 | Understand the model and its limits | `docs/progress.md` (newest first), `docs/discoveries.md` |
 | See what was tried and rejected | `docs/closed_ideas.md` |
 | See what comes next | `docs/plan.md` |
@@ -26,7 +27,7 @@ MarsDataPipeline/
   tests/             solver and forcing tests (Gates 1 and 2)
   notebooks/         the temperature-model notebooks, in the order they were built (see below)
   executed/          run copies of those notebooks, with their outputs
-  outputs/           results: maps, scores, figures (not in git)
+  outputs/           results (not in git): maps/ (the deliverables) and model_scores/ (how the models were tested); see outputs/README.md
   processed_data/    model inputs: REMS training table, terrain rasters, feature table (read-only, not in git)
   raw_data/          original downloads: REMS files, THEMIS, TES albedo, Mastcam tau (not in git)
   data_prep/         notebooks that turned raw_data/ into processed_data/
@@ -39,7 +40,7 @@ MarsDataPipeline/
 
 ## Results in one paragraph
 
-Ground temperature = a physics model run per pixel + a correction fitted to Curiosity's REMS readings. Air temperature = a statistical model of time, season, dust and the predicted ground. At the rover, ground scores about 4.9 K RMSE in leave-one-block-out tests and 5.3 K on the sealed test blocks; air scores about 4.1 K. Neither clearly beats a simple seasonal average of the REMS readings. Accuracy away from the rover is not measured, because all REMS data comes from an area of about 10 x 5 km. Night air on the map is nearly uniform across the crater, which is a limitation of the model, not physics. Details and caveats: `outputs/map/README.md`.
+Ground temperature = a physics model run per pixel + a correction fitted to Curiosity's REMS readings. Air temperature = a statistical model of time, season, dust and the predicted ground. At the rover, ground scores about 4.9 K RMSE in leave-one-block-out tests and 5.3 K on the sealed test blocks; air scores about 4.1 K. Neither clearly beats a simple seasonal average of the REMS readings. Accuracy away from the rover is not measured, because all REMS data comes from an area of about 10 x 5 km. Night air on the map is nearly uniform across the crater, which is a limitation of the model, not physics. Details and caveats: `outputs/maps/README.md`.
 
 ## Running things
 

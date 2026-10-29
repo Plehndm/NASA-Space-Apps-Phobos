@@ -2,6 +2,24 @@
 
 The newest session goes at the top. What we learned goes in `discoveries.md`, what not to retry goes in `closed_ideas.md`, and the next step goes in `plan.md`.
 
+## Session 4d (Oct 29, 2026): outputs/ reorganized (user-approved actions 1-9)
+
+Earlier entries and the notebooks in `executed/` use the old paths. Old to new:
+
+| Old | New |
+|---|---|
+| `outputs/map/` (ground) | `outputs/maps/ground/`; `master/`, `static_200m.npz` and run logs in `outputs/maps/ground/_working/` |
+| `outputs/map/air/` | `outputs/maps/air/`; `master/` in `_working/`; `air_map_summary.csv` renamed `map_summary.csv` |
+| `outputs/map/README.md` | `outputs/maps/README.md` (now covers both maps) |
+| `outputs/baseline/` | `outputs/model_scores/1_physics_baseline/` |
+| `outputs/residual/` | `outputs/model_scores/2_ground_correction/` |
+| `outputs/ti_sensitivity/` | `outputs/model_scores/3_ti_sensitivity/` |
+| `outputs/block0_diagnostic/` | `outputs/model_scores/4_block0_diagnostic/` |
+| `outputs/air/` | `outputs/model_scores/5_air_model/` |
+| `outputs/sealed_test/` | `outputs/model_scores/6_sealed_test/` |
+
+Code: `paths.py` (new constants `SCORES_DIR`, `MAPS_DIR`, `AIR_MAP_OUT_DIR`), `map_export.WORK_SUBDIR`, `map_run.ipynb`, `air_map_run.ipynb`. New `outputs/README.md` (index with headline numbers).
+
 ## Session 4c (Oct 29, 2026): folder reorganized for the team (user-approved actions 1-11)
 
 - Moved by topic: `data_prep/` (7 notebooks that built `processed_data/`), `dust_devil/` (4 notebooks + README), `gale_tiles/` (notebook, README, `out_tiles/`, `dtm_src/`); the build-steps file and the plan-summary PDF into `docs/`. Core code, `notebooks/`, `tests/`, `outputs/`, `processed_data/`, `raw_data/` unchanged.
