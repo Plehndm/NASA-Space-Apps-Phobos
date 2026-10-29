@@ -71,3 +71,10 @@ Each entry gives the evidence. Data and split findings from before Oct 27 are in
 - **So the residual's TI terms matter most at low-TI pixels, through the clamp.** Held at 361 tiu, `flann_safe` adds about +3.3 K at night relative to the no-TI version on most of the map. The high-TI pull toward about 360 tiu (block 0) touches only 0.1% of pixels beyond the range.
 - **At the rover, the TI terms earn 0.12 K macro.** That is below the 0.2 K bar every other addition had to clear (elevation was rejected at 0.07 K), while they shift about 92% of map pixels by more than 2 K at night. The selection rule was fixed before this was known, so `flann_safe` stays the chosen model until the user decides.
 - **The baseline's TI scale is multiplicative, but the evidence is not.** Every block implies about 330-400 tiu whatever THEMIS says (block 0 diagnostic). With `ti_scale` 0.74, a 281 tiu pixel runs at 208 tiu. Nothing in the rover data tests TI below about 330 tiu.
+
+## Running the map (Oct 28, Step 6 dry run)
+
+- **The solver is cache-bound at large chunks.** With 5 parallel workers, ms per column was 28.6 / 16.8 / 13.4 / 18.3 / 23.4 / 38 at 250 / 500 / 1,000 / 2,000 / 4,000 / 10,000 columns. Below 1,000, the Python loop over 960 steps x about 37 nodes dominates; above it, the (n_col, n_nodes) work arrays fall out of cache and the 5 workers share memory bandwidth (one worker alone: 11.6 ms/col). Peak memory per worker was 237 MB at 1,000 and up to 944 MB at 10,000, about 3x the plan's estimate.
+- **Spin-up takes 13-14 sols everywhere in the crater sample**, the same as at the rover, so chunk time does not depend on terrain.
+- **The feature table is missing 148 pixels as rows**, not as NaN values. Read it by `row`/`col`, never by position.
+- **The map runs hotter than the colour scale:** up to 312 K at Ls 195 in the afternoon on the crater sample (2.2% of pixel-frames above 300 K).

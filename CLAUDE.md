@@ -15,7 +15,7 @@ Read the relevant section there before changing a rule in this file.
 
 ## Current status
 
-Steps 0-4 are done (Oct 28): Gates 1 and 2 pass, and the fitted baseline does not beat the benchmark in leave-one-block-out scoring (macro RMSE 6.72 K vs 5.38 K). Step 5 (residual model) is done for ground temperature (Oct 28). The map uses `flann_safe_no_ti` (user decision Oct 28: FLANN ridge without albedo or TI terms, clamped covariates; LOBO macro 4.86 K against the benchmark's 5.38 K), from `notebooks/residual_flann_lobo.ipynb`. Next is Step 6, the map; its decisions (Ls values, tau, output-format options) are in `docs/plan.md`.
+Steps 0-4 are done (Oct 28): Gates 1 and 2 pass, and the fitted baseline does not beat the benchmark in leave-one-block-out scoring (macro RMSE 6.72 K vs 5.38 K). Step 5 (residual model) is done for ground temperature (Oct 28). The map uses `flann_safe_no_ti` (user decision Oct 28: FLANN ridge without albedo or TI terms, clamped covariates; LOBO macro 4.86 K against the benchmark's 5.38 K), from `notebooks/residual_flann_lobo.ipynb`. Step 6 (the map): code and dry run done (Oct 28, `map_export.py`, `notebooks/map_run.ipynb`); the full run is next. Its design and status are in `docs/plan.md`.
 
 Project notes in `docs/`, read before starting work:
 - `plan.md`: the next step's concrete design.
@@ -83,7 +83,8 @@ MarsDataPipeline/
   thermal1d.py           # grid, solver, surface energy balance, solar geometry, data loader
   tests/test_thermal1d.py
   residual.py            # Step 5: residual-model predictors, learner, benchmark
-  notebooks/             # baseline_diagnostic, baseline_fit_lobo, residual_lobo, residual_flann_lobo, ti_sensitivity_lobo, block0_diagnostic
+  map_export.py          # Step 6: static grid, per-Ls worker, residual, map encoders
+  notebooks/             # baseline_diagnostic, baseline_fit_lobo, residual_lobo, residual_flann_lobo, ti_sensitivity_lobo, block0_diagnostic, map_run
   executed/              # nbconvert output (git-ignored)
   outputs/baseline/      # CSVs and PNGs (git-ignored)
   outputs/residual/      # Step 5 outputs (git-ignored)

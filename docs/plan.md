@@ -2,6 +2,25 @@
 
 The long-range plan is `1D Thermal Baseline Build Steps.md`. This file holds only the next step's concrete design. Replace it when the step is done, and move what happened to `progress.md`.
 
+## Where Step 6 stands (Oct 28, session 3)
+
+**The code and the dry run are done, and all checks pass** (`progress.md`, Session 3). Next is the full run:
+
+1. Prepare the laptop: plug it in, turn off sleep and hibernation, close other programs. About 1.2 GB of free RAM is needed for 5 workers at 1,000-column chunks (237 MB each).
+2. Decide the colour scale for format C (the open question below).
+3. Set `MODE = "full"` in `notebooks/map_run.ipynb` and run it:
+   `gale-env/Scripts/jupyter.exe nbconvert --to notebook --execute notebooks/map_run.ipynb --output map_run_full --output-dir executed --ExecutePreprocessor.timeout=-1 --ExecutePreprocessor.kernel_name=gale-env`
+   Expect about 2-3 h. Watch `outputs/map/map_progress_ls{LLL}.log`. On a crash, run the same command again: finished chunks are skipped.
+4. The user opens one COG in QGIS (manual check).
+
+**Changes from the design below, made in the dry run:**
+- Chunks are 1,000 columns, not 10,000 (13.4 vs 38 ms/col with 5 workers).
+- Master files: `master/ls{LLL}_base.npy` is the baseline, `master/ls{LLL}.npy` the map (baseline + residual). Both are (48, rows, cols) float32 with NaN as nodata.
+- A 200 m pixel is nodata if any of its four 100 m pixels is absent from the table (76 pixels).
+- The rover check runs `run_chunk` with the rover's own 100 m inputs for one sol near each map Ls (max 0.0066 K).
+
+**Open question: the colour range for C.** 150-300 K clips 2.2% of pixel-frames at Ls 195 (crater sample, max 312 K). The lowest value is 159 K. Options: keep 150-300 K, or widen to 150-320 K (step 0.67 K instead of 0.59 K). Only C changes; A, B and D are exact either way.
+
 ## Where Step 5 stands (Oct 28)
 
 Ground temperature is done at the rover. The chosen residual model, `flann_safe`, is a FLANN ridge with no albedo terms and covariates clamped to the rover's 1st-99th percentiles. It scores a LOBO macro RMSE of 4.74 K against the benchmark's 5.38 K. 9 configurations were tried. Details are in `progress.md`.

@@ -2,6 +2,40 @@
 
 The newest session goes at the top. What we learned goes in `discoveries.md`, what not to retry goes in `closed_ideas.md`, and the next step goes in `plan.md`.
 
+## Session 3 (Oct 28, 2026): Step 6 code and dry run
+
+Code: `map_export.py` (static grid, `run_ls` worker with checkpoints, residual, encoders A-D and decode checks) and `notebooks/map_run.ipynb` (`MODE = "dry"` or `"full"`). `paths.MAP_OUT_DIR` added. Gates re-run: `13 passed in 76.23s`. Dry run executed into `executed/map_run_dry.ipynb`, outputs in `outputs/map/dryrun/`.
+
+Checks, all passed:
+
+| Check | Result |
+|---|---|
+| Tau per Ls vs the plan table | Exact (0.78, 0.49, 0.69, 1.09, 1.11) |
+| All-blocks parameters | 0.8193 / 0.0312 / 0.7396, none on a bound |
+| Residual refit: clamp ranges vs Step 5's `flann_safe_clamp_ranges.csv` | Match; 12,181 fitting rows, 33 basis columns |
+| Map code path vs the Step 4 model, rover, one sol near each map Ls | Max 0.0066 K (limit 0.05 K) |
+| Decoded A, B, D vs the float32 master | 0.005 K (quantization), same nodata pattern |
+| Decoded C vs the master | 0.294 K, half a colour step (step 0.59 K) |
+| Rover lat/lon lands on 200 m pixel (152, 186) in the COG and through the manifest transform | Yes |
+
+Grid: 148 of 2,120,972 100 m pixels are absent from the feature table (not NaN, missing rows), so 76 of 529,884 200 m pixels are nodata.
+
+Runs (5 workers in parallel):
+
+| Run | Pixels per Ls | Chunk | ms/col per worker | Peak MB per worker | Spin-up sols |
+|---|---|---|---|---|---|
+| Rover window, 100 x 110 | 11,000 | 10,000 | 38.4 | 744-944 | 13-14 |
+| Crater sample, every 20th pixel | 1,332 | 1,332 | 21.9 | 263 | 13-14 |
+| Benchmark (scratch) | 2 chunks each | 250 / 500 / 1,000 / 2,000 / 4,000 | 28.6 / 16.8 / 13.4 / 18.3 / 23.4 | 174-484 | - |
+
+**Chunk size changed to 1,000 columns** (plan said 10,000): full-grid estimate about 2.0 h wall time (529,808 pixels x 13.4 ms), before thermal throttling, against 5.8 h at 10,000. One worker alone ran 11.6 ms/col, so 5 workers are mostly bandwidth-bound at large chunks.
+
+Temperatures on the crater sample (map = baseline + residual): 159 K (Ls 75, night) to 312 K (Ls 195, afternoon). Residual range -17.5 to +17.0 K. Colour scale 150-300 K clips 2.2% of pixel-frames at Ls 195 and 0.5% at Ls 255 (above 300 K); none below. Clamped (pixel-frames, crater sample): slope 29.7%, baseline 9-31%; TI 81.7% and albedo 81.2% clamped but not terms of the model.
+
+Sizes, rover window (11,000 px, 48 frames, per Ls): A 0.77 MB, B 0.74 MB, C 0.60 MB, D 1.01 MB. Scaled to the full grid (48x the pixels): about 37 / 36 / 29 / 48 MB per Ls, about 750 MB in all; real terrain compresses less evenly, so this is a rough figure.
+
+The full run has not started.
+
 ## Session 2g (Oct 28, 2026): Step 6 decisions (user)
 
 - **Residual for the map: `flann_safe_no_ti`** (TI terms dropped; see Session 2f).

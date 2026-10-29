@@ -70,6 +70,7 @@ Decided Oct 28: no bound changes or new parameters before Step 5.
 |---|---|---|---|
 | Running Step 6 in a Claude Code cloud session | User decision | It would need the unpushed commits on GitHub, the 198 MB feature table (over GitHub's 100 MB limit) moved by LFS or as a compressed copy, a new Linux Python environment, and about 1 GB of outputs brought back. A local parallel run is about 3-4 h. | The laptop cannot stay on for the run, and the user asks. |
 | Running the 5 Ls serially | Reasoned | About 11 h, against about 3-4 h with one process per Ls. | - |
+| 10,000-column chunks (plan default) | Tested | 38 ms/col and up to 944 MB per worker with 5 in parallel, against 13.4 ms/col and 237 MB at 1,000 columns (dry run, Oct 28). | The solver is rewritten (for example compiled), which changes the cache behaviour. |
 | A larger time step to save run time | Spec | `dt` = P/960 is fixed in `CLAUDE.md`, and Gate 1 was checked against it. | Never. |
 
 ## Tooling
