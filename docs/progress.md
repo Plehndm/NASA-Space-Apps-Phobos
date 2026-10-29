@@ -2,6 +2,13 @@
 
 The newest session goes at the top. What we learned goes in `discoveries.md`, what not to retry goes in `closed_ideas.md`, and the next step goes in `plan.md`.
 
+## Session 3b (Oct 28, 2026): map README, air-temperature design (user decisions)
+
+- `outputs/map/README.md` written: folder layout, seasons and frames, grid and coordinates, the four formats with decoding examples, caveats, regenerating. (`outputs/` is git-ignored.)
+- **Air temperature design and decision rules fixed with the user, before any air model was scored** (`plan.md`): hybrid FLANN ridge on predicted ground; no elevation term; out-of-fold predicted ground as input; no clamp; 2 configurations (`air_hybrid`, `air_time_only`; numbers 10 and 11); adopt if 0.2 K better than the benchmark macro and better in 5 of 9 blocks, else publish the better of the two anyway with the shortfall stated; same four formats in `outputs/map/air/`; sealed test after air, both at once.
+- Feasibility check behind the design (not a configuration): air benchmark LOBO macro 4.06 K; a crude least-squares model on out-of-fold predicted ground 4.21 K (block 0: 5.96 vs 3.92 K). Air minus ground: +8 K at night, -26 K at 11-12 h.
+- Air temperature is now in scope (`CLAUDE.md`). Nothing has been built for it yet.
+
 ## Session 3 (Oct 28, 2026): Step 6 code and dry run
 
 Code: `map_export.py` (static grid, `run_ls` worker with checkpoints, residual, encoders A-D and decode checks) and `notebooks/map_run.ipynb` (`MODE = "dry"` or `"full"`). `paths.MAP_OUT_DIR` added. Gates re-run: `13 passed in 76.23s`. Dry run executed into `executed/map_run_dry.ipynb`, outputs in `outputs/map/dryrun/`.

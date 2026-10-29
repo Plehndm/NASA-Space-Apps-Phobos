@@ -15,7 +15,7 @@ Read the relevant section there before changing a rule in this file.
 
 ## Current status
 
-Steps 0-4 are done (Oct 28): Gates 1 and 2 pass, and the fitted baseline does not beat the benchmark in leave-one-block-out scoring (macro RMSE 6.72 K vs 5.38 K). Step 5 (residual model) is done for ground temperature (Oct 28). The map uses `flann_safe_no_ti` (user decision Oct 28: FLANN ridge without albedo or TI terms, clamped covariates; LOBO macro 4.86 K against the benchmark's 5.38 K), from `notebooks/residual_flann_lobo.ipynb`. Step 6 (the map) is done (Oct 28): full grid exported in all four formats to `outputs/map/`, all automated checks pass (`map_export.py`, `notebooks/map_run.ipynb`). The user's QGIS check passed. Optional items are in `docs/plan.md`.
+Steps 0-4 are done (Oct 28): Gates 1 and 2 pass, and the fitted baseline does not beat the benchmark in leave-one-block-out scoring (macro RMSE 6.72 K vs 5.38 K). Step 5 (residual model) is done for ground temperature (Oct 28). The map uses `flann_safe_no_ti` (user decision Oct 28: FLANN ridge without albedo or TI terms, clamped covariates; LOBO macro 4.86 K against the benchmark's 5.38 K), from `notebooks/residual_flann_lobo.ipynb`. Step 6 (the map) is done (Oct 28): full grid exported in all four formats to `outputs/map/`, all automated checks pass (`map_export.py`, `notebooks/map_run.ipynb`). The user's QGIS check passed. Next is air temperature (Steps 5b and 6b), then the sealed test for ground and air (Step 7); the design and decision rules were fixed with the user on Oct 28 and are in `docs/plan.md`.
 
 Project notes in `docs/`, read before starting work:
 - `plan.md`: the next step's concrete design.
@@ -33,10 +33,10 @@ Update them at the end of each session: append to `progress.md`, `discoveries.md
 3. The physics-only diagnostic against REMS.
 4. The global-parameter fit with leave-one-block-out (LOBO) scoring.
 5. The residual model for ground temperature (user request, Oct 28; done).
-6. The full-grid export (Step 6; user go-ahead Oct 28). Its design is in `docs/plan.md`.
+6. The full-grid export (Step 6; user go-ahead Oct 28; done).
+7. Air temperature: model (Step 5b) and map (Step 6b). User request Oct 28; design and decision rules in `docs/plan.md`. No elevation term, no lapse rate.
 
 **Out of scope until the user asks:**
-- air temperature
 - the dust devil layer (parked)
 - atmospheric coupling, layered soils, temperature-dependent conductivity, CO2 frost
 - the Mars Climate Database as a dependency

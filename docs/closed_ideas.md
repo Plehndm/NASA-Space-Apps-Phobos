@@ -73,6 +73,15 @@ Decided Oct 28: no bound changes or new parameters before Step 5.
 | 10,000-column chunks (plan default) | Tested | 38 ms/col and up to 944 MB per worker with 5 in parallel, against 13.4 ms/col and 237 MB at 1,000 columns (dry run, Oct 28). | The solver is rewritten (for example compiled), which changes the cache behaviour. |
 | A larger time step to save run time | Spec | `dt` = P/960 is fixed in `CLAUDE.md`, and Gate 1 was checked against it. | Never. |
 
+## Air temperature (Oct 28, user decisions before scoring)
+
+| Idea | Status | Why closed | Reopen if |
+|---|---|---|---|
+| Elevation as an air-temperature predictor | User decision | The rover spans -4,521 to -3,781 m; 83% of crater pixels lie higher, and within a block elevation mostly marks the campaign (handover brief). Clamped, it would be constant for most of the map. | Air data from a wider elevation range. |
+| A fixed near-surface lapse rate | User decision | A new physics term with no rover data to check it; would need a cited value. | The user approves it with a source. |
+| Training the air model on observed REMS ground | User decision | The map only has predicted ground; the score would overstate map skill. | - |
+| A purely ground-driven air model (the brief's plan) | Reasoned | The crude version scored 4.21 K against the benchmark's 4.06 K. Superseded by the hybrid, which keeps ground terms but can shrink them. | - |
+
 ## Tooling
 
 | Idea | Status | Why closed |
