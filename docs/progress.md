@@ -20,6 +20,8 @@ Earlier entries and the notebooks in `executed/` use the old paths. Old to new:
 
 Code: `paths.py` (new constants `SCORES_DIR`, `MAPS_DIR`, `AIR_MAP_OUT_DIR`), `map_export.WORK_SUBDIR`, `map_run.ipynb`, `air_map_run.ipynb`. New `outputs/README.md` (index with headline numbers).
 
+Verification: tests `13 passed in 71.22s`; every `paths.py` folder exists. Both maps regenerated from the new paths (`map_run` reused the saved baselines, 7 min; `air_map_run` 7 min); all decode checks pass. **All 35 rewritten files are bit-identical to before** (SHA-256: ground and air master arrays, physics baselines, raw files, GeoTIFFs). The ground manifest records commit `94e95f4` with `git_dirty: true`, because documentation edits were uncommitted during that run (no code); the air manifest records `c3ec8b7`, clean.
+
 ## Session 4c (Oct 29, 2026): folder reorganized for the team (user-approved actions 1-11)
 
 - Moved by topic: `data_prep/` (7 notebooks that built `processed_data/`), `dust_devil/` (4 notebooks + README), `gale_tiles/` (notebook, README, `out_tiles/`, `dtm_src/`); the build-steps file and the plan-summary PDF into `docs/`. Core code, `notebooks/`, `tests/`, `outputs/`, `processed_data/`, `raw_data/` unchanged.
