@@ -15,7 +15,7 @@ Read the relevant section there before changing a rule in this file.
 
 ## Current status
 
-Steps 0-4 are done (Oct 28): Gates 1 and 2 pass, and the fitted baseline does not beat the benchmark in leave-one-block-out scoring (macro RMSE 6.72 K vs 5.38 K). Step 5 (residual model) is done for ground temperature (Oct 28). The map uses `flann_safe_no_ti` (user decision Oct 28: FLANN ridge without albedo or TI terms, clamped covariates; LOBO macro 4.86 K against the benchmark's 5.38 K), from `notebooks/residual_flann_lobo.ipynb`. Step 6 (the map): code and dry run done (Oct 28, `map_export.py`, `notebooks/map_run.ipynb`); the full run is next. Its design and status are in `docs/plan.md`.
+Steps 0-4 are done (Oct 28): Gates 1 and 2 pass, and the fitted baseline does not beat the benchmark in leave-one-block-out scoring (macro RMSE 6.72 K vs 5.38 K). Step 5 (residual model) is done for ground temperature (Oct 28). The map uses `flann_safe_no_ti` (user decision Oct 28: FLANN ridge without albedo or TI terms, clamped covariates; LOBO macro 4.86 K against the benchmark's 5.38 K), from `notebooks/residual_flann_lobo.ipynb`. Step 6 (the map) is done (Oct 28): full grid exported in all four formats to `outputs/map/`, all automated checks pass (`map_export.py`, `notebooks/map_run.ipynb`). Remaining: the user's QGIS check and optional items in `docs/plan.md`.
 
 Project notes in `docs/`, read before starting work:
 - `plan.md`: the next step's concrete design.

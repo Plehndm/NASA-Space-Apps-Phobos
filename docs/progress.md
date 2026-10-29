@@ -34,7 +34,26 @@ Temperatures on the crater sample (map = baseline + residual): 159 K (Ls 75, nig
 
 Sizes, rover window (11,000 px, 48 frames, per Ls): A 0.77 MB, B 0.74 MB, C 0.60 MB, D 1.01 MB. Scaled to the full grid (48x the pixels): about 37 / 36 / 29 / 48 MB per Ls, about 750 MB in all; real terrain compresses less evenly, so this is a rough figure.
 
-The full run has not started.
+### Full run (Oct 28, 17:49-20:00)
+
+Colour range for C widened to 150-320 K first (user decision). `MODE = "full"`, executed into `executed/map_run_full.ipynb`, outputs in `outputs/map/`.
+
+- **Baseline:** 529,808 pixels x 5 Ls, 530 chunks each, wall time 7,769 s (2.16 h). Per worker: 13.9-14.7 ms/col, peak memory 278-291 MB, spin-up 11-14 sols per chunk. No crash, no restart.
+- **All checks pass:** rover reproduction 0.0066 K; A, B and D decode within 0.005 K with the same nodata pattern; C within 0.333 K (half a colour step of 0.67 K); the rover lands on pixel (152, 186) in the COG and through the manifest.
+
+| Ls | tau | T min | T p1 | T p99 | T max | Residual range | Baseline clamped |
+|---|---|---|---|---|---|---|---|
+| 15 | 0.78 | 169.7 | 181.3 | 282.6 | 292.9 | -11.4 to +18.1 | 10.3% |
+| 75 | 0.49 | 151.5 | 167.8 | 270.5 | 279.7 | -10.4 to +21.5 | 31.2% |
+| 195 | 0.69 | 175.4 | 185.9 | 302.2 | 313.1 | -17.2 to +14.9 | 18.4% |
+| 255 | 1.09 | 181.6 | 189.9 | 298.6 | 310.1 | -18.8 to +16.0 | 18.8% |
+| 340 | 1.11 | 178.6 | 188.5 | 288.8 | 299.8 | -15.1 to +18.3 | 9.5% |
+
+(K; clamped = fraction of pixel-frames.) Nothing falls outside 150-320 K. Slope is clamped in 28.4% of pixels; TI (81.9%) and albedo (81.4%) are clamped but are not model terms.
+
+Sizes: COG 206 MB, 16-bit PNG 178 MB, coloured PNG 134 MB, raw 243 MB (761 MB in all). `master/` holds 1.5 GB (baseline and map float32, plus 2,650 chunk files).
+
+The 14:00 preview shows a faint vertical band near the middle columns. Column means show no sharp jump in the map (largest 0.66 K between neighbouring columns, typical 0.12 K) or in TI, slope or albedo. It may come from the coarse native albedo grid; not checked.
 
 ## Session 2g (Oct 28, 2026): Step 6 decisions (user)
 

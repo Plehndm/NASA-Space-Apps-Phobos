@@ -4,14 +4,17 @@ The long-range plan is `1D Thermal Baseline Build Steps.md`. This file holds onl
 
 ## Where Step 6 stands (Oct 28, session 3)
 
-**The code and the dry run are done, and all checks pass** (`progress.md`, Session 3). Next is the full run:
+**The full map is done (Oct 28, 2.16 h), and every automated check passes** (`progress.md`, Session 3). All four formats are in `outputs/map/`, with `map_manifest.json`.
 
-1. Prepare the laptop: plug it in, turn off sleep and hibernation, close other programs. About 1.2 GB of free RAM is needed for 5 workers at 1,000-column chunks (237 MB each).
-2. Colour scale for C: decided, 150-320 K.
-3. Set `MODE = "full"` in `notebooks/map_run.ipynb` and run it:
-   `gale-env/Scripts/jupyter.exe nbconvert --to notebook --execute notebooks/map_run.ipynb --output map_run_full --output-dir executed --ExecutePreprocessor.timeout=-1 --ExecutePreprocessor.kernel_name=gale-env`
-   Expect about 2-3 h. Watch `outputs/map/map_progress_ls{LLL}.log`. On a crash, run the same command again: finished chunks are skipped.
-4. The user opens one COG in QGIS (manual check).
+Remaining, in order:
+1. **The user opens one COG in QGIS** (for example `outputs/map/cog/gale_tsurf_ls195.tif`) and confirms it lands on Gale. The last check of the build steps; manual.
+2. **Optional, user's call:** the `flann_safe` (with TI terms) sensitivity map. The baselines in `outputs/map/master/ls{LLL}_base.npy` are reusable, so it costs only the residual and export pass (minutes).
+3. **Optional:** delete the 2,650 chunk files in `outputs/map/master/` (about 500 MB). They are only needed to resume an interrupted run.
+4. Optional: find the source of the faint vertical band in the 14:00 frames (suspected coarse albedo grid).
+
+To rerun: set `MODE = "full"` in `notebooks/map_run.ipynb` and run
+`gale-env/Scripts/jupyter.exe nbconvert --to notebook --execute notebooks/map_run.ipynb --output map_run_full --output-dir executed --ExecutePreprocessor.timeout=-1 --ExecutePreprocessor.kernel_name=gale-env`.
+Finished chunks and merged baselines on disk are reused; delete `outputs/map/master/` to recompute.
 
 **Changes from the design below, made in the dry run:**
 - Chunks are 1,000 columns, not 10,000 (13.4 vs 38 ms/col with 5 workers).
