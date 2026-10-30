@@ -5,7 +5,7 @@ REPO_ROOT = Path(__file__).resolve().parent
 DATA_DIR = REPO_ROOT / "processed_data"
 assert DATA_DIR.is_dir(), f"data folder not found: {DATA_DIR}"
 
-# outputs/ (git-ignored); layout explained in outputs/README.md (reorganized Oct 29)
+# outputs/ (git-ignored); layout explained in outputs/README.md
 SCORES_DIR = REPO_ROOT / "outputs" / "model_scores"      # model development and testing, in pipeline order
 OUT_DIR = SCORES_DIR / "1_physics_baseline"              # Steps 3-4
 RESIDUAL_OUT_DIR = SCORES_DIR / "2_ground_correction"    # Step 5
