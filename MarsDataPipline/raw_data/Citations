@@ -1,0 +1,27 @@
+## Data used in the pipeline
+
+1. Grindrod, P. (2018): Gale Crater Stereo CTX DTMs + Orthoimages. Version 1. figshare. (Dataset; source of the 20 m elevation model and derived slope and aspect). https://doi.org/10.6084/m9.figshare.6584984.v1
+
+2. NASA/JPL-Caltech; MRO CTX team at Malin Space Science Systems (n.d.): Gale Crater CTX block-adjusted mosaic (Gale_CTX_BlockAdj_dd). NASA Solar System Treks, Mars Trek. (Image mosaic, WMTS tile layer). https://trek.nasa.gov/tiles/Mars/EQ/Gale_CTX_BlockAdj_dd
+
+3. Gómez-Elvira, J.; REMS Team (n.d.): MSL Rover Environmental Monitoring Station (REMS) Reduced Data Records (RDR), volume mslrem_1001. NASA Planetary Data System, Atmospheres Node, New Mexico State University. (Dataset). https://pds-atmospheres.nmsu.edu/cgi-bin/getdir.pl?volume=mslrem_1001  
+
+4. Putzig, N. E., Mellon, M. T., 2007. Apparent thermal inertia and the surface heterogeneity of Mars, Icarus, 191, 68-94, doi: 10.1016/j.icarus.2007.05.013.
+
+5. Putzig, N. E., & Mellon, M. T. (2007): Apparent thermal inertia and the surface heterogeneity of Mars. Icarus, 191(1), 68-94. https://doi.org/10.1016/j.icarus.2007.05.013
+
+6. Fergason, R. L.; USGS Astrogeology Science Center (n.d.): THEMIS Thermal Inertia Mosaic, Quantitative, 30S120E, 100 m/pixel. USGS Astropedia. (Dataset). https://astrogeology.usgs.gov/search/map/themis_thermal_inertia_mosaic_quantitative_30s120e_100mpp  
+
+7. Fergason, R. L., Christensen, P. R., & Kieffer, H. H. (2006): High-resolution thermal inertia derived from the Thermal Emission Imaging System (THEMIS): Thermal model and applications. Journal of Geophysical Research, 111, E12004. https://doi.org/10.1029/2006JE002735 
+
+8. Christensen, P. R., et al. (2004): The Thermal Emission Imaging System (THEMIS) for the Mars 2001 Odyssey Mission. Space Science Reviews, 110, 85-130. https://doi.org/10.1023/B:SPAC.0000021008.16305.94
+
+9. Millour, E., Forget, F., Spiga, A., et al., and the MCD development team (2022): The Mars Climate Database, version 6.1. 7th Mars Atmosphere Modelling and Observations workshop, Paris, 14-17 Jun 2022. https://oro.open.ac.uk/86963  
+
+10. Lewis, S. R., et al. (1999): A climate database for Mars. Journal of Geophysical Research, 104. https://doi.org/10.1029/1999JE001024
+
+11. Kahanpää, H., et al. (2017): Meteorological properties of Martian dust devils (EPSC2017-294). Europlanet Science Congress 2017. https://meetingorganizer.copernicus.org/EPSC2017/EPSC2017-294.pdf 
+
+12. Malin, M. C., et al. (2007): Context Camera Investigation on board the Mars Reconnaissance Orbiter. Journal of Geophysical Research, 112, E05S04. https://doi.org/10.1029/2006JE002808
+
+13. Lemmon, Mark (2024), “Mars Science Laboratory aerosol optical depths”, Mendeley Data, V3, doi: 10.17632/tbh3pg39xc.3
