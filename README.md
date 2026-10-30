@@ -58,11 +58,3 @@ gale-env/Scripts/jupyter.exe nbconvert --to notebook --execute notebooks/<name>.
 Notebook order in `notebooks/`: `baseline_diagnostic`, `baseline_fit_lobo`, `residual_lobo`, `residual_flann_lobo`, `ti_sensitivity_lobo`, `block0_diagnostic`, `map_run` (ground map), `air_lobo`, `air_map_run` (air map), `sealed_test`.
 
 The notebooks in `data_prep/`, `dust_devil/` and `gale_tiles/` use paths relative to their own folder (for example `../processed_data`), so open or run them from where they are.
-
-## `_Trash_Review/`
-
-Set aside on Oct 29 instead of deleted. Delete the folder once nobody needs it.
-
-- `DTMs.zip` (355 MB): the original DTM download, already unzipped in `gale_tiles/dtm_src/`. Needed only to rerun the tile notebook's unzip step.
-- `outputs_map/dryrun/`, `outputs_map_air/dryrun/`: test runs of the map export on small windows.
-- `caches/`: Python caches; Python recreates them.
