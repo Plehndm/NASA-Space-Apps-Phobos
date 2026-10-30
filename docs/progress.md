@@ -2,7 +2,7 @@
 
 The newest session goes at the top. What we learned goes in `discoveries.md`, what not to retry goes in `closed_ideas.md`, and the next step goes in `plan.md`.
 
-## Session 4d (Oct 29, 2026): outputs/ reorganized (user-approved actions 1-9)
+## Session 4d : outputs/ reorganized (user-approved actions 1-9)
 
 Earlier entries and the notebooks in `executed/` use the old paths. Old to new:
 
@@ -22,20 +22,18 @@ Code: `paths.py` (new constants `SCORES_DIR`, `MAPS_DIR`, `AIR_MAP_OUT_DIR`), `m
 
 Verification: tests `13 passed in 71.22s`; every `paths.py` folder exists. Both maps regenerated from the new paths (`map_run` reused the saved baselines, 7 min; `air_map_run` 7 min); all decode checks pass. **All 35 rewritten files are bit-identical to before** (SHA-256: ground and air master arrays, physics baselines, raw files, GeoTIFFs). Both maps were then regenerated once more from a clean tree (user request, to clear a `git_dirty` flag caused by uncommitted documentation edits): both manifests now record commit `5784569`, `git_dirty: false`, and the air manifest's ground reference matches; the 35 files are still bit-identical.
 
-## Session 4c (Oct 29, 2026): folder reorganized for the team (user-approved actions 1-11)
+## Session 4c : folder reorganized for the team (user-approved actions 1-11)
 
 - Moved by topic: `data_prep/` (7 notebooks that built `processed_data/`), `dust_devil/` (4 notebooks + README), `gale_tiles/` (notebook, README, `out_tiles/`, `dtm_src/`); the build-steps file and the plan-summary PDF into `docs/`. Core code, `notebooks/`, `tests/`, `outputs/`, `processed_data/`, `raw_data/` unchanged.
 - Paths inside the moved notebooks now resolve from their own folder (`../processed_data`, `../raw_data`, `../gale_tiles/out_tiles`); every input path checked to exist. Not re-run. Pre-existing stale paths fixed at the same time: `sharad_bin_to_rasters` and `themis_100m_thermal_inertia` pointed at `Heatmapdata/` and `processed_albedo_inertia/` (now `../raw_data`, `../processed_data`); `ode_gale_themis` wrote its CSVs beside itself (now where they live); `dust_devil_pipeline` read the Mastcam tau tables from `processed_data/` (they are in `raw_data/`).
 - Set aside in `_Trash_Review/` (git-ignored, nothing deleted): `DTMs.zip` (355 MB, already unzipped in `gale_tiles/dtm_src/`), both map dry-run folders (98 MB), Python caches.
 - New top-level `README.md`; references updated in `CLAUDE.md`, the docs and the moved READMEs; `.gitignore` updated. Tests after the move: `13 passed in 68.27s`.
 
-## Session 4b (Oct 29, 2026): air colour scale, sealed test (Step 7)
+## Session 4b : air colour scale, sealed test (Step 7)
 
 **Air map colour scale changed to the ground scale, 150-320 K** (user decision). Rerun of `notebooks/air_map_run.ipynb`: all checks pass; nothing clipped; C within 0.333 K (half a 0.67 K step); C now 55 MB for 5 seasons. README updated.
 
-**Chunk files deleted** (user request): 2,650 files, 487 MB, from `outputs/map/master/`, after checking each season's chunks matched its `ls{LLL}_base.npy` exactly. `master/` is now 972 MB.
-
-**Sealed test, one look (user go-ahead Oct 29; defaults accepted: report only, `notebooks/sealed_test.ipynb`).** Blocks 4 (sols 1343-1360, 12 sols) and 8 (sols 3069-3110, 13 sols); 1,133 rows with ground (no placeholder tau), 1,132 with air. Models frozen as on the maps. Checks: baseline paths agree within 2e-8 K; ground clamp ranges match Step 5; no test row clipped; no benchmark fallback rows.
+**Sealed test, one look (user go-ahead ; defaults accepted: report only, `notebooks/sealed_test.ipynb`).** Blocks 4 (sols 1343-1360, 12 sols) and 8 (sols 3069-3110, 13 sols); 1,133 rows with ground (no placeholder tau), 1,132 with air. Models frozen as on the maps. Checks: baseline paths agree within 2e-8 K; ground clamp ranges match Step 5; no test row clipped; no benchmark fallback rows.
 
 | | Block 4 RMSE (bias) | Block 8 RMSE (bias) | Sealed macro | LOBO macro |
 |---|---|---|---|---|
@@ -46,7 +44,7 @@ Verification: tests `13 passed in 71.22s`; every `paths.py` folder exists. Both 
 
 (K.) **Ground: the map model loses to the benchmark on the sealed test** (5.25 vs 5.06 K), reversing its LOBO lead (4.86 vs 5.38 K). It wins block 4 and loses block 8 (13-15 h RMSE 6.4-7.7 K, bias -2.7 to -3.3 K). **Air: the model edges the benchmark** (4.10 vs 4.19 K), winning block 4 and losing block 8, where it is 3.2 K too cold. Two blocks and 25 sols: neither difference is beyond noise. Nothing is refit or tuned on these numbers.
 
-## Session 4 (Oct 29, 2026): Step 5b, air temperature LOBO (configurations 10 and 11)
+## Session 4 : Step 5b, air temperature LOBO (configurations 10 and 11)
 
 Code: `notebooks/air_lobo.ipynb` (executed into `executed/air_lobo.ipynb`, outputs in `outputs/air/`); `residual.py` gained `FlannModel` (moved from the FLANN notebook), `AIR_VARIANTS`, `GROUND_VARIANT` and a `target` argument on `benchmark`; `thermal1d.TABLE_COLUMNS` gained `air_temp_k` and `air_missing` (filtering unchanged); `paths.AIR_OUT_DIR`. Gates re-run after the loader change: `13 passed in 77.86s`.
 
@@ -60,11 +58,11 @@ Checks: recomputed out-of-fold `ground_pred` matches Step 5's `pred_flann_safe_n
 
 (K, RMSE.) Per block, `air_hybrid` vs benchmark: block 0 5.80 vs 3.92; 1 4.05 vs 4.01; 2 4.45 vs 4.73; 3 3.41 vs 4.19; 5 3.85 vs 4.22; 6 4.58 vs 5.95; 7 3.17 vs 2.84; 9 3.85 vs 3.36; 10 3.31 vs 3.13.
 
-**Decision (rule fixed Oct 28): `air_hybrid` is not adopted** (gain -0.015 K, need +0.2 K; 4/9 blocks, need 5). Under the rule's fallback it is still the **published** air model, as the better of the two configurations (4.05 vs 4.35 K); the shortfall goes in the manifest and README. It is better than the benchmark without block 0 (3.83 vs 4.05 K), but pooled RMSE is 0.38 K worse because block 0 holds a quarter of the rows.
+**Decision : `air_hybrid` is not adopted** (gain -0.015 K, need +0.2 K; 4/9 blocks, need 5). Under the rule's fallback it is still the **published** air model, as the better of the two configurations (4.05 vs 4.35 K); the shortfall goes in the manifest and README. It is better than the benchmark without block 0 (3.83 vs 4.05 K), but pooled RMSE is 0.38 K worse because block 0 holds a quarter of the rows.
 
 Block 0: `ground_pred` is +6.9 K too warm at night there (-1.9 K by day); `air_hybrid` night bias +5.7 K. The ground term is what fails: `air_time_only` night bias is +2.9 K.
 
-### Step 6b, the air map (Oct 29)
+### Step 6b, the air map 
 
 User decision: publish `air_hybrid` with its caveats (option 1 of 3 after the night-air physics question; see `discoveries.md`).
 
@@ -85,14 +83,14 @@ Colour range for C: **190-280 K** (crater sample 191.0-276.4 K rounded outward t
 Rover pixel vs REMS mean air by hour (sols within 15 deg Ls; information only): mean difference -0.66 to +0.50 K, largest 3.2-7.0 K, mostly at 17 h (the model's known +3 K bias there). Run time about 45 s per Ls. Sizes: A 153 MB, B 141 MB, C 84 MB, D 243 MB.
 
 
-## Session 3b (Oct 28, 2026): map README, air-temperature design (user decisions)
+## Session 3b : map README, air-temperature design (user decisions)
 
 - `outputs/map/README.md` written: folder layout, seasons and frames, grid and coordinates, the four formats with decoding examples, caveats, regenerating. (`outputs/` is git-ignored.)
 - **Air temperature design and decision rules fixed with the user, before any air model was scored** (`plan.md`): hybrid FLANN ridge on predicted ground; no elevation term; out-of-fold predicted ground as input; no clamp; 2 configurations (`air_hybrid`, `air_time_only`; numbers 10 and 11); adopt if 0.2 K better than the benchmark macro and better in 5 of 9 blocks, else publish the better of the two anyway with the shortfall stated; same four formats in `outputs/map/air/`; sealed test after air, both at once.
 - Feasibility check behind the design (not a configuration): air benchmark LOBO macro 4.06 K; a crude least-squares model on out-of-fold predicted ground 4.21 K (block 0: 5.96 vs 3.92 K). Air minus ground: +8 K at night, -26 K at 11-12 h.
 - Air temperature is now in scope (`CLAUDE.md`). Nothing has been built for it yet.
 
-## Session 3 (Oct 28, 2026): Step 6 code and dry run
+## Session 3: Step 6 code and dry run
 
 Code: `map_export.py` (static grid, `run_ls` worker with checkpoints, residual, encoders A-D and decode checks) and `notebooks/map_run.ipynb` (`MODE = "dry"` or `"full"`). `paths.MAP_OUT_DIR` added. Gates re-run: `13 passed in 76.23s`. Dry run executed into `executed/map_run_dry.ipynb`, outputs in `outputs/map/dryrun/`.
 
@@ -124,7 +122,7 @@ Temperatures on the crater sample (map = baseline + residual): 159 K (Ls 75, nig
 
 Sizes, rover window (11,000 px, 48 frames, per Ls): A 0.77 MB, B 0.74 MB, C 0.60 MB, D 1.01 MB. Scaled to the full grid (48x the pixels): about 37 / 36 / 29 / 48 MB per Ls, about 750 MB in all; real terrain compresses less evenly, so this is a rough figure.
 
-### Full run (Oct 28, 17:49-20:00)
+### Full run
 
 Colour range for C widened to 150-320 K first (user decision). `MODE = "full"`, executed into `executed/map_run_full.ipynb`, outputs in `outputs/map/`.
 
@@ -145,12 +143,12 @@ Sizes: COG 206 MB, 16-bit PNG 178 MB, coloured PNG 134 MB, raw 243 MB (761 MB in
 
 The 14:00 preview shows a faint vertical band near the middle columns. Column means show no sharp jump in the map (largest 0.66 K between neighbouring columns, typical 0.12 K) or in TI, slope or albedo. It may come from the coarse native albedo grid; not checked.
 
-### After the run (Oct 28)
+### After the run
 
 - **QGIS check passed** (user): `gale_tsurf_ls195.tif` lands on Gale. Step 6 is complete.
 - **Fix:** `run_ls` now reuses a merged `master/ls{LLL}_base.npy` instead of relying on the chunk files, so the chunk files can be deleted without forcing a 2 h rerun. Checked: rerunning Ls 15 returned at once and logged the reuse.
 
-## Session 2g (Oct 28, 2026): Step 6 decisions (user)
+## Session 2g : Step 6 decisions (user)
 
 - **Residual for the map: `flann_safe_no_ti`** (TI terms dropped; see Session 2f).
 - **Ls values: 15, 75, 195, 255, 340 deg.**
@@ -161,7 +159,7 @@ The 14:00 preview shows a faint vertical band near the middle columns. Column me
 - **The 5 Ls values run in parallel, one process each, locally on this laptop.** The Claude cloud is not used (user decision). Expected wall time is about 3-4 h, against about 11 h serial; this is an estimate to confirm in the dry run.
 - Step 6 has not started: the user will run it later.
 
-## Session 2f (Oct 28, 2026): residual with and without TI terms (map sensitivity, part 1)
+## Session 2f : residual with and without TI terms (map sensitivity, part 1)
 
 User request (plan option: map with and without the residual's TI terms). The map itself (Step 6) was **not** produced: it needs the Ls values, a tau per map Ls and the output format (open questions), and about 2 h of solver time per Ls. Done instead: configuration 9, `flann_safe_no_ti` (sensitivity only, never selected), in `residual_flann_lobo.ipynb`, and a crater-wide estimate of the difference from the 100 m feature table's TI column (no solver run).
 
@@ -177,7 +175,7 @@ User request (plan option: map with and without the residual's TI terms). The ma
 
 `flann_safe` minus `flann_safe_no_ti` (TI part only, other inputs at the rover's distribution): night mean +3.3 K at 361 tiu, +0.4 K at 481, -4.5 K at 682 (largest at any hour 4.5 / 1.1 / 6.7 K). Over crater pixels: 92% differ by more than 2 K at night, none by more than 5 K at night, 0.2% by more than 5 K at some hour. Median pixel: +3.3 K at night (clamped at 361 tiu).
 
-## Session 2e (Oct 28, 2026): block 0 diagnostic (does TI explain sols 1-170?)
+## Session 2e : block 0 diagnostic (does TI explain sols 1-170?)
 
 User request. `notebooks/block0_diagnostic.ipynb` (about 9 min), outputs in `outputs/block0_diagnostic/`. **A diagnostic, not a fit:** in-sample scans with `g_diff` at the all-blocks fit; nothing enters the baseline. Main rows only.
 
@@ -201,7 +199,7 @@ User request. `notebooks/block0_diagnostic.ipynb` (about 9 min), outputs in `out
 
 At its best scale block 0 still has a shape error: +2 to +4 K at 11-14 h and -5 K at 18-19 h (the model peaks too hot and cools too fast in the evening).
 
-## Session 2d (Oct 28, 2026): map-safe FLANN (no albedo terms, clamped covariates)
+## Session 2d : map-safe FLANN (no albedo terms, clamped covariates)
 
 User request (both fixes). `residual_flann_lobo.ipynb` now scores four variants; rules fixed in the notebook before the run. Clamping: TI, slope, albedo and the baseline (as a predictor) clipped to the fold's training-row 1st-99th percentiles in training and prediction, so the LOBO score is the map pipeline's score. Configurations tried: 8 in total.
 
@@ -221,7 +219,7 @@ User request (both fixes). `residual_flann_lobo.ipynb` now scores four variants;
 
 Largest hourly spread of the predicted residual, all-blocks `flann_safe`: TI 10.4 K at night (same inside and beyond the rover range, since clamped), slope 2.4 K, albedo 0. Clamp ranges: TI 361-682 tiu, slope 1.25-12.27 deg, baseline 183-284 K (`outputs/residual/flann_safe_clamp_ranges.csv`). Night bias at 22-03 h is still +1.8 to +2.5 K on main rows.
 
-## Session 2c (Oct 28, 2026): second learner, FLANN-style ridge
+## Session 2c : second learner, FLANN-style ridge
 
 User request (plan option 1). `notebooks/residual_flann_lobo.ipynb` (about 1 min); basis and ridge in `residual.py` (39 columns, alpha 1.0 on standardized columns), fixed in `plan.md` before the run. Same fold baselines (reproduced exactly), training rows and benchmark as Step 5. Configuration 5.
 
@@ -249,7 +247,7 @@ Largest hourly spread of the predicted residual (all-blocks model):
 
 Fold-0 model (no block 0) at night: +0.28 K at TI 450, -0.15 K at 514, -0.85 K at 620 tiu. Block 0 night bias +6.4 K (trees +9.2 K).
 
-## Session 2b (Oct 28, 2026): `ti_scale` sensitivity run (lower bound 0.5)
+## Session 2b : `ti_scale` sensitivity run (lower bound 0.5)
 
 User request. `notebooks/ti_sensitivity_lobo.ipynb` (about 13 min) repeats the Step 4 fold fits with `ti_scale` in [0.5, 1.3], then the Step 5 residual model on the new fold baselines (configuration not re-selected). Outputs in `outputs/ti_sensitivity/`. Not the headline. `fit_global_params` gained a `bounds` argument (default: spec bounds); tests rerun: `13 passed in 101.81s`.
 
@@ -265,7 +263,7 @@ User request. `notebooks/ti_sensitivity_lobo.ipynb` (about 13 min) repeats the S
 | Block 0, `no_elev` night bias (19-06 h) | +9.13 K | +9.28 K |
 | Other blocks, baseline night bias (19-06 h) | -3.22 K | -3.28 K |
 
-## Session 2 (Oct 28, 2026): Step 5, residual model
+## Session 2 : Step 5, residual model
 
 `notebooks/residual_lobo.ipynb` (about 75 s) with `residual.py`; outputs in `outputs/residual/`. The learner is scikit-learn `HistGradientBoostingRegressor` with fixed settings (300 rounds, rate 0.05, 15 leaves, min 50 rows per leaf, L2 1.0), not tuned. The decision rule was written into the notebook before the run. 4 configurations were tried, 1 learner setting.
 
@@ -297,7 +295,7 @@ Decision rule outcome: static covariates adopted (0.34 K gain); elevation reject
 
 Partial-dependence range of the residual over the rover's covariate values (`no_elev`): TI 1.76 K, aspect 1.80 K, albedo 1.04 K, slope 0.77 K. Night hours (17-23 h) gained a +1.5 to +2.2 K warm bias that the baseline did not have.
 
-## Session 1 (Oct 27-28, 2026)
+## Session 1 
 
 Steps 0-4 of `docs/1D Thermal Baseline Build Steps.md` are done and committed locally. Nothing from this session is pushed to GitHub; only `docs/` and `.vscode/` were pushed to `Plehndm/NASA-Space-Apps-Phobos` (`MarsDataPipline/`).
 
@@ -347,7 +345,7 @@ Fitted parameters: `g_diff` 0.77-0.88, `f_ir` 0.027-0.034, `ti_scale` 0.70-0.87 
 
 ### Environment
 
-- `gale-env` additions (user-approved): pytest 9.2.0 and nbconvert 7.17.2 (Oct 27); xgboost 3.4.1, scikit-learn 1.9.1 and scipy 1.18.1 (Oct 28). numpy 2.5.4 and pandas 3.1.0 unchanged.
+- `gale-env` additions (user-approved): pytest 9.2.0 and nbconvert 7.17.2 ; xgboost 3.4.1, scikit-learn 1.9.1 and scipy 1.18.1 . numpy 2.5.4 and pandas 3.1.0 unchanged.
 - Jupyter kernel `gale-env` registered (runs `gale-env\Scripts\python.exe`). The old `python3` kernel still exists; do not use it.
 
 ### Outputs
@@ -359,5 +357,5 @@ Fitted parameters: `g_diff` 0.77-0.88, `f_ir` 0.027-0.034, `ti_scale` 0.70-0.87 
 
 ### Housekeeping
 
-- `docs/1D Thermal Baseline Build Steps.md` said stretch "about 1.15"; fixed to 1.10 on Oct 28.
+- `docs/1D Thermal Baseline Build Steps.md` said stretch "about 1.15"; fixed to 1.10.
 - The git author email in the user's config reads `aypeng2019#gmail.com` (`#` for `@`).

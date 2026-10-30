@@ -21,11 +21,11 @@ Older closed ideas are in `CLAUDE.md` (Anti-patterns) and the handover brief (se
 
 ## Fitting the physics baseline
 
-Decided Oct 28: no bound changes or new parameters before Step 5.
+Decided: no bound changes or new parameters before Step 5.
 
 | Idea | Status | Why closed | Reopen if |
 |---|---|---|---|
-| Lower `ti_scale` bound from 0.7 to 0.5 | Tested (Oct 28) | Fits stay at 0.69-0.88, scores change by at most 0.04 K, block 0 night bias unchanged (+9 K). One global scale cannot cool block 0 without cooling nights that are already 3 K cold elsewhere. | Never as a global bound change; block 0 needs a local explanation. |
+| Lower `ti_scale` bound from 0.7 to 0.5 | Tested | Fits stay at 0.69-0.88, scores change by at most 0.04 K, block 0 night bias unchanged (+9 K). One global scale cannot cool block 0 without cooling nights that are already 3 K cold elsewhere. | Never as a global bound change; block 0 needs a local explanation. |
 | Thermal inertia fitted per rover pixel or per block | Reasoned | Cannot transfer to the map's unobserved pixels and leaks between LOBO folds. That correction belongs in the residual model. | Never for the baseline. |
 | Fitting albedo | Reasoned | Closing the midday gap by albedo alone needs a drop of about 0.15-0.2, to roughly 0.05-0.10, which is implausible for Gale. It also trades off against `g_diff` at midday. | An independent albedo source shows TES is badly off at the rover. |
 | `g_diff` above 1 | Reasoned | Unphysical (more diffuse light than was scattered). The midday deficit does not grow with tau, so more diffuse light also over-corrects the dusty season. | Never. |
@@ -42,20 +42,20 @@ Decided Oct 28: no bound changes or new parameters before Step 5.
 | Model absorbed flux as a residual predictor | Tested | 0.04 K worse macro, better in 4 of 9 blocks. | Never on its own; time and tau already carry it. |
 | Static covariates dropped (`time_only`) | Tested | 0.34 K worse macro than `no_elev`. | - |
 
-## Block 0 explanations (Oct 28)
+## Block 0 explanations
 
 | Idea | Status | Why closed | Reopen if |
 |---|---|---|---|
 | Sky IR explains block 0's warm nights | Tested | Block 0's best `f_ir` (0.030) equals the global fit; fixing nights by sky IR alone leaves -8.8 K by day (RMSE 8.7 K vs 5.7 K with TI). | Never. |
 
-## Residual model inputs (Oct 28)
+## Residual model inputs
 
 | Idea | Status | Why closed | Reopen if |
 |---|---|---|---|
 | Albedo as a residual predictor (linear learner) | Tested | Rover albedo spans 0.24-0.26; the term moved the residual by 29 K over 0.10-0.35, and dropping it improved macro RMSE by 0.14 K. | An albedo source with real spread along the traverse. |
 | Unclamped linear residual model on the map | Tested | Extrapolates linearly (TI 14 K, slope 5 K, albedo 29 K over map ranges). Clamping costs 0.02 K macro. | Never. |
 
-## Second learners for the residual model (Oct 28, reasoned with the user)
+## Second learners for the residual model
 
 | Idea | Status | Why closed | Reopen if |
 |---|---|---|---|
@@ -64,16 +64,16 @@ Decided Oct 28: no bound changes or new parameters before Step 5.
 | NeuralGCM | Reasoned | Earth atmosphere model trained on Earth reanalysis; no Mars version; cells of hundreds of km against a 10 km area. Brings in atmospheric coupling (out of scope). | Never. |
 | xgboost as the second learner | Reasoned | Same tree family as the current learner, so the same failure outside the training TI range; monotone constraints already exist in HistGradientBoosting. Expected change under 0.1 K. | A tree-specific need appears (for example GPU speed for the map). |
 
-## Running the map (Oct 28)
+## Running the map 
 
 | Idea | Status | Why closed | Reopen if |
 |---|---|---|---|
 | Running Step 6 in a Claude Code cloud session | User decision | It would need the unpushed commits on GitHub, the 198 MB feature table (over GitHub's 100 MB limit) moved by LFS or as a compressed copy, a new Linux Python environment, and about 1 GB of outputs brought back. A local parallel run is about 3-4 h. | The laptop cannot stay on for the run, and the user asks. |
 | Running the 5 Ls serially | Reasoned | About 11 h, against about 3-4 h with one process per Ls. | - |
-| 10,000-column chunks (plan default) | Tested | 38 ms/col and up to 944 MB per worker with 5 in parallel, against 13.4 ms/col and 237 MB at 1,000 columns (dry run, Oct 28). | The solver is rewritten (for example compiled), which changes the cache behaviour. |
+| 10,000-column chunks (plan default) | Tested | 38 ms/col and up to 944 MB per worker with 5 in parallel, against 13.4 ms/col and 237 MB at 1,000 columns (dry run). | The solver is rewritten (for example compiled), which changes the cache behaviour. |
 | A larger time step to save run time | Spec | `dt` = P/960 is fixed in `CLAUDE.md`, and Gate 1 was checked against it. | Never. |
 
-## Air temperature (Oct 28, user decisions before scoring)
+## Air temperature 
 
 | Idea | Status | Why closed | Reopen if |
 |---|---|---|---|
@@ -82,7 +82,7 @@ Decided Oct 28: no bound changes or new parameters before Step 5.
 | Training the air model on observed REMS ground | User decision | The map only has predicted ground; the score would overstate map skill. | - |
 | A purely ground-driven air model (the brief's plan) | Reasoned | The crude version scored 4.21 K against the benchmark's 4.06 K. Superseded by the hybrid, which keeps ground terms but can shrink them. | - |
 | Air from time, season and tau only (`air_time_only`, configuration 11) | Tested | Macro 4.35 K vs benchmark 4.04 K, better in 2 of 9 blocks. A 3-harmonic daily basis is too smooth. | - |
-| Adopting `air_hybrid` (configuration 10) under the 0.2 K / 5-block rule | Tested | Macro 4.05 vs 4.04 K, 4 of 9 blocks; fails. Published anyway as the better of the two, per the Oct 28 fallback. Do not tweak the basis or alpha to pass the rule. | - |
+| Adopting `air_hybrid` (configuration 10) under the 0.2 K / 5-block rule | Tested | Macro 4.05 vs 4.04 K, 4 of 9 blocks; fails. Published anyway as the better of the two. Do not tweak the basis or alpha to pass the rule. | - |
 
 ## Tooling
 
