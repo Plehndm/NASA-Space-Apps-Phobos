@@ -1,0 +1,11 @@
+gale-env/
+processed_data/
+executed/
+outputs/
+raw_data/
+gale_tiles/out_tiles/
+gale_tiles/dtm_src/
+DTMs.zip
+_Trash_Review/
+__pycache__/
+.pytest_cache/
