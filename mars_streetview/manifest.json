@@ -1,0 +1,87 @@
+{
+  "credit": "Imagery: NASA/JPL-Caltech/MSSS",
+  "_notes": [
+    "file: name inside --src. hfov: horizontal degrees the image covers. vfov: omit to derive from aspect ratio.",
+    "heading: compass azimuth (0=N, 90=E) of the image's horizontal centre. pitch: elevation of its vertical centre.",
+    "projection: 'equirect' or 'cylindrical'. lat/lon: planetocentric, east-positive, from MSLPLC LOCALIZATIONS for that sol.",
+    "Fields set to null must be filled before that pano builds; the build skips it otherwise."
+  ],
+  "panos": [
+    {
+      "id": "bradbury_navcam360",
+      "title": "Bradbury Landing (Navcam 360)",
+      "file": "PIA16074.tif",
+      "source": "https://www.jpl.nasa.gov/images/pia16074-all-around-curiosity/",
+      "sol": 2,
+      "hfov": 360,
+      "vfov": null,
+      "heading": null,
+      "pitch": 0,
+      "projection": "cylindrical",
+      "lat": -4.5895,
+      "lon": 137.4417
+    },
+    {
+      "id": "bradbury_mastcam_color",
+      "title": "Bradbury Landing (first color Mastcam 360)",
+      "file": "PIA16029.jpg",
+      "source": "https://photojournal.jpl.nasa.gov/catalog/PIA16029",
+      "hfov": 360,
+      "heading": null,
+      "pitch": 0,
+      "projection": "cylindrical",
+      "lat": -4.5895,
+      "lon": 137.4417,
+      "_note": "Low-res thumbnail mosaic; use only if the Navcam pano is not wanted. Same spot as bradbury_navcam360, so drop one of the two."
+    },
+    {
+      "id": "rocknest_360",
+      "title": "Rocknest (Mastcam 100 mm, Sols 64-72)",
+      "file": "rocknest_gigapan.jpg",
+      "source": "http://gigapan.com/gigapans?tags=Gale+Crater",
+      "hfov": 360,
+      "heading": null,
+      "pitch": 0,
+      "projection": "equirect",
+      "lat": null,
+      "lon": null
+    },
+    {
+      "id": "yellowknife_pointlake",
+      "title": "Yellowknife Bay from Point Lake (Sol 106)",
+      "file": "pointlake_gigapan.jpg",
+      "source": "http://gigapan.com/gigapans?tags=Gale+Crater",
+      "hfov": null,
+      "heading": null,
+      "pitch": 0,
+      "projection": "equirect",
+      "lat": null,
+      "lon": null
+    },
+    {
+      "id": "naukluft_crater_wall",
+      "title": "Mount Sharp foothills - Naukluft Plateau (130 deg)",
+      "file": "PIA20333_full.tif",
+      "source": "https://photojournal.jpl.nasa.gov/catalog/PIA20333",
+      "hfov": 130,
+      "heading": null,
+      "pitch": 0,
+      "projection": "cylindrical",
+      "lat": null,
+      "lon": null
+    },
+    {
+      "id": "peace_vallis_rim",
+      "title": "Peace Vallis / north rim (Sol 4640, 44 frames)",
+      "file": "PIA26671.jpg",
+      "source": "https://www.jpl.nasa.gov/images/pia26671-curiosity-views-gale-craters-rim-homing-in-on-ancient-river-channel/",
+      "sol": 4640,
+      "hfov": null,
+      "heading": null,
+      "pitch": 0,
+      "projection": "cylindrical",
+      "lat": null,
+      "lon": null
+    }
+  ]
+}
