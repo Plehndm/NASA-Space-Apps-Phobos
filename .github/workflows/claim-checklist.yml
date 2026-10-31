@@ -1,0 +1,57 @@
+# Feature checklist (issue #3): ticking a box claims that feature for whoever
+# clicked it; unticking releases it. Lines look like:
+#   - [ ] 👤 **unclaimed** · **Feature name**: description
+name: Claim checklist items
+
+on:
+  issues:
+    types: [edited]
+
+permissions:
+  issues: write
+
+concurrency:
+  group: claim-checklist-${{ github.event.issue.number }}
+
+jobs:
+  claim:
+    # Only checklist issues, and only when the body changed.
+    if: contains(github.event.issue.body, '👤') && github.event.changes.body
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const ITEM = /^(\s*- \[)([ xX])(\] 👤 \*\*)(.+?)(\*\* · )(.*)$/;
+            const who = `@${context.payload.sender.login}`;
+
+            // Checked state per feature before the click.
+            const before = new Map();
+            for (const line of (context.payload.changes.body.from || '').split('\n')) {
+              const m = line.match(ITEM);
+              if (m) before.set(m[6], m[2] !== ' ');
+            }
+
+            // Re-read the issue so a quick second edit is not overwritten.
+            const { data: issue } = await github.rest.issues.get({
+              ...context.repo, issue_number: context.payload.issue.number,
+            });
+
+            let changed = false;
+            const body = issue.body.split('\n').map(line => {
+              const m = line.match(ITEM);
+              if (!m || !before.has(m[6])) return line;
+              const was = before.get(m[6]), now = m[2] !== ' ';
+              let name = m[4];
+              if (!was && now && name === 'unclaimed') name = who;
+              else if (was && !now) name = 'unclaimed';
+              if (name === m[4]) return line;
+              changed = true;
+              return m[1] + m[2] + m[3] + name + m[5] + m[6];
+            }).join('\n');
+
+            if (changed) {
+              await github.rest.issues.update({
+                ...context.repo, issue_number: issue.number, body,
+              });
+            }
