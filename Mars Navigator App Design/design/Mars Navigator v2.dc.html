@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="./image-slot.js"></script>
+<style>
+html,body{margin:0;background:#140b09}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#f8ece4;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+*{box-sizing:border-box}
+a{color:#cdf3ea}a:hover{color:#7fd4c1}
+input,button{font-family:inherit}
+input::placeholder{color:#ab8878}
+input[type=range]{accent-color:#7fd4c1;width:100%;margin:0;height:24px;cursor:pointer}
+.mn-scroll::-webkit-scrollbar{display:none}
+.mn-stack>*{flex-shrink:0}
+@keyframes mn-pulse{0%{transform:scale(.5);opacity:.9}100%{transform:scale(2.4);opacity:0}}
+@keyframes mn-blink{0%,100%{opacity:1}50%{opacity:.15}}
+</style>
+</helmet>
+<div style="position:relative;width:{{ rootW }};height:{{ rootH }};overflow:hidden;background:#1b100d;margin:0 auto;user-select:none;-webkit-user-select:none;--bg0:#140b09;--bg1:#1b100d;--bg1-rgb:27,16,13;--bg2:#231512;--bg2-rgb:35,21,18;--sheet:rgba(35,21,18,.94);--row:#2e1e19;--row-rgb:46,30,25;--card:#36251f;--raised:#47322a;--raised-rgb:71,50,42;--line:#5e4537;--fg:#f8ece4;--fg2:#dcb9a6;--fg3:#ab8878;--accent:#7fd4c1;--accent-rgb:127,212,193;--accent2:#cdf3ea;--accent-ink:#0d2a24;--route:#7fd4c1;--route-rgb:127,212,193;--route2:#cdf3ea;--route-ink:#0d2a24;--cta:#ec7a56;--cta-rgb:236,122,86;--cta-hover:#f78d6b;--cta-ink:#2b0d04;--warm:#ffc394;--warm-rgb:255,195,148;--warm2:#f2b98f;--warm3:#ffe3cc;--danger:#ff6b5e;--danger-bg:rgba(255,107,94,.12);--danger-bd:rgba(255,107,94,.35);--danger-deep:#9b2418;--hair:rgba(255,216,190,.08);--bd-card:transparent;--r-sheet:34px;--r-pebble:30px 24px 28px 18px / 28px 22px 30px 20px;--r-pebble2:18px 28px 24px 30px / 20px 30px 22px 28px;--r-card:22px;--r-row:18px;--r-btn:999px;--r-xs:12px;--blur:28px;--shadow1:0 8px 20px rgba(10,4,2,.4);--shadow2:0 14px 36px rgba(10,4,2,.5);--shadow-sheet:0 -18px 50px rgba(10,4,2,.5),inset 0 1px 0 rgba(255,216,190,.08);--glow:0 10px 26px rgba(236,122,86,.35);--font-ui:'Plus Jakarta Sans',sans-serif;--map-filter:sepia(.5) saturate(1.3) contrast(1.02) brightness(.88) hue-rotate(-8deg)">
+  <div ref="{{ stageRef }}" onPointerDown="{{ onPD }}" onPointerMove="{{ onPM }}" onPointerUp="{{ onPU }}" onPointerCancel="{{ onPU }}" style="position:absolute;left:{{ mapLeft }}px;top:0;width:{{ mapW }}px;height:{{ rootH }};overflow:hidden;background:var(--bg1);touch-action:none;cursor:grab">
+    <div style="position:absolute;left:0;top:0;width:512px;height:683px;transform-origin:0 0;transform:{{ worldTf }};transition:{{ worldTrans }};will-change:transform">
+      <img src="assets/world.png" draggable="false" style="position:absolute;left:0;top:0;width:512px;height:683px;filter:var(--map-filter)">
+      <sc-if value="{{ elev1 }}" hint-placeholder-val="{{ false }}"><img src="assets/elev-l1.png" draggable="false" style="position:absolute;left:0;top:0;width:512px;height:683px;opacity:.74"></sc-if>
+      <sc-if value="{{ elev2 }}" hint-placeholder-val="{{ false }}"><img src="assets/elev-l2.png" draggable="false" style="position:absolute;left:0;top:0;width:512px;height:683px;opacity:.74"></sc-if>
+      <sc-if value="{{ elev3 }}" hint-placeholder-val="{{ false }}"><img src="assets/elev-l3.png" draggable="false" style="position:absolute;left:0;top:0;width:512px;height:683px;opacity:.74"></sc-if>
+      <sc-if value="{{ heatLayerOn }}" hint-placeholder-val="{{ false }}"><img src="{{ heatSrc }}" draggable="false" style="position:absolute;left:63px;top:240px;width:458px;height:445px;opacity:.62;-webkit-mask-image:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 26px),transparent calc(100% - 10px)),linear-gradient(180deg,transparent,#000 14px,#000 calc(100% - 18px),transparent calc(100% - 2px));-webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 26px),transparent calc(100% - 10px)),linear-gradient(180deg,transparent,#000 14px,#000 calc(100% - 18px),transparent calc(100% - 2px));mask-composite:intersect"></sc-if>
+      <svg viewBox="0 0 512 683" style="position:absolute;left:0;top:0;width:512px;height:683px;overflow:visible;display:block">
+        <sc-for list="{{ gridLines }}" as="g" hint-placeholder-count="0"><line style="stroke:var(--warm3)" x1="{{ g.x1 }}" y1="{{ g.y1 }}" x2="{{ g.x2 }}" y2="{{ g.y2 }}" stroke-opacity=".07" stroke-width="1" vector-effect="non-scaling-stroke"></line></sc-for>
+        <sc-for list="{{ hazShapes }}" as="h" hint-placeholder-count="0"><ellipse cx="{{ h.x }}" cy="{{ h.y }}" rx="{{ h.rx }}" ry="{{ h.ry }}" transform="{{ h.rot }}" fill="{{ h.color }}" fill-opacity=".13" stroke="{{ h.color }}" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="1 7" vector-effect="non-scaling-stroke"></ellipse></sc-for>
+        <path style="stroke:var(--fg3)" d="{{ routeAltD }}" fill="none" stroke-opacity=".8" stroke-width="2" stroke-linecap="round" stroke-dasharray="1 7" vector-effect="non-scaling-stroke"></path>
+        <path style="stroke:var(--bg1)" d="{{ routeDoneD }}" fill="none" stroke-opacity=".4" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path>
+        <path style="stroke:var(--bg1)" d="{{ routeD }}" fill="none" stroke-opacity=".6" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path>
+        <path style="stroke:var(--route2)" d="{{ routeDoneD }}" fill="none" stroke-opacity=".28" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path>
+        <path style="stroke:var(--route)" d="{{ routeD }}" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path>
+        <path style="stroke:var(--warm)" d="{{ routeSteepD }}" fill="none" stroke-width="3.5" stroke-linecap="round" vector-effect="non-scaling-stroke"></path>
+      </svg>
+      <sc-for list="{{ hazLabels }}" as="h" hint-placeholder-count="0"><div style="position:absolute;left:{{ h.x }}px;top:{{ h.y }}px;transform:{{ h.tf }};transform-origin:50% 100%;font:700 9.5px var(--font-ui);letter-spacing:.6px;color:{{ h.color }};background:rgba(var(--bg1-rgb),.9);padding:4px 10px;border-radius:999px;white-space:nowrap;pointer-events:none;box-shadow:0 4px 12px rgba(10,4,2,.4)">{{ h.label }}</div></sc-for>
+      <sc-if value="{{ altPill }}" hint-placeholder-val="{{ false }}"><div onPointerDown="{{ altPill.onDown }}" onPointerUp="{{ altPill.onUp }}" style="position:absolute;left:{{ altPill.x }}px;top:{{ altPill.y }}px;transform:{{ altPill.tf }};transform-origin:50% 100%;padding:5px 11px;border-radius:999px;background:rgba(var(--bg1-rgb),.92);color:var(--fg2);font:700 10px var(--font-ui);letter-spacing:.3px;white-space:nowrap;box-shadow:0 4px 12px rgba(10,4,2,.4);cursor:pointer">{{ altPill.text }}</div></sc-if>
+      <sc-if value="{{ etaPill }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;left:{{ etaPill.x }}px;top:{{ etaPill.y }}px;transform:{{ etaPill.tf }};transform-origin:50% 100%;padding:5px 11px;border-radius:999px;background:var(--route);color:var(--route-ink);font:700 10.5px var(--font-ui);letter-spacing:.3px;white-space:nowrap;box-shadow:0 6px 16px rgba(10,4,2,.45);pointer-events:none">{{ etaPill.text }}</div></sc-if>
+      <sc-for list="{{ markers }}" as="m" hint-placeholder-count="0">
+        <div onPointerDown="{{ m.onDown }}" onPointerUp="{{ m.onUp }}" style="position:absolute;left:{{ m.x }}px;top:{{ m.y }}px;transform:{{ m.tf }};transform-origin:50% 100%;opacity:{{ m.op }};display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:opacity .25s">
+          <sc-if value="{{ m.showLabel }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;background:{{ m.bg }};color:{{ m.fg }};font:700 10.5px var(--font-ui);letter-spacing:.7px;white-space:nowrap;backdrop-filter:blur(8px);box-shadow:0 6px 16px rgba(10,4,2,.45)">
+            <sc-if value="{{ m.num }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:rgba(0,0,0,.28);font-size:9px">{{ m.num }}</span></sc-if>
+            <span>{{ m.label }}</span>
+          </div>
+          <div style="width:2px;height:16px;border-radius:1px;background:var(--route);opacity:.8"></div>
+          </sc-if>
+          <div style="width:14px;height:14px;border-radius:50%;background:{{ m.dot }};display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 3px rgba(var(--bg1-rgb),.55)"><div style="width:5px;height:5px;border-radius:50%;background:var(--bg1)"></div></div>
+        </div>
+      </sc-for>
+      <div onPointerDown="{{ roverDown }}" onPointerUp="{{ roverUp }}" style="position:absolute;left:{{ rover.x }}px;top:{{ rover.y }}px;transform:{{ roverTf }};width:0;height:0;cursor:pointer">
+        <svg viewBox="-44 -44 88 88" style="position:absolute;left:-44px;top:-44px;width:88px;height:88px;transform:rotate({{ rover.h }}deg);pointer-events:none"><defs><radialGradient id="mnCone" cx="0" cy="0" r="44" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color:var(--route);stop-opacity:.45"></stop><stop offset="1" style="stop-color:var(--route);stop-opacity:0"></stop></radialGradient></defs><path d="M0 0 L-19 -40 A44 44 0 0 1 19 -40 Z" fill="url(#mnCone)"></path></svg>
+        <div style="position:absolute;left:-20px;top:-20px;width:40px;height:40px;border-radius:50%;background:rgba(var(--route-rgb),.22);animation:mn-pulse 2.4s ease-out infinite"></div>
+        <div style="position:absolute;left:-20px;top:-20px;width:40px;height:40px;border-radius:50%;border:1.5px solid rgba(var(--route-rgb),.45)"></div>
+        <svg viewBox="-12 -12 24 24" style="position:absolute;left:-12px;top:-12px;width:24px;height:24px;transform:rotate({{ rover.h }}deg);filter:drop-shadow(0 0 6px rgba(255,195,148,.6))"><path style="fill:var(--warm);stroke:var(--bg1)" d="M0 -10 L7 8 L0 4 L-7 8 Z" stroke-width="1.2" stroke-linejoin="round"></path></svg>
+      </div>
+    </div>
+    <div style="position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(255,172,122,.2) 0%,rgba(255,172,122,0) 32%)"></div>
+    <div style="position:absolute;inset:0;pointer-events:none;background:#140b09;opacity:{{ scrimOp }};transition:opacity .25s"></div>
+    <div data-nopan="1" style="position:absolute;right:12px;top:{{ dockTop }}px;display:flex;flex-direction:column;gap:10px;align-items:flex-end;z-index:3">
+      <div style="position:relative;display:flex;gap:8px;align-items:flex-start">
+        <sc-if value="{{ elevOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;right:54px;top:0;display:flex;gap:8px;align-items:stretch">
+            <div style="width:42px;padding:10px 0;border-radius:21px;background:rgba(var(--bg1-rgb),.9);display:flex;flex-direction:column;align-items:center;gap:6px;box-shadow:var(--shadow1)"><span style="font:700 9px var(--font-ui);letter-spacing:.4px;color:var(--warm)">+0.7k</span><div style="width:6px;flex:1;min-height:52px;border-radius:3px;background:linear-gradient(#4a3401,#2db11c,#0e0cca)"></div><span style="font:600 9px var(--font-ui);letter-spacing:.4px;color:#c5c6ff">-4.5k</span></div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <sc-for list="{{ elevChips }}" as="c" hint-placeholder-count="3"><button onClick="{{ c.onTap }}" style="width:46px;height:30px;border-radius:999px;background:var(--raised);border:1.5px solid {{ c.bd }};display:flex;align-items:center;justify-content:center;gap:2px;cursor:pointer;font:700 10px var(--font-ui);letter-spacing:.5px;color:var(--fg);box-shadow:var(--shadow1)"><span>{{ c.l }}</span><span style="color:{{ c.color }}">{{ c.n }}</span></button></sc-for>
+            </div>
+          </div>
+        </sc-if>
+        <button onClick="{{ toggleElev }}" title="Layers" style="width:44px;height:44px;border-radius:50%;background:{{ layersBg }};border:1px solid {{ layersBd }};color:{{ layersFg }};backdrop-filter:blur(var(--blur));display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow1);flex:none;transition:background .2s"><svg viewBox="0 0 16 16" style="width:17px;height:17px" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M8 2.5 14 5.5 8 8.5 2 5.5Z"></path><path d="m2 8.5 6 3 6-3M2 11.5l6 3 6-3"></path></svg></button>
+      </div>
+      <sc-if value="{{ dockFull }}" hint-placeholder-val="{{ true }}">
+        <div style="position:relative"><button onClick="{{ toggleHaz }}" title="Hazard zones" style="width:44px;height:44px;border-radius:50%;background:{{ hazBg }};border:1px solid {{ hazBd }};color:{{ hazFg }};backdrop-filter:blur(var(--blur));display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow1);transition:background .2s"><svg viewBox="0 0 16 16" style="width:18px;height:18px" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M8 2.5 14 13H2Z"></path><path d="M8 6.5v3M8 11.2v.3"></path></svg></button><span style="position:absolute;right:0;top:0;width:10px;height:10px;border-radius:50%;background:{{ hazDot }};border:2px solid var(--bg1)"></span></div>
+        <div style="position:relative;display:flex;gap:8px;align-items:flex-start">
+          <sc-if value="{{ heatOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;right:54px;top:0;padding:12px;border-radius:22px 22px 8px 22px;background:rgba(var(--bg1-rgb),.95);display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow2);width:216px">
+              <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:700 10px var(--font-ui);letter-spacing:1px;color:var(--fg2)">GROUND TEMP</span><button onClick="{{ heatToggle }}" style="width:44px;height:24px;border-radius:12px;background:{{ heatSwBg }};border:0;position:relative;cursor:pointer;transition:background .2s"><span style="position:absolute;top:2px;left:{{ heatKnob }};width:20px;height:20px;border-radius:10px;background:{{ heatKnobBg }};transition:left .2s;box-shadow:0 2px 6px rgba(0,0,0,.3)"></span></button></div>
+              <div style="display:flex;align-items:center;gap:8px"><button onClick="{{ heatPlayToggle }}" title="Play timelapse" style="width:30px;height:30px;border-radius:50%;background:var(--raised);border:0;color:var(--fg);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none"><sc-if value="{{ heatPlay }}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 12 12" style="width:11px;height:11px" fill="currentColor"><rect x="2" y="2" width="3" height="8" rx="1"></rect><rect x="7" y="2" width="3" height="8" rx="1"></rect></svg></sc-if><sc-if value="{{ heatIdle }}" hint-placeholder-val="{{ true }}"><svg viewBox="0 0 12 12" style="width:11px;height:11px;margin-left:1px" fill="currentColor"><path d="M3 2l7 4-7 4z"></path></svg></sc-if></button><input type="range" min="0" max="20" step="1" value="{{ heatT }}" onChange="{{ onHeatT }}" onInput="{{ onHeatT }}" style="flex:1;min-width:0"><span style="font:700 10.5px var(--font-ui);color:var(--accent2);min-width:38px;text-align:right">{{ heatTime }}</span></div>
+              <div style="display:flex;justify-content:space-between;font:500 9px var(--font-ui);color:var(--fg3);padding-left:38px"><span>01:30</span><span>LTST</span><span>11:30</span></div>
+              <div style="font:500 10px var(--font-ui);color:var(--fg3);line-height:1.45">{{ heatHint }}</div>
+            </div>
+          </sc-if>
+          <button onClick="{{ toggleHeatOpen }}" title="Heatmap" style="width:44px;height:44px;border-radius:50%;background:{{ hmBg }};border:1px solid {{ hmBd }};color:{{ hmFg }};backdrop-filter:blur(var(--blur));display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow1);font:800 11px var(--font-ui);letter-spacing:.6px;flex:none;transition:background .2s">HM</button>
+        </div>
+        <button onClick="{{ openAssistant }}" title="Route assistant" style="width:44px;height:44px;border-radius:50%;background:{{ aiBg }};border:1px solid {{ aiBd }};color:{{ aiFg }};backdrop-filter:blur(var(--blur));display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow1);font-size:17px;line-height:1;transition:background .2s">✦</button>
+      </sc-if>
+      <div style="display:flex;flex-direction:column;border-radius:22px;background:rgba(var(--bg1-rgb),.9);backdrop-filter:blur(var(--blur));box-shadow:var(--shadow1);overflow:hidden;margin-top:4px">
+        <button onClick="{{ zoomIn }}" style="width:44px;height:40px;border:0;background:none;color:var(--fg);font:400 22px var(--font-ui);cursor:pointer;line-height:1" style-hover="background:var(--card)">+</button>
+        <div style="height:1px;margin:0 12px;background:var(--hair)"></div>
+        <button onClick="{{ zoomOut }}" style="width:44px;height:40px;border:0;background:none;color:var(--fg);font:400 22px var(--font-ui);cursor:pointer;line-height:1" style-hover="background:var(--card)">−</button>
+      </div>
+    </div>
+    <sc-if value="{{ hazBanner }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;left:12px;top:{{ overlayTop }}px;max-width:270px;display:flex;align-items:center;gap:9px;padding:9px 14px 9px 11px;border-radius:999px;background:rgba(var(--bg1-rgb),.92);border:1px solid {{ hazBannerColor }};box-shadow:var(--shadow2);z-index:3"><span style="width:8px;height:8px;border-radius:50%;background:{{ hazBannerColor }};flex:none;animation:mn-blink 1.4s infinite"></span><span style="font:700 10px var(--font-ui);letter-spacing:.4px;color:var(--fg);line-height:1.4">{{ hazBanner }}</span></div></sc-if>
+    <div style="position:absolute;left:{{ scaleLeft }}px;top:{{ scaleTop }}px;display:flex;flex-direction:column;gap:4px;pointer-events:none;transition:top .35s cubic-bezier(.2,.8,.2,1)">
+      <div style="position:relative;height:12px;width:{{ scaleW }};font:600 9px var(--font-ui);color:var(--fg2)"><span style="position:absolute;left:0">0</span><span style="position:absolute;left:50%;transform:translateX(-50%)">{{ scaleMid }}</span><span style="position:absolute;left:100%;transform:translateX(-30%);font-weight:700;color:var(--accent2);white-space:nowrap">{{ scaleMax }}</span></div>
+      <div style="display:flex;width:{{ scaleW }};height:5px;border-radius:3px;overflow:hidden;background:rgba(var(--raised-rgb),.8)"><div style="width:{{ scaleHalf }};background:var(--accent2)"></div><div style="flex:1;background:var(--card)"></div></div>
+    </div>
+    <sc-if value="{{ coordText }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;left:50%;top:{{ overlayTop }}px;transform:translateX(-50%);padding:6px 12px;border-radius:999px;background:rgba(var(--bg1-rgb),.92);font:600 10px var(--font-ui);letter-spacing:.4px;color:var(--accent2);white-space:nowrap;pointer-events:none;box-shadow:var(--shadow1)">{{ coordText }}</div></sc-if>
+    <sc-if value="{{ heatOn }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;left:{{ scaleLeft }}px;top:{{ legendTop }}px;display:flex;flex-direction:column;gap:4px;padding:8px 10px;border-radius:14px;background:rgba(var(--bg1-rgb),.9);pointer-events:none;transition:top .35s cubic-bezier(.2,.8,.2,1);box-shadow:var(--shadow1)"><div style="font:700 9px var(--font-ui);letter-spacing:.8px;color:var(--fg2)">{{ heatLabel }}</div><div style="width:132px;height:6px;border-radius:3px;background:linear-gradient(90deg,#0d0887,#46039f,#7201a8,#9c179e,#bd3786,#d8576b,#ed7953,#fb9f3a,#f0f921)"></div><div style="display:flex;justify-content:space-between;font:500 9px var(--font-ui);color:var(--fg2)"><span>{{ kMinLabel }}</span><span>{{ kMidLabel }}</span><span>{{ kMaxLabel }}</span></div></div></sc-if>
+    <button onClick="{{ locateRover }}" data-nopan="1" title="Center on rover" style="position:absolute;left:{{ fabLeft }}px;top:{{ fabTop }}px;width:44px;height:44px;border-radius:50%;background:rgba(var(--bg1-rgb),.9);border:1px solid var(--hair);color:var(--accent2);backdrop-filter:blur(var(--blur));box-shadow:var(--shadow1);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:3;transition:top .35s cubic-bezier(.2,.8,.2,1)"><svg viewBox="0 0 16 16" style="width:18px;height:18px" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="4"></circle><circle cx="8" cy="8" r="1.2" fill="currentColor" stroke="none"></circle><path d="M8 1v3M8 12v3M1 8h3M12 8h3" stroke-linecap="round"></path></svg></button>
+  </div>
+  <div style="{{ headerPos }}">
+    <div style="display:flex;flex-direction:column;gap:3px">
+      <span style="font:700 15px var(--font-ui);letter-spacing:-.2px;color:var(--fg)">Gale Crater</span>
+      <span style="font:500 11px var(--font-ui);letter-spacing:.3px;color:var(--fg2)">Sol 742 · {{ clock }} MTC</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font:700 9.5px var(--font-ui);letter-spacing:.6px;color:{{ linkFg }};padding:6px 11px;border-radius:999px;background:rgba(var(--raised-rgb),.75);white-space:nowrap;flex:none">{{ linkLabel }}</span>
+      <button onClick="{{ openSettings }}" title="Settings" style="width:36px;height:36px;border-radius:50%;background:rgba(var(--raised-rgb),.75);border:0;color:var(--fg);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--raised)"><svg viewBox="0 0 16 16" style="width:16px;height:16px" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8" cy="8" r="2.4"></circle><path d="M8 1.5v2.2M8 12.3v2.2M1.5 8h2.2M12.3 8h2.2M3.4 3.4l1.6 1.6M11 11l1.6 1.6M3.4 12.6 5 11M11 5l1.6-1.6"></path></svg></button>
+    </div>
+  </div>
+  <sc-if value="{{ isPhone }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;left:0;top:64px;width:393px;height:36px;background:linear-gradient(180deg,rgba(27,16,13,.5),rgba(27,16,13,0));pointer-events:none;z-index:5"></div></sc-if>
+  <div style="{{ sheetPos }}">
+    <sc-if value="{{ isSheet }}" hint-placeholder-val="{{ true }}"><div onPointerDown="{{ onSheetDown }}" onPointerMove="{{ onSheetMove }}" onPointerUp="{{ onSheetUp }}" style="height:24px;display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none;flex:none"><div style="width:44px;height:5px;border-radius:3px;background:var(--line)"></div></div></sc-if>
+    <sc-if value="{{ isSide }}" hint-placeholder-val="{{ false }}"><div style="height:14px;flex:none"></div></sc-if>
+    <sc-if value="{{ showEta }}" hint-placeholder-val="{{ false }}">
+      <div style="margin:0 16px 10px;padding:12px 18px 13px;border-radius:24px;background:var(--card);display:flex;flex-wrap:wrap;align-items:flex-end;column-gap:18px;row-gap:8px;flex:none">
+        <div style="flex:1 1 96px;min-width:0"><div style="font:600 9px var(--font-ui);letter-spacing:.7px;color:var(--fg2)">ARRIVAL · MTC</div><div style="font:700 26px var(--font-ui);letter-spacing:-.8px;color:var(--fg);line-height:1.1;margin-top:3px;white-space:nowrap">{{ etaArrive }}</div></div>
+        <div style="flex:1 1 72px;min-width:0"><div style="font:600 9px var(--font-ui);letter-spacing:.7px;color:var(--fg2)">TIME LEFT</div><div style="font:700 16px var(--font-ui);letter-spacing:-.2px;color:var(--accent2);line-height:1.2;margin-top:4px;white-space:nowrap">{{ etaRemain }}</div></div>
+        <div style="flex:1 1 64px;min-width:0"><div style="font:600 9px var(--font-ui);letter-spacing:.7px;color:var(--fg2)">DISTANCE</div><div style="font:700 16px var(--font-ui);letter-spacing:-.2px;color:var(--fg);line-height:1.2;margin-top:4px;white-space:nowrap">{{ etaDist }}</div></div>
+      </div>
+    </sc-if>
+    <div style="padding:0 16px 10px;flex:none">
+      <div style="display:flex;align-items:center;gap:10px;height:46px;padding:0 7px 0 16px;border-radius:999px;background:var(--row);box-shadow:inset 0 1px 0 rgba(255,216,190,.05)">
+        <svg viewBox="0 0 16 16" style="width:15px;height:15px;flex:none;stroke:var(--fg3)" fill="none" stroke-width="1.7" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"></circle><path d="M10.5 10.5 14 14"></path></svg>
+        <input value="{{ q }}" onChange="{{ onQ }}" onFocus="{{ onSearchFocus }}" onKeyDown="{{ onSearchKey }}" placeholder="Search craters, bases, coords or quad..." style="flex:1;min-width:0;background:none;border:0;outline:0;color:var(--fg);font:500 14px var(--font-ui);letter-spacing:0;padding:0">
+        <sc-if value="{{ q }}" hint-placeholder-val="{{ false }}"><button onClick="{{ clearQ }}" style="width:32px;height:32px;border-radius:50%;background:none;border:0;color:var(--fg3);font:500 17px var(--font-ui);cursor:pointer">×</button></sc-if>
+        <button onClick="{{ onFilterTap }}" style="width:32px;height:32px;border-radius:50%;background:{{ filterBg }};border:0;display:flex;align-items:center;justify-content:center;color:{{ filterFg }};cursor:pointer;flex:none;transition:background .2s"><svg viewBox="0 0 16 16" style="width:14px;height:14px" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M2 4h12M4 8h8M6 12h4"></path></svg></button>
+      </div>
+    </div>
+    <div ref="{{ scrollRef }}" class="mn-scroll mn-stack" style="flex:1;min-height:0;overflow-y:auto;padding:0 16px 28px;display:flex;flex-direction:column;gap:10px;scrollbar-width:none">
+      <!-- @cards -->
+      <sc-if value="{{ isAssistant }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0 0"><div style="display:flex;align-items:center;gap:8px"><span style="color:var(--accent);font-size:16px;line-height:1">✦</span><span style="font:700 22px var(--font-ui);letter-spacing:-.5px;color:var(--fg)">Route assistant</span></div><button onClick="{{ goHome }}" title="Close assistant" style="width:36px;height:36px;border-radius:50%;background:var(--raised);border:0;color:var(--fg);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--line)"><svg viewBox="0 0 16 16" style="width:14px;height:14px" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"></path></svg></button></div>
+        <div style="font:500 10.5px var(--font-ui);color:var(--fg3);letter-spacing:.2px;margin-bottom:4px">{{ assistStatus }}</div>
+        <sc-for list="{{ chat }}" as="m" hint-placeholder-count="0">
+          <div style="display:flex;flex-direction:column;gap:8px;align-items:{{ m.align }}">
+            <div style="max-width:88%;padding:11px 14px;border-radius:{{ m.rad }};background:{{ m.bg }};color:{{ m.fg }};font:500 13px var(--font-ui);line-height:1.5;white-space:pre-wrap">{{ m.text }}</div>
+            <sc-if value="{{ m.hasRoute }}" hint-placeholder-val="{{ false }}">
+              <div style="width:100%;background:var(--card);border-radius:22px 22px 22px 8px;box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb),.22);padding:14px">
+                <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:700 10px var(--font-ui);color:var(--warm);letter-spacing:1px">PROPOSED ROUTE</span><span style="font:700 11px var(--font-ui);color:var(--accent2)">{{ m.routeTotal }}</span></div>
+                <sc-for list="{{ m.routeRows }}" as="rr" hint-placeholder-count="2"><div style="display:flex;gap:10px;align-items:center;margin-top:8px"><span style="width:24px;height:24px;border-radius:50%;background:rgba(var(--accent-rgb),.15);display:flex;align-items:center;justify-content:center;font:700 10px var(--font-ui);color:var(--accent2);flex:none">{{ rr.num }}</span><span style="font:600 13px var(--font-ui);color:var(--fg);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ rr.name }}</span><span style="font:500 10.5px var(--font-ui);color:var(--fg2);flex:none">{{ rr.sub }}</span></div></sc-for>
+                <sc-if value="{{ m.avoid }}" hint-placeholder-val="{{ false }}"><div style="font:500 10px var(--font-ui);color:var(--fg2);margin-top:10px;letter-spacing:.3px">AVOIDS · {{ m.avoid }}</div></sc-if>
+                <button onClick="{{ m.load }}" style="margin-top:12px;width:100%;height:44px;border-radius:999px;background:var(--cta);border:0;color:var(--cta-ink);font:700 14px var(--font-ui);cursor:pointer;box-shadow:var(--glow)" style-hover="background:var(--cta-hover)">LOAD ROUTE</button>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+        <sc-if value="{{ busy }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:999px;background:var(--row);align-self:flex-start"><span style="color:var(--accent);animation:mn-blink 1s infinite">✦</span><span style="font:500 11px var(--font-ui);color:var(--fg2)">checking telemetry and hazard tracks…</span></div></sc-if>
+        <sc-if value="{{ showSuggestions }}" hint-placeholder-val="{{ true }}">
+          <div style="font:700 10.5px var(--font-ui);letter-spacing:1px;color:var(--fg3);margin-top:4px">TRY</div>
+          <sc-for list="{{ suggestions }}" as="sg" hint-placeholder-count="3"><button onClick="{{ sg.onTap }}" style="text-align:left;padding:12px 16px;border-radius:20px 20px 20px 8px;background:var(--row);border:0;color:var(--fg);font:500 13px var(--font-ui);cursor:pointer;line-height:1.45" style-hover="background:var(--card)">{{ sg.text }}</button></sc-for>
+        </sc-if>
+        <div style="display:flex;gap:8px;margin-top:4px;position:sticky;bottom:0;padding-top:8px;backdrop-filter:blur(12px);-webkit-mask-image:linear-gradient(rgba(0,0,0,0),#000 30%);mask-image:linear-gradient(rgba(0,0,0,0),#000 30%)">
+          <input value="{{ chatIn }}" onChange="{{ onChatIn }}" onKeyDown="{{ onChatKey }}" placeholder="Ask for a route, a hazard check, a science plan…" style="flex:1;min-width:0;height:48px;border-radius:999px;background:var(--row);border:0;color:var(--fg);padding:0 18px;font:500 14px var(--font-ui);outline:0">
+          <button onClick="{{ sendChat }}" style="width:48px;height:48px;border-radius:50%;background:var(--accent);border:0;color:var(--accent-ink);cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;box-shadow:0 8px 20px rgba(var(--accent-rgb),.3)"><svg viewBox="0 0 16 16" style="width:16px;height:16px" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V3M4 7l4-4 4 4"></path></svg></button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ showHazChips }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:700 10.5px var(--font-ui);letter-spacing:1px;color:var(--fg3)">WARNING ZONES · FILTER BY HAZARD</span><span style="font:600 10px var(--font-ui);color:var(--fg2)">{{ hazCount }}</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ hazChips }}" as="c" hint-placeholder-count="5"><button onClick="{{ c.onTap }}" style="display:flex;align-items:center;gap:7px;height:30px;padding:0 12px;border-radius:999px;background:{{ c.bg }};border:1px solid {{ c.bd }};color:{{ c.fg }};font:600 10.5px var(--font-ui);letter-spacing:.2px;cursor:pointer"><span style="width:8px;height:8px;border-radius:50%;background:{{ c.color }};opacity:{{ c.dotOp }}"></span>{{ c.name }}</button></sc-for></div>
+      </sc-if>
+      <sc-if value="{{ isLayers }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0 4px"><span style="font:700 22px var(--font-ui);letter-spacing:-.5px;color:var(--fg)">Layers</span><button onClick="{{ goHome }}" style="height:32px;padding:0 14px;border-radius:999px;background:var(--raised);border:0;color:var(--fg);font:700 10.5px var(--font-ui);letter-spacing:.5px;cursor:pointer">DONE</button></div>
+        <div style="background:var(--card);border-radius:var(--r-pebble);padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:700 10px var(--font-ui);letter-spacing:1px;color:var(--fg2)">ELEVATION STRATA</span><span style="font:500 9.5px var(--font-ui);color:var(--fg3)">1 highest · 3 lowest</span></div>
+          <div style="display:flex;gap:6px"><sc-for list="{{ elevChipsPanel }}" as="c" hint-placeholder-count="4"><button onClick="{{ c.onTap }}" style="flex:1;height:36px;border-radius:999px;background:var(--raised);border:1.5px solid {{ c.bd }};display:flex;align-items:center;justify-content:center;gap:4px;cursor:pointer;font:700 10px var(--font-ui);letter-spacing:.5px;color:var(--fg)"><span>{{ c.l }}</span><span style="color:{{ c.color }}">{{ c.n }}</span></button></sc-for></div>
+          <div style="height:6px;border-radius:3px;background:linear-gradient(90deg,#0e0cca,#2db11c,#4a3401)"></div>
+          <div style="display:flex;justify-content:space-between;font:500 9.5px var(--font-ui);color:var(--fg2)"><span>-4.5 km floor</span><span>+0.7 km summit</span></div>
+        </div>
+        <div style="background:var(--card);border-radius:var(--r-pebble2);padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font:700 10px var(--font-ui);letter-spacing:1px;color:var(--fg2)">GROUND TEMPERATURE</div><div style="font:500 9.5px var(--font-ui);color:var(--fg3);margin-top:3px">THEMIS thermal model · Ls 340</div></div><button onClick="{{ heatToggle }}" style="width:44px;height:24px;border-radius:12px;background:{{ heatSwBg }};border:0;position:relative;cursor:pointer;transition:background .2s;flex:none"><span style="position:absolute;top:2px;left:{{ heatKnob }};width:20px;height:20px;border-radius:10px;background:{{ heatKnobBg }};transition:left .2s;box-shadow:0 2px 6px rgba(0,0,0,.3)"></span></button></div>
+          <div style="display:flex;align-items:center;gap:8px"><button onClick="{{ heatPlayToggle }}" title="Play timelapse" style="width:30px;height:30px;border-radius:50%;background:var(--raised);border:0;color:var(--fg);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none"><sc-if value="{{ heatPlay }}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 12 12" style="width:11px;height:11px" fill="currentColor"><rect x="2" y="2" width="3" height="8" rx="1"></rect><rect x="7" y="2" width="3" height="8" rx="1"></rect></svg></sc-if><sc-if value="{{ heatIdle }}" hint-placeholder-val="{{ true }}"><svg viewBox="0 0 12 12" style="width:11px;height:11px;margin-left:1px" fill="currentColor"><path d="M3 2l7 4-7 4z"></path></svg></sc-if></button><input type="range" min="0" max="20" step="1" value="{{ heatT }}" onChange="{{ onHeatT }}" onInput="{{ onHeatT }}" style="flex:1;min-width:0"><span style="font:700 11px var(--font-ui);color:var(--accent2);min-width:40px;text-align:right">{{ heatTime }}</span></div>
+          <div style="display:flex;justify-content:space-between;font:500 9px var(--font-ui);color:var(--fg3);padding-left:38px"><span>01:30</span><span>LOCAL TRUE SOLAR TIME</span><span>11:30</span></div>
+          <div style="height:8px;border-radius:4px;background:linear-gradient(90deg,#0d0887,#46039f,#7201a8,#9c179e,#bd3786,#d8576b,#ed7953,#fb9f3a,#f0f921)"></div>
+          <div style="display:flex;justify-content:space-between;font:600 9.5px var(--font-ui);color:var(--fg2)"><sc-for list="{{ kTicks }}" as="k" hint-placeholder-count="5"><span>{{ k }}</span></sc-for></div>
+          <div style="font:500 9.5px var(--font-ui);color:var(--fg3)">Kelvin · one scale shared by all 21 frames</div>
+          <div style="font:500 10.5px var(--font-ui);color:var(--fg3);line-height:1.5">{{ heatHint }}</div>
+        </div>
+        <div style="background:var(--card);border-radius:var(--r-pebble);padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:700 10px var(--font-ui);letter-spacing:1px;color:var(--fg2)">WARNING ZONES</span><button onClick="{{ toggleHaz }}" style="width:44px;height:24px;border-radius:12px;background:{{ hazSwBg }};border:0;position:relative;cursor:pointer;transition:background .2s"><span style="position:absolute;top:2px;left:{{ hazKnob }};width:20px;height:20px;border-radius:10px;background:{{ hazKnobBg }};transition:left .2s;box-shadow:0 2px 6px rgba(0,0,0,.3)"></span></button></div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ hazChips }}" as="c" hint-placeholder-count="5"><button onClick="{{ c.onTap }}" style="display:flex;align-items:center;gap:7px;height:30px;padding:0 12px;border-radius:999px;background:{{ c.bg }};border:1px solid {{ c.bd }};color:{{ c.fg }};font:600 10.5px var(--font-ui);letter-spacing:.2px;cursor:pointer"><span style="width:8px;height:8px;border-radius:50%;background:{{ c.color }};opacity:{{ c.dotOp }}"></span>{{ c.name }}</button></sc-for></div>
+        </div>
+        <div style="background:var(--card);border-radius:var(--r-pebble2);padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font:700 10px var(--font-ui);letter-spacing:1px;color:var(--fg2)">LANDING POINTS</div><div style="font:500 10.5px var(--font-ui);color:var(--fg3);margin-top:3px">Surveyed pads and the Sol 0 site</div></div><button onClick="{{ toggleLz }}" style="width:44px;height:24px;border-radius:12px;background:{{ lzSwBg }};border:0;position:relative;cursor:pointer;transition:background .2s"><span style="position:absolute;top:2px;left:{{ lzKnob }};width:20px;height:20px;border-radius:10px;background:{{ lzKnobBg }};transition:left .2s;box-shadow:0 2px 6px rgba(0,0,0,.3)"></span></button></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid var(--hair)"><div><div style="font:700 10px var(--font-ui);letter-spacing:1px;color:var(--fg2)">SATELLITE IMAGERY</div><div style="font:500 10.5px var(--font-ui);color:var(--fg3);margin-top:3px">MRO CTX mosaic · 6 m/px · always on</div></div><span style="font:700 9.5px var(--font-ui);letter-spacing:.5px;color:var(--accent2);background:var(--raised);padding:5px 10px;border-radius:999px">BASE</span></div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isSearch }}" hint-placeholder-val="{{ false }}">
+        <div class="mn-scroll" style="display:flex;gap:6px;overflow-x:auto;margin:0 -16px;padding:2px 16px 4px;scrollbar-width:none">
+          <sc-for list="{{ chips }}" as="c" hint-placeholder-count="0"><button onClick="{{ c.onTap }}" style="flex:none;display:flex;align-items:center;gap:7px;height:32px;padding:0 6px 0 14px;border-radius:999px;background:{{ c.bg }};border:0;color:{{ c.fg }};font:600 11px var(--font-ui);cursor:pointer"><span>{{ c.name }}</span><span style="font:700 10px var(--font-ui);color:{{ c.cfg }};background:{{ c.cbg }};padding:3px 7px;border-radius:999px;min-width:22px;text-align:center">{{ c.count }}</span></button></sc-for>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px"><span style="font:700 10.5px var(--font-ui);letter-spacing:1px;color:var(--fg3)">{{ resultsLabel }}</span><sc-if value="{{ showClear }}" hint-placeholder-val="{{ false }}"><button onClick="{{ clearRecent }}" style="background:none;border:0;padding:0;color:var(--warm2);font:600 11px var(--font-ui);cursor:pointer">Clear History</button></sc-if><sc-if value="{{ showHint }}" hint-placeholder-val="{{ true }}"><span style="font:600 10px var(--font-ui);letter-spacing:.3px;color:var(--fg2)">{{ resultsHint }}</span></sc-if></div>
+        <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}"><div style="padding:20px 16px;border-radius:20px;background:var(--row);border:1px dashed var(--line);font:500 12px var(--font-ui);color:var(--fg3);line-height:1.5;text-align:center">{{ noResultsText }}</div></sc-if>
+        <sc-for list="{{ results }}" as="r" hint-placeholder-count="3">
+          <button onClick="{{ r.onTap }}" style="display:flex;align-items:center;gap:12px;padding:10px 12px 10px 10px;border-radius:999px;background:var(--row);border:0;text-align:left;cursor:pointer;color:inherit;width:100%;transition:background .15s" style-hover="background:var(--card)">
+            <div style="width:38px;height:38px;border-radius:50%;background:var(--raised);display:flex;align-items:center;justify-content:center;color:var(--accent2);font:800 10px var(--font-ui);letter-spacing:.3px;flex:none">{{ r.icon }}</div>
+            <div style="flex:1;min-width:0"><div style="font:600 14px var(--font-ui);color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</div><div style="font:500 11px var(--font-ui);color:var(--fg2);letter-spacing:.2px;margin-top:1px">{{ r.sub }}</div></div>
+            <span style="font:700 9.5px var(--font-ui);letter-spacing:.6px;color:{{ r.tagFg }};flex:none;padding-right:4px">{{ r.tag }}</span>
+          </button>
+        </sc-for>
+      </sc-if>
+      <sc-if value="{{ isWaypoint }}" hint-placeholder-val="{{ false }}">
+        <div style="position:relative;overflow:hidden;background:var(--card);border-radius:var(--r-pebble);padding:16px">
+          <div style="position:absolute;right:-40px;top:-50px;width:150px;height:150px;border-radius:50%;background:rgba(var(--cta-rgb),.14);pointer-events:none"></div>
+          <div style="position:absolute;right:30px;top:40px;width:70px;height:70px;border-radius:50%;background:rgba(var(--warm-rgb),.06);pointer-events:none"></div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;position:relative">
+            <div style="min-width:0"><div style="font:700 10.5px var(--font-ui);letter-spacing:1.2px;color:var(--warm)">TARGET</div><div style="font:700 22px var(--font-ui);letter-spacing:-.5px;color:var(--fg);margin-top:3px;line-height:1.15">{{ selName }}</div><div style="font:500 10.5px var(--font-ui);color:var(--fg2);margin-top:6px;letter-spacing:.2px">{{ selMeta }}</div></div>
+            <div style="text-align:right;flex:none;white-space:nowrap"><div style="font:600 9.5px var(--font-ui);letter-spacing:.6px;color:var(--fg2)">ESTIMATED TRANSIT</div><div style="font:700 15px var(--font-ui);letter-spacing:-.2px;color:var(--accent2);margin-top:3px">{{ selEta }}</div><div style="font:500 9.5px var(--font-ui);color:var(--fg2);margin-top:2px">{{ selKm }}</div></div>
+          </div>
+          <div style="font:500 13px var(--font-ui);color:var(--fg2);line-height:1.5;margin-top:10px;position:relative">{{ selDesc }}</div>
+          <sc-if value="{{ showNotes }}" hint-placeholder-val="{{ true }}"><div style="display:flex;gap:9px;margin-top:12px;padding:10px 14px;border-radius:18px 18px 18px 6px;background:rgba(var(--accent-rgb),.09);position:relative"><span style="color:var(--accent);font-size:12px;line-height:1.5">✦</span><span style="font:500 12px var(--font-ui);color:var(--accent2);line-height:1.5">{{ selNote }}</span></div></sc-if>
+          <sc-if value="{{ isNoRoute }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:12px;padding:14px;border-radius:20px;background:var(--danger-bg);box-shadow:inset 0 0 0 1px var(--danger-bd);position:relative">
+              <div style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 16 16" style="width:16px;height:16px;flex:none;stroke:var(--danger)" fill="none" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M8 2.5 14 13H2Z"></path><path d="M8 6.5v3M8 11.2v.3"></path></svg><span style="font:700 12px var(--font-ui);letter-spacing:.8px;color:var(--danger)">NO SAFE ROUTE FOUND</span></div>
+              <div style="font:500 12.5px var(--font-ui);color:var(--fg);line-height:1.5;margin-top:6px">{{ noRouteWhy }}</div>
+              <div style="display:flex;gap:8px;margin-top:12px">
+                <button onClick="{{ goSafeApproach }}" style="flex:1;height:42px;border-radius:999px;background:var(--raised);border:0;color:var(--fg);font:600 13px var(--font-ui);cursor:pointer">{{ noRouteApproach }}</button>
+                <button onClick="{{ overrideRisk }}" style="flex:1;height:42px;border-radius:999px;background:transparent;border:1.5px solid var(--danger);color:var(--danger);font:600 13px var(--font-ui);cursor:pointer">{{ noRouteOverride }}</button>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ isRoutable }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;gap:8px;margin-top:12px;position:relative">
+              <button onClick="{{ pickRoute1 }}" style="flex:1;text-align:left;padding:10px 14px;border-radius:20px 20px 20px 8px;background:{{ r1Bg }};border:1.5px solid {{ r1Bd }};cursor:pointer;color:inherit;transition:background .2s"><div style="font:700 10.5px var(--font-ui);letter-spacing:.6px;color:var(--fg)">ROUTE #1 · DIRECT</div><div style="font:500 10.5px var(--font-ui);color:{{ r1Fg }};margin-top:4px;line-height:1.35">{{ r1Sub }}</div></button>
+              <button onClick="{{ pickRoute2 }}" style="flex:1;text-align:left;padding:10px 14px;border-radius:20px 20px 8px 20px;background:{{ r2Bg }};border:1.5px solid {{ r2Bd }};cursor:pointer;color:inherit;transition:background .2s"><div style="font:700 10.5px var(--font-ui);letter-spacing:.6px;color:var(--fg)">ROUTE #2 · SAFE</div><div style="font:500 10.5px var(--font-ui);color:var(--accent2);margin-top:4px;line-height:1.35">{{ r2Sub }}</div></button>
+            </div>
+            <div style="margin-top:8px;padding:10px 14px;border-radius:20px;background:var(--row);position:relative">
+              <div style="display:flex;justify-content:space-between;gap:8px;font:600 9.5px var(--font-ui);color:var(--fg2);letter-spacing:.5px;white-space:nowrap"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">ELEVATION PROFILE</span><span style="color:var(--warm);text-align:right;flex:none">{{ profStats }}</span></div>
+              <svg viewBox="0 0 300 44" preserveAspectRatio="none" style="width:100%;height:44px;display:block;margin-top:6px;overflow:visible"><defs><linearGradient id="mnProfG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--accent);stop-opacity:.35"></stop><stop offset="1" style="stop-color:var(--accent);stop-opacity:0"></stop></linearGradient></defs><path fill="url(#mnProfG)" d="{{ profArea }}"></path><path style="stroke:var(--accent)" d="{{ profLine }}" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path><path style="stroke:var(--warm)" d="{{ profSteep }}" fill="none" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke"></path></svg>
+              <div style="display:flex;justify-content:space-between;gap:8px;font:500 9.5px var(--font-ui);color:var(--fg3);margin-top:4px;white-space:nowrap"><span style="flex:none">{{ profStartLabel }}</span><span style="text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis">{{ profEndLabel }}</span></div>
+              <div style="font:500 9.5px var(--font-ui);color:var(--fg3);margin-top:4px;letter-spacing:.3px">{{ gradeLimit }} · PEACH = GRADE OVER 12°</div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px;position:relative">
+              <button onClick="{{ addStopSel }}" style="height:50px;padding:0 16px;border-radius:999px;background:var(--raised);border:0;color:var(--fg);font:600 14px var(--font-ui);cursor:pointer;white-space:nowrap">{{ addStopLabel }}</button>
+              <button onClick="{{ openStreet }}" title="Street level" style="width:50px;height:50px;border-radius:50%;background:var(--raised);border:0;color:var(--accent2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none"><svg viewBox="0 0 20 20" style="width:20px;height:20px" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 10s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5Z"></path><circle cx="10" cy="10" r="2.5"></circle></svg></button>
+              <button onClick="{{ startNav }}" style="flex:1;height:50px;border-radius:999px;background:var(--cta);border:0;color:var(--cta-ink);font:800 17px var(--font-ui);letter-spacing:-.2px;cursor:pointer;box-shadow:var(--glow);display:flex;align-items:center;justify-content:center;gap:8px;transition:background .2s" style-hover="background:var(--cta-hover)">NAVIGATE<svg viewBox="0 0 16 16" style="width:16px;height:16px" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"></path></svg></button>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isRoute }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:8px;padding:2px 0 4px">
+          <span style="font:700 22px var(--font-ui);letter-spacing:-.5px;color:var(--fg)">Sequence</span>
+          <span style="font:700 10.5px var(--font-ui);letter-spacing:.5px;color:var(--fg2);background:var(--raised);padding:7px 11px;border-radius:999px">{{ stopsCount }}</span>
+          <button onClick="{{ addStopSearch }}" style="margin-left:auto;height:36px;padding:0 16px;border-radius:999px;background:var(--cta);border:0;color:var(--cta-ink);font:700 13px var(--font-ui);cursor:pointer">Add Stop</button>
+        </div>
+        <sc-for list="{{ stopRows }}" as="st" hint-placeholder-count="2">
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 12px 10px 10px;border-radius:999px;background:var(--row)">
+            <div style="width:34px;height:34px;border-radius:50%;background:rgba(var(--accent-rgb),.15);display:flex;align-items:center;justify-content:center;font:700 11px var(--font-ui);color:var(--accent2);flex:none">{{ st.num }}</div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:8px;min-width:0"><span style="font:700 14px var(--font-ui);color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ st.name }}</span><sc-if value="{{ st.tag }}" hint-placeholder-val="{{ false }}"><span style="font:700 8.5px var(--font-ui);letter-spacing:.5px;color:var(--accent2);background:var(--raised);padding:3px 7px;border-radius:999px;flex:none">{{ st.tag }}</span></sc-if></div>
+              <div style="font:500 10.5px var(--font-ui);color:var(--fg2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ st.sub }}</div>
+            </div>
+            <sc-if value="{{ st.editable }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:4px;flex:none">
+              <button onClick="{{ st.up }}" style="width:28px;height:28px;border-radius:50%;background:var(--raised);border:0;color:var(--fg);cursor:pointer;font:600 12px var(--font-ui)">↑</button>
+              <button onClick="{{ st.down }}" style="width:28px;height:28px;border-radius:50%;background:var(--raised);border:0;color:var(--fg);cursor:pointer;font:600 12px var(--font-ui)">↓</button>
+              <button onClick="{{ st.remove }}" style="width:28px;height:28px;border-radius:50%;background:var(--raised);border:0;color:var(--warm);cursor:pointer;font:500 15px var(--font-ui)">×</button>
+            </div></sc-if>
+          </div>
+        </sc-for>
+        <sc-if value="{{ routeCrossWarn }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:10px;padding:11px 12px 11px 16px;border-radius:20px;background:var(--danger-bg);box-shadow:inset 0 0 0 1px var(--danger-bd)"><span style="font:700 10px var(--font-ui);letter-spacing:.4px;color:var(--danger);flex:1;line-height:1.45">{{ routeCrossWarn }}</span><button onClick="{{ pickRoute2 }}" style="height:32px;padding:0 12px;border-radius:999px;background:var(--raised);border:0;color:var(--fg);font:700 10px var(--font-ui);letter-spacing:.3px;cursor:pointer;flex:none">USE ROUTE #2</button></div></sc-if>
+        <button onClick="{{ navAll }}" style="height:54px;border-radius:999px;background:var(--cta);border:0;color:var(--cta-ink);font:800 16px var(--font-ui);letter-spacing:-.2px;cursor:pointer;margin-top:2px;box-shadow:var(--glow);transition:background .2s" style-hover="background:var(--cta-hover)">NAVIGATE ({{ routeTotal }})</button>
+        <button onClick="{{ clearRoute }}" style="height:32px;background:none;border:0;color:var(--fg3);font:600 11px var(--font-ui);letter-spacing:.6px;cursor:pointer">CLEAR SEQUENCE</button>
+      </sc-if>
+      <sc-if value="{{ isNav }}" hint-placeholder-val="{{ false }}">
+        <sc-if value="{{ navWarn }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:10px;padding:11px 12px 11px 14px;border-radius:20px;background:var(--danger-bg);box-shadow:inset 0 0 0 1px var(--danger-bd)"><svg viewBox="0 0 16 16" style="width:16px;height:16px;flex:none;stroke:var(--danger)" fill="none" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M8 2.5 14 13H2Z"></path><path d="M8 6.5v3M8 11.2v.3"></path></svg><span style="font:700 10px var(--font-ui);letter-spacing:.4px;color:var(--danger);flex:1;line-height:1.45">{{ navWarn }}</span><sc-if value="{{ navWarnFix }}" hint-placeholder-val="{{ false }}"><button onClick="{{ autoReroute }}" style="height:32px;padding:0 12px;border-radius:999px;background:var(--raised);border:0;color:var(--fg);font:700 10px var(--font-ui);letter-spacing:.3px;cursor:pointer;flex:none">REROUTE</button></sc-if></div></sc-if>
+        <sc-if value="{{ viaPending }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:10px;padding:11px 12px 11px 16px;border-radius:20px;background:rgba(var(--accent-rgb),.1);box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb),.35)"><span style="font:600 11px var(--font-ui);color:var(--accent2);flex:1;line-height:1.45">MANUAL REROUTE · tap the map to place a via-point</span><button onClick="{{ toggleReroute }}" style="height:32px;padding:0 12px;border-radius:999px;background:var(--raised);border:0;color:var(--fg);font:700 10px var(--font-ui);letter-spacing:.3px;cursor:pointer">CANCEL</button></div></sc-if>
+        <sc-if value="{{ progStepped }}" hint-placeholder-val="{{ true }}">
+          <div style="background:var(--card);border-radius:var(--r-pebble);padding:14px 16px;position:relative;overflow:hidden">
+            <div style="position:absolute;right:-50px;top:-60px;width:160px;height:160px;border-radius:50%;background:rgba(var(--accent-rgb),.07);pointer-events:none"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;position:relative"><span style="font:700 10px var(--font-ui);letter-spacing:1px;color:var(--warm)">EXPEDITION PROGRESS</span><span style="font:700 11px var(--font-ui);color:var(--fg2)">{{ navPct }}</span></div>
+            <div style="font:700 20px var(--font-ui);letter-spacing:-.5px;color:var(--fg);margin-top:4px;line-height:1.2;position:relative">{{ navLegTitle }}</div>
+            <div style="display:flex;gap:4px;margin-top:12px;position:relative"><sc-for list="{{ navLegs }}" as="lg" hint-placeholder-count="1"><div style="flex:{{ lg.flex }};height:8px;border-radius:4px;background:var(--raised);overflow:hidden"><div style="height:100%;width:{{ lg.fill }};background:var(--accent);border-radius:4px;transition:width .2s linear"></div></div></sc-for></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;position:relative">
+              <div style="background:var(--row);border-radius:18px;padding:10px 12px;min-width:0"><div style="font:600 9px var(--font-ui);letter-spacing:.6px;color:var(--fg2)">TARGET WAYPOINT</div><div style="font:700 14px var(--font-ui);color:var(--fg);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ navTarget }}</div><div style="font:500 11px var(--font-ui);color:var(--accent2);margin-top:2px">{{ navRemain }}</div></div>
+              <div style="background:var(--row);border-radius:18px;padding:10px 12px;min-width:0"><div style="font:600 9px var(--font-ui);letter-spacing:.6px;color:var(--fg2)">HAZARD RADAR SCAN</div><div style="font:700 14px var(--font-ui);color:var(--warm3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ navHazName }}</div><div style="font:700 11px var(--font-ui);color:{{ navHazFg }};margin-top:2px">{{ navHazDist }}</div></div>
+            </div>
+            <div style="margin-top:8px;padding:10px 14px;border-radius:18px;background:var(--row);position:relative">
+              <div style="display:flex;justify-content:space-between;gap:8px;font:600 9.5px var(--font-ui);color:var(--fg2);letter-spacing:.5px;white-space:nowrap"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">GRADE {{ navGrade }} · {{ navSpeed }}</span><span style="color:var(--warm);text-align:right;flex:none">{{ navProfStats }}</span></div>
+              <div style="position:relative;margin-top:6px;height:40px">
+                <svg viewBox="0 0 300 44" preserveAspectRatio="none" style="position:absolute;left:0;top:0;width:100%;height:40px;display:block;overflow:visible"><defs><linearGradient id="mnNavG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--accent);stop-opacity:.35"></stop><stop offset="1" style="stop-color:var(--accent);stop-opacity:0"></stop></linearGradient></defs><path fill="url(#mnNavG)" d="{{ navProfArea }}"></path><path style="stroke:var(--accent)" d="{{ navProfLine }}" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path><path style="stroke:var(--warm)" d="{{ navProfSteep }}" fill="none" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke"></path></svg>
+                <div style="position:absolute;left:0;top:-4px;bottom:-4px;width:{{ navPosLeft }};background:rgba(var(--bg1-rgb),.45);pointer-events:none;transition:width .2s linear"></div>
+                <div style="position:absolute;left:{{ navPosLeft }};top:-4px;bottom:-4px;width:2px;background:var(--warm3);transform:translateX(-50%);pointer-events:none;transition:left .2s linear"></div>
+                <div style="position:absolute;left:{{ navPosLeft }};top:{{ navPosTop }};width:12px;height:12px;border-radius:50%;background:var(--warm3);border:2px solid var(--bg1);transform:translate(-50%,-50%);pointer-events:none;transition:left .2s linear,top .2s linear"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;gap:8px;font:600 9.5px var(--font-ui);color:var(--fg3);margin-top:6px"><span style="color:var(--warm3)">{{ navPosLabel }}</span><span style="text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ navProfEndLabel }}</span></div>
+            </div>
+            <sc-if value="{{ showNotes }}" hint-placeholder-val="{{ true }}"><div style="display:flex;gap:9px;margin-top:10px;padding:10px 14px;border-radius:18px 18px 18px 6px;background:rgba(var(--accent-rgb),.09);position:relative"><span style="color:var(--accent);font-size:12px;line-height:1.5">✦</span><span style="font:500 12px var(--font-ui);color:var(--accent2);line-height:1.5">{{ navNote }}</span></div></sc-if>
+            <div style="display:flex;gap:8px;margin-top:12px;position:relative">
+              <button onClick="{{ addStopSearch }}" style="flex:1;height:42px;border-radius:999px;background:var(--raised);border:0;color:var(--fg);font:700 10.5px var(--font-ui);letter-spacing:.6px;cursor:pointer">ADD STOP</button>
+              <button onClick="{{ toggleReroute }}" style="flex:1;height:42px;border-radius:999px;background:{{ rerouteBg }};border:1.5px solid {{ rerouteBd }};color:var(--fg);font:700 10.5px var(--font-ui);letter-spacing:.6px;cursor:pointer">REROUTE</button>
+              <button onClick="{{ endNav }}" style="width:68px;height:42px;border-radius:999px;background:var(--danger-deep);border:0;color:#fff;font:800 10.5px var(--font-ui);letter-spacing:.6px;cursor:pointer">END</button>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ progCompact }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:12px;background:var(--card);border-radius:var(--r-pebble);padding:12px 14px">
+            <div style="position:relative;width:46px;height:46px;flex:none"><svg viewBox="0 0 44 44" style="width:46px;height:46px;transform:rotate(-90deg)"><circle style="stroke:var(--raised)" cx="22" cy="22" r="18" fill="none" stroke-width="4"></circle><circle cx="22" cy="22" r="18" fill="none" stroke-width="4" stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="{{ navRingOff }}" style="transition:stroke-dashoffset .2s linear;stroke:var(--accent)"></circle></svg><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 9.5px var(--font-ui);color:var(--accent2)">{{ navPct }}</span></div>
+            <div style="flex:1;min-width:0"><div style="font:700 14px var(--font-ui);color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ navTarget }}</div><div style="font:500 10.5px var(--font-ui);color:var(--fg2);margin-top:2px">{{ navLegShort }} · {{ navRemain }}</div><div style="font:700 9.5px var(--font-ui);color:{{ navHazFg }};margin-top:3px;letter-spacing:.3px">{{ navHazName }} · {{ navHazDist }}</div></div>
+            <button onClick="{{ endNav }}" style="width:52px;height:38px;border-radius:999px;background:var(--danger-deep);border:0;color:#fff;font:800 10px var(--font-ui);letter-spacing:.5px;cursor:pointer;flex:none">END</button>
+          </div>
+          <div style="display:flex;gap:8px"><button onClick="{{ addStopSearch }}" style="flex:1;height:36px;border-radius:999px;background:var(--raised);border:0;color:var(--fg);font:700 10.5px var(--font-ui);letter-spacing:.6px;cursor:pointer">ADD STOP</button><button onClick="{{ toggleReroute }}" style="flex:1;height:36px;border-radius:999px;background:{{ rerouteBg }};border:1.5px solid {{ rerouteBd }};color:var(--fg);font:700 10.5px var(--font-ui);letter-spacing:.6px;cursor:pointer">REROUTE</button></div>
+        </sc-if>
+      </sc-if>
+      <sc-if value="{{ isArrived }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:12px;background:var(--card);border-radius:var(--r-pebble2);padding:14px;box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb),.25)">
+          <div style="width:40px;height:40px;border-radius:50%;background:rgba(var(--accent-rgb),.15);display:flex;align-items:center;justify-content:center;color:var(--accent);flex:none"><svg viewBox="0 0 16 16" style="width:16px;height:16px" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 6.5 12 13 4.5"></path></svg></div>
+          <div style="flex:1;min-width:0"><div style="font:700 10.5px var(--font-ui);letter-spacing:.9px;color:var(--accent2)">{{ arrivedName }}</div><div style="font:700 15px var(--font-ui);color:var(--fg);margin-top:2px;letter-spacing:-.2px">Arrived at Destination</div><div style="font:500 10.5px var(--font-ui);color:var(--fg2);margin-top:2px">{{ arrivedStats }}</div></div>
+          <button onClick="{{ dismissArrived }}" style="height:36px;padding:0 14px;border-radius:999px;background:var(--raised);border:0;color:var(--fg);font:700 10.5px var(--font-ui);letter-spacing:.5px;cursor:pointer;flex:none">DONE</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ showSector }}" hint-placeholder-val="{{ true }}">
+        <div style="background:rgba(var(--row-rgb),.92);border-radius:var(--r-pebble);padding:14px 16px;backdrop-filter:blur(var(--blur));position:relative;overflow:hidden">
+          <div style="position:absolute;left:-40px;bottom:-60px;width:150px;height:150px;border-radius:50%;background:rgba(var(--warm-rgb),.06);pointer-events:none"></div>
+          <button onClick="{{ locateRover }}" title="Center on rover" style="display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;padding:0;cursor:pointer;text-align:left;color:inherit;position:relative"><span style="font:700 22px var(--font-ui);letter-spacing:-.5px;color:var(--fg)">Gale Crater</span><span style="margin-left:auto;font:500 10px var(--font-ui);color:var(--fg2)">{{ roverCoords }}</span><svg viewBox="0 0 16 16" style="width:15px;height:15px;flex:none;stroke:var(--accent2)" fill="none" stroke-width="1.6"><circle cx="8" cy="8" r="4"></circle><path d="M8 1v3M8 12v3M1 8h3M12 8h3" stroke-linecap="round"></path></svg></button>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px;position:relative">
+            <div style="background:var(--card);border-radius:18px;padding:10px 11px"><div style="font:600 9px var(--font-ui);letter-spacing:.6px;color:var(--fg2);white-space:nowrap">{{ t1Label }}</div><div style="display:flex;align-items:baseline;gap:4px;margin-top:4px;flex-wrap:wrap"><span style="font:700 14px var(--font-ui);letter-spacing:-.2px;color:var(--warm3)">{{ t1Val }}</span><span style="font:500 9px var(--font-ui);color:var(--fg2)">{{ t1Sub }}</span></div></div>
+            <div style="background:var(--card);border-radius:18px;padding:10px 11px"><div style="font:600 9px var(--font-ui);letter-spacing:.6px;color:var(--fg2);white-space:nowrap">DUST OPACITY</div><div style="display:flex;align-items:baseline;gap:4px;margin-top:4px;flex-wrap:wrap"><span style="font:700 14px var(--font-ui);letter-spacing:-.2px;color:var(--accent2)">τ 0.32</span><span style="font:500 9px var(--font-ui);color:var(--accent2);opacity:.8">LOW</span></div></div>
+            <div style="background:var(--card);border-radius:18px;padding:10px 11px"><div style="font:600 9px var(--font-ui);letter-spacing:.6px;color:var(--fg2);white-space:nowrap">GROUND SLOPE</div><div style="display:flex;align-items:baseline;gap:4px;margin-top:4px;flex-wrap:wrap"><span style="font:700 14px var(--font-ui);letter-spacing:-.2px;color:var(--warm2)">{{ slopeVal }}</span><span style="font:500 9px var(--font-ui);color:var(--fg2)">{{ slopeSub }}</span></div></div>
+          </div>
+        </div>
+        <!-- @advisory -->
+        <button onClick="{{ viewAdvisory }}" title="View on map" style="display:flex;align-items:center;gap:12px;background:rgba(var(--bg1-rgb),.92);border-radius:999px;padding:10px 12px 10px 10px;border:1px solid {{ advBd }};width:100%;text-align:left;cursor:pointer;color:inherit;transition:background .15s" style-hover="background:var(--row)">
+          <div style="width:40px;height:40px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;color:{{ advColor }};flex:none"><svg viewBox="0 0 16 16" style="width:17px;height:17px" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M8 2.5 14 13H2Z"></path><path d="M8 6.5v3M8 11.2v.3"></path></svg></div>
+          <div style="flex:1;min-width:0"><div style="font:700 12px var(--font-ui);color:var(--fg)">{{ advTitle }}</div><div style="font:500 10.5px var(--font-ui);color:var(--fg2);line-height:1.45;margin-top:2px">{{ advSub }}</div></div>
+          <span style="font:700 9.5px var(--font-ui);letter-spacing:.6px;color:{{ advBadgeFg }};background:var(--raised);padding:6px 11px;border-radius:999px;flex:none">{{ advBadge }}</span>
+        </button>
+        <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+          <div style="font:700 10.5px var(--font-ui);letter-spacing:1px;color:var(--fg3);margin-top:6px;padding-left:4px">NEARBY LANDMARKS</div>
+          <sc-for list="{{ nearby }}" as="r" hint-placeholder-count="3">
+            <button onClick="{{ r.onTap }}" style="display:flex;align-items:center;gap:12px;padding:10px 12px 10px 10px;border-radius:999px;background:var(--row);border:0;text-align:left;cursor:pointer;color:inherit;width:100%;transition:background .15s" style-hover="background:var(--card)">
+              <div style="width:38px;height:38px;border-radius:50%;background:var(--raised);display:flex;align-items:center;justify-content:center;color:var(--accent2);font:800 10px var(--font-ui);letter-spacing:.3px;flex:none">{{ r.icon }}</div>
+              <div style="flex:1;min-width:0"><div style="font:600 14px var(--font-ui);color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</div><div style="font:500 11px var(--font-ui);color:var(--fg2);letter-spacing:.2px;margin-top:1px">{{ r.sub }}</div></div>
+              <span style="font:700 9.5px var(--font-ui);letter-spacing:.6px;color:{{ r.tagFg }};flex:none;padding-right:4px">{{ r.tag }}</span>
+            </button>
+          </sc-for>
+        </sc-if>
+      </sc-if>
+    </div>
+  </div>
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;left:{{ toastLeft }}px;right:16px;top:{{ overlayTop }}px;max-width:380px;z-index:6;display:flex;align-items:center;gap:10px;padding:11px 16px;border-radius:20px;background:rgba(var(--bg1-rgb),.95);box-shadow:var(--shadow2);pointer-events:none"><span style="width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none;animation:mn-blink 1.2s infinite"></span><span style="font:600 11px var(--font-ui);letter-spacing:.2px;color:var(--fg);line-height:1.45">{{ toast }}</span></div></sc-if>
+  <sc-if value="{{ street }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:{{ mapLeft }}px;top:0;right:0;bottom:0;background:var(--bg0);z-index:8;display:flex;flex-direction:column">
+      <div style="height:64px;display:flex;align-items:center;gap:12px;padding:0 12px;background:rgba(var(--bg1-rgb),.9);flex:none">
+        <button onClick="{{ closeStreet }}" style="width:44px;height:44px;border-radius:50%;background:var(--card);border:0;color:var(--fg);display:flex;align-items:center;justify-content:center;cursor:pointer"><svg viewBox="0 0 16 16" style="width:16px;height:16px" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3 5 8l5 5"></path></svg></button>
+        <div style="min-width:0"><div style="font:700 10px var(--font-ui);letter-spacing:1.1px;color:var(--accent2)">STREET LEVEL</div><div style="font:700 15px var(--font-ui);color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.2px">{{ streetName }}</div></div>
+        <span style="margin-left:auto;font:700 9px var(--font-ui);letter-spacing:.6px;color:var(--warm);padding:6px 11px;border-radius:999px;background:var(--card);flex:none">MASTCAM-Z · SOL 740</span>
+      </div>
+      <div style="flex:1;position:relative;min-height:0">
+        <image-slot id="street-pano" shape="rect" placeholder="Drop a rover panorama for this waypoint (360° Mastcam mosaic)"></image-slot>
+        <div style="position:absolute;left:0;right:0;top:0;height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:linear-gradient(rgba(20,11,9,.8),rgba(20,11,9,0));pointer-events:none;font:600 10px var(--font-ui);letter-spacing:1px;color:var(--fg2)"><span>N</span><span>NE</span><span style="color:var(--accent)">E</span><span>SE</span><span>S</span><span>SW</span><span>W</span><span>NW</span></div>
+        <div style="position:absolute;left:50%;top:36px;bottom:0;width:1px;background:rgba(var(--accent-rgb),.35);pointer-events:none"></div>
+        <div style="position:absolute;left:12px;bottom:12px;display:flex;gap:6px;pointer-events:none"><span style="font:600 9px var(--font-ui);letter-spacing:.5px;color:var(--accent2);padding:5px 10px;border-radius:999px;background:rgba(var(--bg1-rgb),.85)">HDG 092°</span><span style="font:600 9px var(--font-ui);letter-spacing:.5px;color:var(--fg2);padding:5px 10px;border-radius:999px;background:rgba(var(--bg1-rgb),.85)">{{ streetCoords }}</span></div>
+      </div>
+      <div style="padding:14px 16px 22px;display:flex;flex-direction:column;gap:10px;background:var(--bg2);border-radius:var(--r-sheet) var(--r-sheet) 0 0;flex:none;margin-top:-24px;position:relative">
+        <div style="font:500 13px var(--font-ui);color:var(--fg2);line-height:1.5">{{ streetDesc }}</div>
+        <div style="display:flex;gap:8px"><button onClick="{{ closeStreet }}" style="flex:1;height:46px;border-radius:999px;background:var(--raised);border:0;color:var(--fg);font:600 14px var(--font-ui);cursor:pointer">Back to map</button><button onClick="{{ streetNav }}" style="flex:1;height:46px;border-radius:999px;background:var(--cta);border:0;color:var(--cta-ink);font:800 15px var(--font-ui);cursor:pointer;box-shadow:var(--glow)">Navigate here</button></div>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ settingsOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeSettings }}" style="position:absolute;inset:0;background:rgba(20,11,9,.55);backdrop-filter:blur(4px);z-index:9"></div>
+    <div style="{{ settingsPos }}">
+      <sc-if value="{{ isPhone }}" hint-placeholder-val="{{ true }}"><div style="height:24px;display:flex;align-items:center;justify-content:center;flex:none"><div style="width:44px;height:5px;border-radius:3px;background:var(--line)"></div></div></sc-if>
+      <sc-if value="{{ isDesk }}" hint-placeholder-val="{{ false }}"><div style="height:20px;flex:none"></div></sc-if>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 16px 12px;flex:none"><span style="font:700 22px var(--font-ui);letter-spacing:-.5px;color:var(--fg)">Settings</span><button onClick="{{ closeSettings }}" style="height:32px;padding:0 14px;border-radius:999px;background:var(--raised);border:0;color:var(--fg);font:700 10.5px var(--font-ui);letter-spacing:.5px;cursor:pointer">DONE</button></div>
+      <div class="mn-scroll mn-stack" style="flex:1;min-height:0;overflow-y:auto;padding:0 16px 28px;display:flex;flex-direction:column;gap:10px;scrollbar-width:none">
+        <div style="font:700 10.5px var(--font-ui);letter-spacing:1px;color:var(--fg3);padding-left:4px">MAP</div>
+        <div style="background:var(--card);border-radius:var(--r-pebble);padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+          <div><div style="font:700 13px var(--font-ui);color:var(--fg)">Layer controls</div><div style="font:500 10.5px var(--font-ui);color:var(--fg3);margin-top:3px;line-height:1.45">Dock keeps elevation and heatmap in floating buttons; Panel opens them inside the sheet.</div></div>
+          <div style="display:flex;gap:4px;background:var(--row);padding:3px;border-radius:999px"><sc-for list="{{ segLayer }}" as="o" hint-placeholder-count="2"><button onClick="{{ o.onTap }}" style="flex:1;height:32px;border-radius:999px;border:0;background:{{ o.bg }};color:{{ o.fg }};font:700 10px var(--font-ui);letter-spacing:.4px;cursor:pointer;transition:background .2s">{{ o.label }}</button></sc-for></div>
+        </div>
+        <div style="background:var(--card);border-radius:var(--r-pebble2);padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+          <div><div style="font:700 13px var(--font-ui);color:var(--fg)">Hazard alerts</div><div style="font:500 10.5px var(--font-ui);color:var(--fg3);margin-top:3px;line-height:1.45">Where the nearest-threat warning appears when warning zones are on.</div></div>
+          <div style="display:flex;gap:4px;background:var(--row);padding:3px;border-radius:999px"><sc-for list="{{ segHaz }}" as="o" hint-placeholder-count="2"><button onClick="{{ o.onTap }}" style="flex:1;height:32px;border-radius:999px;border:0;background:{{ o.bg }};color:{{ o.fg }};font:700 10px var(--font-ui);letter-spacing:.4px;cursor:pointer;transition:background .2s">{{ o.label }}</button></sc-for></div>
+        </div>
+        <div style="font:700 10.5px var(--font-ui);letter-spacing:1px;color:var(--fg3);padding-left:4px;margin-top:6px">NAVIGATION</div>
+        <div style="background:var(--card);border-radius:var(--r-pebble);padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+          <div><div style="font:700 13px var(--font-ui);color:var(--fg)">Progress card</div><div style="font:500 10.5px var(--font-ui);color:var(--fg3);margin-top:3px;line-height:1.45">Stepped shows legs, radar and the grade map; Compact is a single ring.</div></div>
+          <div style="display:flex;gap:4px;background:var(--row);padding:3px;border-radius:999px"><sc-for list="{{ segProg }}" as="o" hint-placeholder-count="2"><button onClick="{{ o.onTap }}" style="flex:1;height:32px;border-radius:999px;border:0;background:{{ o.bg }};color:{{ o.fg }};font:700 10px var(--font-ui);letter-spacing:.4px;cursor:pointer;transition:background .2s">{{ o.label }}</button></sc-for></div>
+        </div>
+        <div style="background:var(--card);border-radius:var(--r-pebble2);padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div style="min-width:0"><div style="font:700 13px var(--font-ui);color:var(--fg)">Rover grade limit</div><div style="font:500 10.5px var(--font-ui);color:var(--fg3);margin-top:3px;line-height:1.45">Steepest slope Route #2 will plan across. Direct routes allow 25°.</div></div><span style="font:700 12px var(--font-ui);color:var(--accent2);background:var(--raised);padding:6px 11px;border-radius:999px;flex:none">{{ gradeLabel }}</span></div>
+          <input type="range" min="8" max="30" step="1" value="{{ gradeVal }}" onChange="{{ onGrade }}" onInput="{{ onGrade }}">
+          <div style="display:flex;justify-content:space-between;font:500 9.5px var(--font-ui);color:var(--fg3)"><span>8° cautious</span><span>30° aggressive</span></div>
+        </div>
+        <div style="background:var(--card);border-radius:var(--r-pebble);padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div style="min-width:0"><div style="font:700 13px var(--font-ui);color:var(--fg)">Demo speed</div><div style="font:500 10.5px var(--font-ui);color:var(--fg3);margin-top:3px;line-height:1.45">How fast the rover simulation runs relative to real time.</div></div><span style="font:700 12px var(--font-ui);color:var(--accent2);background:var(--raised);padding:6px 11px;border-radius:999px;flex:none">{{ demoLabel }}</span></div>
+          <input type="range" min="10" max="240" step="10" value="{{ demoVal }}" onChange="{{ onDemo }}" onInput="{{ onDemo }}">
+          <div style="display:flex;justify-content:space-between;font:500 9.5px var(--font-ui);color:var(--fg3)"><span>10×</span><span>240×</span></div>
+        </div>
+        <div style="font:700 10.5px var(--font-ui);letter-spacing:1px;color:var(--fg3);padding-left:4px;margin-top:6px">SEARCH</div>
+        <div style="background:var(--card);border-radius:var(--r-pebble2);padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+          <div><div style="font:700 13px var(--font-ui);color:var(--fg)">Category chips</div><div style="font:500 10.5px var(--font-ui);color:var(--fg3);margin-top:3px;line-height:1.45">Badge on each category: how many landmarks it holds, or its code.</div></div>
+          <div style="display:flex;gap:4px;background:var(--row);padding:3px;border-radius:999px"><sc-for list="{{ segChips }}" as="o" hint-placeholder-count="2"><button onClick="{{ o.onTap }}" style="flex:1;height:32px;border-radius:999px;border:0;background:{{ o.bg }};color:{{ o.fg }};font:700 10px var(--font-ui);letter-spacing:.4px;cursor:pointer;transition:background .2s">{{ o.label }}</button></sc-for></div>
+        </div>
+        <div style="font:700 10.5px var(--font-ui);letter-spacing:1px;color:var(--fg3);padding-left:4px;margin-top:6px">ASSISTANT</div>
+        <div style="background:var(--card);border-radius:var(--r-pebble);padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px">
+          <div style="min-width:0"><div style="font:700 13px var(--font-ui);color:var(--fg)">Inline notes</div><div style="font:500 10.5px var(--font-ui);color:var(--fg3);margin-top:3px;line-height:1.45">Show the assistant's waypoint notes on target and progress cards.</div></div>
+          <button onClick="{{ toggleNotes }}" style="width:44px;height:24px;border-radius:12px;background:{{ notesSwBg }};border:0;position:relative;cursor:pointer;transition:background .2s;flex:none"><span style="position:absolute;top:2px;left:{{ notesKnob }};width:20px;height:20px;border-radius:10px;background:{{ notesKnobBg }};transition:left .2s;box-shadow:0 2px 6px rgba(0,0,0,.3)"></span></button>
+        </div>
+        <button onClick="{{ resetSettings }}" style="height:36px;background:none;border:0;color:var(--fg3);font:600 11px var(--font-ui);letter-spacing:.6px;cursor:pointer;margin-top:4px">RESET TO DEFAULTS</button>
+      </div>
+    </div>
+  </sc-if>
+  <!-- @overlays -->
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:393,&quot;height&quot;:852},
+&quot;scene&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;home&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;layers&quot;,&quot;search&quot;,&quot;waypoint&quot;,&quot;route&quot;,&quot;nav&quot;,&quot;assistant&quot;,&quot;settings&quot;],&quot;tsType&quot;:&quot;'home' | 'layers' | 'search' | 'waypoint' | 'route' | 'nav' | 'assistant' | 'settings'&quot;,&quot;section&quot;:&quot;Demo&quot;},
+&quot;device&quot;:{&quot;editor&quot;:null,&quot;default&quot;:&quot;phone&quot;,&quot;tsType&quot;:&quot;'phone' | 'desktop'&quot;,&quot;section&quot;:&quot;Demo&quot;},
+&quot;legendMinK&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:180,&quot;min&quot;:100,&quot;max&quot;:300,&quot;step&quot;:5,&quot;unit&quot;:&quot;K&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Heatmap&quot;},
+&quot;legendMaxK&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:280,&quot;min&quot;:150,&quot;max&quot;:350,&quot;step&quot;:5,&quot;unit&quot;:&quot;K&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Heatmap&quot;},
+&quot;layerPicker&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;dock&quot;,&quot;options&quot;:[&quot;dock&quot;,&quot;panel&quot;],&quot;tsType&quot;:&quot;'dock' | 'panel'&quot;,&quot;section&quot;:&quot;Layout&quot;},
+&quot;hazardStyle&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;advisory&quot;,&quot;options&quot;:[&quot;advisory&quot;,&quot;banner&quot;],&quot;tsType&quot;:&quot;'advisory' | 'banner'&quot;,&quot;section&quot;:&quot;Hazards&quot;},
+&quot;progressCard&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;stepped&quot;,&quot;options&quot;:[&quot;stepped&quot;,&quot;compact&quot;],&quot;tsType&quot;:&quot;'stepped' | 'compact'&quot;,&quot;section&quot;:&quot;Navigation&quot;},
+&quot;maxGrade&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:18,&quot;min&quot;:8,&quot;max&quot;:30,&quot;step&quot;:1,&quot;unit&quot;:&quot;°&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Navigation&quot;},
+&quot;demoSpeed&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:60,&quot;min&quot;:10,&quot;max&quot;:240,&quot;step&quot;:10,&quot;unit&quot;:&quot;×&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Navigation&quot;},
+&quot;chipStyle&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;counts&quot;,&quot;options&quot;:[&quot;counts&quot;,&quot;icons&quot;],&quot;tsType&quot;:&quot;'counts' | 'icons'&quot;,&quot;section&quot;:&quot;Search&quot;},
+&quot;inlineNotes&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Assistant&quot;}}">
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    const L=(id,name,cat,x,y,lvl,elev,desc,note)=>({id,name,cat,x,y,lvl,elev,desc,note});
+    this.LM=[
+      L('bradbury','Bradbury Landing','Landing',214,356,3,-4501,'Curiosity touchdown site, Sol 0. Flat alluvial plain with cached supplies.','Home base. Every route starts from the rover unless you move it.'),
+      L('yellowknife','Yellowknife Bay','Water-Ice',248,340,3,-4519,'Ancient lakebed mudstone; first drill site (John Klein).','Low-slope approach from the west. Good first science stop.'),
+      L('rocknest','The Rocknest','Geological',262,400,3,-4489,'Wind-drift sand shadow; first scoop samples of the mission.','Route #2 adds 6 min but keeps 12 km clear of Dust Devil #84.'),
+      L('pahrump','Pahrump Hills','Geological',280,428,2,-4460,'Murray formation outcrop at the base of Mount Sharp.','Surface temps here drop fast after 15:00 MTC. Plan arrival before then.'),
+      L('hematite','Hematite Hotspot','Geological',236,442,2,-4440,'Strong hematite signature on a ridge-top outcrop.','Last 400 m are a 14° grade. Keep speed under 4 km/h.'),
+      L('murray','Murray Buttes','Geological',352,468,2,-4410,'Sandstone buttes and mesas; boulder field to the east.','Approach from the north. The east side is flagged rough terrain.'),
+      L('bagnold','Bagnold Dunes','Geological',160,400,3,-4480,'Active dark basaltic dune field.','Low thermal inertia sand: wheels sink. No safe crossing today.'),
+      L('summit','Mount Sharp Summit','Geological',250,470,1,733,'Aeolis Mons peak, 5.2 km above the crater floor.','Critical incline on every flank. EVA time at altitude is radiation-limited.'),
+      L('peace','Peace Vallis Fan','Water-Ice',205,300,2,-4300,'Alluvial fan fed by the northern rim channel; hydrated minerals.','Channel walls shade the fan after 16:00. Cold, but sheltered from wind.'),
+      L('glen','Glen Torridon','Water-Ice',300,452,2,-4420,'Clay-bearing trough with the strongest smectite signal in the crater.','Clay unit is soft but stable. A good shelter stop on long traverses.'),
+      L('habitat','Habitat Alpha','Habitats',168,336,3,-4505,'Pressurized hab module, 4 crew. O2 and water resupply.','Resupply here before any traverse over 20 km.'),
+      L('relay2','Relay Mast R-2','Relays',150,330,3,-4498,'UHF relay, 12 km line-of-sight radius.','Coverage drops behind the rim west of here.'),
+      L('relay1','Relay Mast R-1','Relays',300,380,3,-4470,'UHF relay, 12 km line-of-sight radius.','Covers the Rocknest and Pahrump corridor.'),
+      L('lz2','LZ-2 Aeolis Palus','Landing',330,360,3,-4495,'Surveyed landing pad. 1.1° mean slope, no boulders over 20 cm.','Clear for descent. Dust opacity τ 0.32 is within limits.'),
+      L('lz3','LZ-3 Emergency Pad','Landing',120,470,3,-4470,'Emergency ascent-vehicle pad; unlit.','Reachable from the Bagnold edge in 40 min if an abort is called.'),
+      L('crater7k','Crater 7-K','Craters',225,555,3,-4450,'Fresh 400 m impact crater; ejecta blocks expose bedrock.','Rim is loose. Sample from the outer ejecta instead.'),
+      L('rimcrater','North Rim Crater','Craters',282,72,1,-2100,'Large degraded crater on the northern rim.','Outside relay coverage. Log a check-in before leaving the floor.'),
+      L('t4','Checkpoint T-4','Traverse',240,410,3,-4478,'Curiosity traverse marker, Sol 1400.','Known-good ground; tracks still visible.'),
+      L('t9','Checkpoint T-9','Traverse',290,440,2,-4432,'Curiosity traverse marker, Sol 2300.','Short steep step at the vein field. Walk it, do not drive it.')
+    ];
+    this.HZ=[
+      {id:'dust',type:'weather',name:'Dust Devil #84',label:'DUST DEVIL #84 // 42 KM/H',x:300,y:330,rx:28,ry:28,rot:0,color:'#d946ef',detail:'Moving SSE at 18 km/h',vx:0.012,vy:0.03},
+      {id:'steep',type:'steep',name:'Steep slopes',label:'> 28° CRITICAL INCLINE',x:250,y:474,rx:52,ry:30,rot:-20,color:'#ef4444',detail:'Mount Sharp flank, 28–41° grades'},
+      {id:'rough',type:'rough',name:'Rough terrain',label:'BOULDER FIELD // > 40 CM',x:380,y:494,rx:30,ry:22,rot:10,color:'#f4baa0',detail:'Murray Buttes east, 1.2 km of boulders'},
+      {id:'radiation',type:'radiation',name:'Radiation',label:'GCR DOSE 0.9 mSv/DAY',x:430,y:300,rx:60,ry:40,rot:0,color:'#c5c6ff',detail:'Thin atmosphere above +2 km on the east rim'},
+      {id:'sand',type:'sand',name:'Low thermal inertia',label:'SAND TRAP // TI < 120',x:165,y:405,rx:46,ry:22,rot:28,color:'#ffb4a5',detail:'Bagnold Dunes, unconsolidated sand'}
+    ];
+    const RANK={bradbury:1,rocknest:1,pahrump:1,murray:2,summit:1,habitat:1,bagnold:1,yellowknife:2,hematite:2,glen:2,peace:2,lz2:2};
+    this.LM.forEach(l=>{ l.rank=RANK[l.id]||3; });
+    this.CATS=['All','Traverse','Water-Ice','Habitats','Geological','Craters','Relays','Landing'];
+    this.ICON={Traverse:'TR','Water-Ice':'WI',Habitats:'HB',Geological:'GE',Craters:'CR',Relays:'RL',Landing:'LZ'};
+    this.SNAP={peek:400,half:250,full:76};
+    this.HEAT_T=[]; for(let m=90;m<=690;m+=30) this.HEAT_T.push(String(Math.floor(m/60)).padStart(2,'0')+String(m%60).padStart(2,'0'));
+    this.state={mode:'home',sel:null,stops:[],routeOpt:2,q:'',cat:'All',sheetY:400,anim:false,
+      ...(props&&props.device==='desktop'?{s:2.1,tx:-28,ty:-298}:{s:1.3,tx:-116,ty:-284}),elev:0,elevOpen:false,heat:'off',heatT:15,heatPlay:false,heatOpen:false,hazOn:false,
+      hazTypes:{weather:true,steep:true,rough:true,radiation:true,sand:true},lz:true,
+      rover:{x:214,y:356,h:35},nav:null,toast:null,coord:null,clock:'14:32:08',recent:['rocknest','pahrump','murray'],
+      chat:[],chatIn:'',busy:false,street:false,viaPending:false,layersOpen:false,settingsOpen:false,settings:{}};
+    this.DEF={layerPicker:'dock',hazardStyle:'advisory',progressCard:'stepped',maxGrade:18,demoSpeed:60,chipStyle:'counts',inlineNotes:true,legendMinK:180,legendMaxK:280};
+    this.ptrs=new Map(); this.stageRef=React.createRef(); this.t0=Date.now();
+  }
+  applyScene(scene){
+    scene=scene||'home'; const half=this.SNAP.half;
+    if(scene==='layers'){ this.preloadHeat(); this.setState({heat:'on',heatOpen:true,hazOn:true,sheetY:this.SNAP.peek}); }
+    else if(scene==='search') this.setState({mode:'search',cat:'Geological',sheetY:half});
+    else if(scene==='waypoint'){ this.select('rocknest'); this.setState({sheetY:half}); }
+    else if(scene==='route') this.setState({stops:['yellowknife','rocknest','pahrump'],mode:'route',routeOpt:2,sheetY:half});
+    else if(scene==='nav'){ this.beginNav(['rocknest','pahrump']); setTimeout(()=>{ const n=this.state.nav; if(!n) return; const total=n.cum[n.cum.length-1], prog=total*0.3, p=this.posAt(n,prog); this.setState({nav:{...n,prog},rover:{x:p.x,y:p.y,h:p.h},sheetY:200,toast:null}); setTimeout(()=>this.centerOn(this.state.rover,Math.max(this.state.s,1.9)),0); },60); }
+    else if(scene==='assistant'){ const q='Plan a 3-stop science day that stays clear of Dust Devil #84'; const out=this.scripted(q); this.setState({mode:'assistant',sheetY:this.SNAP.full,chat:[{role:'user',text:q,raw:q},{role:'assistant',text:out.reply,raw:JSON.stringify(out),route:out.route,avoid:out.avoid,live:false}]}); }
+    else if(scene==='settings') this.setState({settingsOpen:true});
+  }
+  resetScene(){ this.stopHeat(); this.setState({mode:'home',sel:null,stops:[],nav:null,chat:[],settingsOpen:false,elevOpen:false,heatOpen:false,heat:'off',heatT:15,heatPlay:false,elev:0,hazOn:false,sheetY:this.SNAP.peek,street:false,viaPending:false,q:'',cat:'All',toast:null,rover:{x:214,y:356,h:35},...this.initView()},()=>this.applyScene(this.props.scene)); }
+  componentDidMount(){
+    this.applyScene(this.props.scene);
+    this.clockI=setInterval(()=>{ const t=Math.floor((Date.now()-this.t0)/1000); const s=52328+t; const hh=Math.floor(s/3600)%24, mm=Math.floor(s/60)%60, ss=s%60; const p=n=>String(n).padStart(2,'0'); this.setState({clock:`${p(hh)}:${p(mm)}:${p(ss)}`}); },1000);
+    this.navI=setInterval(()=>this.tick(),100);
+    const el=this.stageRef.current; if(el){ this.wheelH=e=>{ e.preventDefault(); const r=el.getBoundingClientRect(); this.zoomAt(Math.exp(-e.deltaY*0.002),e.clientX-r.left,e.clientY-r.top); }; el.addEventListener('wheel',this.wheelH,{passive:false}); }
+  }
+  componentWillUnmount(){ clearInterval(this.clockI); clearInterval(this.navI); clearInterval(this.heatI); const el=this.stageRef.current; if(el&&this.wheelH) el.removeEventListener('wheel',this.wheelH); }
+  // ---- geometry
+  lm(id){ return this.LM.find(l=>l.id===id); }
+  dist(a,b){ return Math.hypot(a.x-b.x,a.y-b.y); }
+  km(px){ return px*0.1; }
+  minOf(px){ return this.km(px)/8*60; }
+  fmtMin(m){ m=Math.round(m); return m>=60?`${Math.floor(m/60)} h ${String(m%60).padStart(2,'0')} min`:`${m} min`; }
+  fmtKm(px){ return `${this.km(px).toFixed(1)} km`; }
+  latlon(p){ const lat=-4.5895+(p.y-356)*0.1/59.3, lon=137.4417+(p.x-214)*0.1/59.1; return `${Math.abs(lat).toFixed(2)}°${lat<0?'S':'N'} ${lon.toFixed(2)}°E`; }
+  hzR(h){ return Math.max(h.rx,h.ry); }
+  hzOn(h){ return this.state.hazTypes[h.type]; }
+  ellFrame(p,h){ const a=-(h.rot||0)*Math.PI/180, dx=p.x-h.x, dy=p.y-h.y; return {x:dx*Math.cos(a)-dy*Math.sin(a),y:dx*Math.sin(a)+dy*Math.cos(a)}; }
+  inside(p,h,k){ k=k||1; const f=this.ellFrame(p,h); return (f.x*f.x)/(h.rx*h.rx*k*k)+(f.y*f.y)/(h.ry*h.ry*k*k)<1; }
+  edgeDist(p,h){ const f=this.ellFrame(p,h); const th=Math.atan2(f.y,f.x); const r=h.rx*h.ry/Math.sqrt(Math.pow(h.ry*Math.cos(th),2)+Math.pow(h.rx*Math.sin(th),2)); return Math.hypot(f.x,f.y)-r; }
+  segHit(a,b,h){ for(let i=0;i<=20;i++){ const t=i/20; if(this.inside({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t},h,1.08)) return true; } return false; }
+  // ---- terrain model (synthetic DEM: Mount Sharp mound, crater rim ring, Peace Vallis fan, micro-relief), slope scale 250 m/px
+  E(x,y){ const d=Math.hypot(x-250,y-470); const t=Math.max(0,Math.min(1,(d-6)/104)); const mound=4333*Math.pow(1-t,3)+900*Math.exp(-d*d/196); const rc=Math.hypot(x-262,y-470); const ring=2600*Math.exp(-Math.pow((rc-205)/22,2)); const out=rc>205?1200*Math.min(1,(rc-205)/80):0; const fan=Math.max(0,1-Math.hypot(x-205,y-300)/60)*350; const noise=45*Math.sin(x*0.21)*Math.cos(y*0.17)+30*Math.sin((x+y)*0.33); return -4500+mound+ring+out+fan+noise; }
+  elevOf(p){ return Math.round(this.E(p.x,p.y)); }
+  slopeAt(p){ const h=2; const gx=(this.E(p.x+h,p.y)-this.E(p.x-h,p.y))/(2*h*250), gy=(this.E(p.x,p.y+h)-this.E(p.x,p.y-h))/(2*h*250); return Math.atan(Math.hypot(gx,gy))*180/Math.PI; }
+  speedFor(g){ return g>20?2:g>15?3:g>8?5:8; }
+  overrideOn(){ const S=this.state, o=S.override; return !!o&&(o===S.sel||S.stops.includes(o)||(!!S.nav&&S.nav.stops.includes(o))); }
+  capSafe(){ return this.overrideOn()?45:(this.opt('maxGrade')); }
+  capDirect(){ return this.overrideOn()?45:25; }
+  initGrid(){ this.GS=4; this.GW=Math.ceil(512/this.GS)+1; this.GH=Math.ceil(683/this.GS)+1; this.EL=new Float32Array(this.GW*this.GH); for(let j=0;j<this.GH;j++) for(let i=0;i<this.GW;i++) this.EL[j*this.GW+i]=this.E(i*this.GS,j*this.GS); this.rcache=new Map(); }
+  astar(start,goal,cap,blocked){
+    if(!this.EL) this.initGrid(); const GW=this.GW,GH=this.GH,GS=this.GS,EL=this.EL,N=GW*GH; const cl=(v,m)=>Math.max(0,Math.min(m-1,Math.round(v/GS)));
+    const si=cl(start.x,GW),sj=cl(start.y,GH),gi=cl(goal.x,GW),gj=cl(goal.y,GH); const s=sj*GW+si,t=gj*GW+gi;
+    const g=new Float32Array(N).fill(Infinity),prev=new Int32Array(N).fill(-1),closed=new Uint8Array(N),blk=new Uint8Array(N);
+    if(blocked){ for(let j=0;j<GH;j++) for(let i=0;i<GW;i++){ if(blocked(i*GS,j*GS)) blk[j*GW+i]=1; } } blk[s]=0; blk[t]=0;
+    const tanCap=Math.tan(cap*Math.PI/180); const heap=[];
+    const push=(f,n)=>{ heap.push([f,n]); let k=heap.length-1; while(k>0){ const p=(k-1)>>1; if(heap[p][0]<=heap[k][0]) break; [heap[p],heap[k]]=[heap[k],heap[p]]; k=p; } };
+    const pop=()=>{ const top=heap[0],last=heap.pop(); if(heap.length){ heap[0]=last; let k=0; for(;;){ const l=2*k+1,r=l+1; let m=k; if(l<heap.length&&heap[l][0]<heap[m][0]) m=l; if(r<heap.length&&heap[r][0]<heap[m][0]) m=r; if(m===k) break; [heap[m],heap[k]]=[heap[k],heap[m]]; k=m; } } return top; };
+    const DIRS=[[1,0,1],[-1,0,1],[0,1,1],[0,-1,1],[1,1,1.414],[1,-1,1.414],[-1,1,1.414],[-1,-1,1.414]];
+    g[s]=0; push(Math.hypot(gi-si,gj-sj),s); let best=s,bestH=Infinity,steps=0;
+    while(heap.length&&steps++<60000){ const [,n]=pop(); if(closed[n]) continue; closed[n]=1; if(n===t) break; const i=n%GW,j=(n-i)/GW; const hh=Math.hypot(gi-i,gj-j); if(hh<bestH){ bestH=hh; best=n; }
+      for(const [di,dj,dd] of DIRS){ const ni=i+di,nj=j+dj; if(ni<0||nj<0||ni>=GW||nj>=GH) continue; const m=nj*GW+ni; if(closed[m]||blk[m]) continue; const grade=Math.abs(EL[m]-EL[n])/(dd*GS*250); if(grade>tanCap) continue; const ng=g[n]+dd*(1+3*Math.pow(grade/tanCap,2)); if(ng<g[m]){ g[m]=ng; prev[m]=n; push(ng+Math.hypot(gi-ni,gj-nj),m); } } }
+    const ok=closed[t]===1; let n=ok?t:best; const pts=[]; while(n!==-1){ const i=n%GW; pts.push({x:i*GS,y:(n-i)/GW*GS}); n=prev[n]; } pts.reverse(); return {ok,pts};
+  }
+  segOk(a,b,cap,blocked){ const L=this.dist(a,b),n=Math.max(2,Math.ceil(L/2)),tanCap=Math.tan(cap*Math.PI/180); let prev=a; for(let k=1;k<=n;k++){ const p={x:a.x+(b.x-a.x)*k/n,y:a.y+(b.y-a.y)*k/n}; if(blocked&&blocked(p.x,p.y)) return false; if(Math.abs(this.E(p.x,p.y)-this.E(prev.x,prev.y))/((this.dist(prev,p)||1e-6)*250)>tanCap) return false; prev=p; } return true; }
+  smooth(pts,cap,blocked){ if(pts.length<3) return pts; const out=[pts[0]]; let i=0; while(i<pts.length-1){ let j=Math.min(pts.length-1,i+40); while(j>i+1&&!this.segOk(pts[i],pts[j],cap,blocked)) j--; out.push(pts[j]); i=j; } return out; }
+  blockedFn(points){ const zones=this.HZ.filter(h=>this.hzOn(h)&&!points.some(p=>this.inside(p,h))); return zones.length?(x,y)=>{ const p={x,y}; for(const h of zones){ if(this.inside(p,h,1.06)) return true; } return false; }:null; }
+  profile(pts){ const samples=[]; let px=0; for(let i=1;i<pts.length;i++){ const a=pts[i-1],b=pts[i],L=this.dist(a,b),n=Math.max(1,Math.ceil(L/2)); for(let k=(i===1?0:1);k<=n;k++){ const p={x:a.x+(b.x-a.x)*k/n,y:a.y+(b.y-a.y)*k/n}; samples.push({x:p.x,y:p.y,d:px+L*k/n,h:this.E(p.x,p.y)}); } px+=L; }
+    if(!samples.length){ const p=pts[0]||{x:0,y:0}; samples.push({x:p.x,y:p.y,d:0,h:this.E(p.x,p.y)}); }
+    let min=0,maxGrade=0,asc=0,desc=0; const steep=[]; for(let i=1;i<samples.length;i++){ const a=samples[i-1],b=samples[i],dd=b.d-a.d||1e-6,dh=b.h-a.h,g=Math.atan(Math.abs(dh)/(dd*250))*180/Math.PI; if(dh>0) asc+=dh; else desc-=dh; if(g>maxGrade) maxGrade=g; min+=this.km(dd)/this.speedFor(g)*60; if(g>12) steep.push(`M${a.x.toFixed(1)} ${a.y.toFixed(1)}L${b.x.toFixed(1)} ${b.y.toFixed(1)}`); }
+    return {samples,px,min,maxGrade,asc,desc,steepD:steep.join('')}; }
+  leg(a,b,safe,depth){ depth=depth||0; if(safe&&depth<4){ for(const h of this.HZ){ if(!this.hzOn(h)||this.inside(a,h)||this.inside(b,h)) continue; if(this.segHit(a,b,h)){ const dx=b.x-a.x,dy=b.y-a.y,L=Math.hypot(dx,dy)||1,nx=-dy/L,ny=dx/L,R=this.hzR(h)*1.5; const c1={x:h.x+nx*R,y:h.y+ny*R},c2={x:h.x-nx*R,y:h.y-ny*R}; const via=(this.dist(a,c1)+this.dist(c1,b))<=(this.dist(a,c2)+this.dist(c2,b))?c1:c2; return [...this.leg(a,via,true,depth+1),...this.leg(via,b,true,depth+1)]; } } } return [b]; }
+  buildRoute(points,safe){ const cap=safe?this.capSafe():this.capDirect(), blocked=safe?this.blockedFn(points):null; const pts=[points[0]],legEnds=[0],cross=new Set(); let ok=true,reached=null;
+    for(let i=1;i<points.length;i++){ const a=pts[pts.length-1]; const r=this.astar(a,points[i],cap,blocked); let seg=this.smooth(r.pts,cap,blocked).slice(1); if(r.ok){ if(seg.length) seg[seg.length-1]=points[i]; else seg=[points[i]]; } else { ok=false; if(!seg.length) seg=[a]; reached=reached||seg[seg.length-1]; }
+      let prev=a; for(const p of seg){ for(const h of this.HZ){ if(this.hzOn(h)&&this.segHit(prev,p,h)&&!this.inside(points[i],h)&&!this.inside(points[0],h)) cross.add(h.id); } prev=p; } pts.push(...seg); legEnds.push(pts.length-1); }
+    const prof=this.profile(pts); return {pts,legEnds,px:prof.px,min:prof.min,cross:[...cross],ok,reached,maxGrade:prof.maxGrade,asc:prof.asc,desc:prof.desc,steepD:prof.steepD,prof,cap}; }
+  routeKey(ids,safe){ const S=this.state; return JSON.stringify([ids,safe,Math.round(S.rover.x*2),Math.round(S.rover.y*2),S.hazTypes,this.capSafe(),this.capDirect(),this.HZ.map(h=>Math.round(h.x)+','+Math.round(h.y))]); }
+  memoRoute(ids,safe){ if(!this.rcache) this.initGrid(); const k=this.routeKey(ids,safe); if(this.rcache.has(k)) return this.rcache.get(k); const r=this.buildRoute([this.state.rover,...ids.map(id=>this.lm(id)).filter(Boolean)],safe); if(this.rcache.size>40) this.rcache.delete(this.rcache.keys().next().value); this.rcache.set(k,r); return r; }
+  pathD(pts){ return pts.length>1?pts.map((p,i)=>`${i?'L':'M'}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' '):''; }
+  midOf(pts){ if(!pts||!pts.length) return {x:0,y:0}; const c=this.cumul(pts), half=c[c.length-1]/2; let i=1; while(i<c.length&&c[i]<half) i++; if(i>=c.length){ const e=pts[pts.length-1]; return {x:e.x,y:e.y}; } const a=pts[i-1],b=pts[i],t=(half-c[i-1])/((c[i]-c[i-1])||1); return {x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t}; }
+  blockedBy(p){ return this.HZ.find(h=>this.hzOn(h)&&this.inside(p,h))||null; }
+  // ---- map interaction (stage spans the full 852px; the visible map runs from the 64px header down to the sheet)
+  viewCenter(){ if(this.desk()){ const g=this.geo(); return {x:g.mapW/2,y:g.H/2}; } return {x:196,y:Math.max(184,(64+this.state.sheetY)/2)}; }
+  clampS(s){ return Math.max(0.7,Math.min(4.2,s)); }
+  zoomAt(k,ox,oy){ const ns=this.clampS(this.state.s*k),kk=ns/this.state.s; this.setState({s:ns,tx:ox-(ox-this.state.tx)*kk,ty:oy-(oy-this.state.ty)*kk,anim:false}); }
+  centerOn(p,s){ s=s||this.state.s; const c=this.viewCenter(); this.setState({s,tx:c.x-p.x*s,ty:c.y-p.y*s,anim:true}); clearTimeout(this.animT); this.animT=setTimeout(()=>this.setState({anim:false}),450); }
+  onPD=e=>{ if(e.target.closest&&e.target.closest('button,input,[data-nopan]')) return; e.currentTarget.setPointerCapture(e.pointerId); this.ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); if(this.ptrs.size===1){ this.pan={x:e.clientX,y:e.clientY,tx:this.state.tx,ty:this.state.ty,t:Date.now(),moved:0}; } else if(this.ptrs.size===2){ const [a,b]=[...this.ptrs.values()],r=e.currentTarget.getBoundingClientRect(); this.pinch={d:Math.hypot(a.x-b.x,a.y-b.y),s:this.state.s,tx:this.state.tx,ty:this.state.ty,ox:(a.x+b.x)/2-r.left,oy:(a.y+b.y)/2-r.top}; } };
+  onPM=e=>{ if(!this.ptrs.has(e.pointerId)) return; this.ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); if(this.ptrs.size===2&&this.pinch){ const [a,b]=[...this.ptrs.values()]; const ns=this.clampS(this.pinch.s*Math.hypot(a.x-b.x,a.y-b.y)/this.pinch.d),k=ns/this.pinch.s; this.setState({s:ns,tx:this.pinch.ox-(this.pinch.ox-this.pinch.tx)*k,ty:this.pinch.oy-(this.pinch.oy-this.pinch.ty)*k,anim:false}); } else if(this.pan){ const dx=e.clientX-this.pan.x,dy=e.clientY-this.pan.y; this.pan.moved=Math.max(this.pan.moved,Math.hypot(dx,dy)); this.setState({tx:this.pan.tx+dx,ty:this.pan.ty+dy,anim:false}); } };
+  onPU=e=>{ const tap=this.pan&&this.pan.moved<5&&Date.now()-this.pan.t<450&&this.ptrs.size===1; this.ptrs.delete(e.pointerId); if(this.ptrs.size<2) this.pinch=null; if(this.ptrs.size===0){ if(tap){ const r=e.currentTarget.getBoundingClientRect(); this.mapTap({x:(e.clientX-r.left-this.state.tx)/this.state.s,y:(e.clientY-r.top-this.state.ty)/this.state.s}); } this.pan=null; } };
+  mapTap(p){ if(this.state.viaPending){ this.addVia(p); return; } this.setState({coord:`${this.latlon(p)} · ${this.elevOf(p).toLocaleString()} m · ${Math.round(this.slopeAt(p))}° slope`,heatOpen:false,elevOpen:false}); clearTimeout(this.coordT); this.coordT=setTimeout(()=>this.setState({coord:null}),2600); if(this.state.mode==='waypoint'&&!this.state.stops.length) this.setState({mode:'home',sel:null}); }
+  // ---- sheet
+  layout(){ return 'sheet'; }
+  desk(){ return this.props.device==='desktop'; }
+  initView(){ return this.desk()?{s:2.1,tx:-28,ty:-298}:{s:1.3,tx:-116,ty:-284}; }
+  geo(){ return this.desk()?{W:1440,H:900,panelW:420,mapLeft:420,mapW:1020}:{W:393,H:852,panelW:393,mapLeft:0,mapW:393}; }
+  opt(k){ const v=this.state.settings[k]; if(v!==undefined) return v; const p=this.props[k]; return (p===undefined||p===null)?this.DEF[k]:p; }
+  setOpt(k,v){ this.setState({settings:{...this.state.settings,[k]:v}}); }
+  openSettings=()=>this.setState({settingsOpen:true,elevOpen:false,heatOpen:false});
+  closeSettings=()=>this.setState({settingsOpen:false});
+  resetSettings=()=>this.setState({settings:{}});
+  settingsVals(){
+    const S=this.state; const seg=(k,opts)=>opts.map(([v,label])=>{ const on=this.opt(k)===v; return {label,bg:on?'var(--fg)':'transparent',fg:on?'var(--raised)':'var(--fg2)',onTap:()=>this.setOpt(k,v)}; });
+    const notes=!!this.opt('inlineNotes');
+    return {settingsOpen:S.settingsOpen,openSettings:this.openSettings,closeSettings:this.closeSettings,resetSettings:this.resetSettings,
+      segLayer:seg('layerPicker',[['dock','DOCK'],['panel','PANEL']]),segHaz:seg('hazardStyle',[['advisory','ADVISORY CARD'],['banner','TOP BANNER']]),segProg:seg('progressCard',[['stepped','STEPPED'],['compact','COMPACT']]),segChips:seg('chipStyle',[['counts','COUNTS'],['icons','ICONS']]),
+      gradeVal:this.opt('maxGrade'),gradeLabel:`${this.opt('maxGrade')}°`,onGrade:e=>this.setOpt('maxGrade',Number(e.target.value)),demoVal:this.opt('demoSpeed'),demoLabel:`${this.opt('demoSpeed')}×`,onDemo:e=>this.setOpt('demoSpeed',Number(e.target.value)),
+      notesSwBg:notes?'var(--accent)':'var(--line)',notesKnob:notes?'22px':'2px',notesKnobBg:notes?'var(--bg1)':'var(--fg3)',toggleNotes:()=>this.setOpt('inlineNotes',!notes)};
+  }
+  snapTo(name){ this.setState({sheetY:this.SNAP[name],drag:null}); }
+  setState(s,cb){ if(this.desk()&&s&&typeof s==='object'&&'sheetY' in s){ s={...s}; delete s.sheetY; if(!Object.keys(s).length) return cb&&cb(); } super.setState(s,cb); }
+  onSheetDown=e=>{ e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId); this.sdrag={y:e.clientY,start:this.state.sheetY,t:Date.now(),moved:0}; };
+  onSheetMove=e=>{ if(!this.sdrag) return; const dy=e.clientY-this.sdrag.y; this.sdrag.moved=Math.max(this.sdrag.moved,Math.abs(dy)); this.setState({sheetY:Math.max(60,Math.min(560,this.sdrag.start+dy)),drag:true}); };
+  onSheetUp=e=>{ if(!this.sdrag) return; const y=this.state.sheetY; let next; if(this.sdrag.moved<6){ next=y>=400?'half':y>=250?'full':'peek'; } else { next=Object.entries(this.SNAP).sort((a,b)=>Math.abs(a[1]-y)-Math.abs(b[1]-y))[0][0]; } this.sdrag=null; this.snapTo(next); };
+  // ---- selection / search
+  select(id){ const l=this.lm(id); if(!l) return; const st={sel:id,mode:'waypoint',q:'',cat:'All',elevOpen:false,heatOpen:false}; if(this.state.mode==='search'&&this.state.stops.length){ const stops=this.state.stops.includes(id)?this.state.stops:[...this.state.stops,id]; this.setState({...st,sel:null,mode:'route',stops,sheetY:this.SNAP.half}); if(this.state.stops.includes(id)) this.toast(`${l.name} is already in the sequence`); } else { this.setState({...st,sheetY:this.state.sheetY>400?400:this.state.sheetY}); } this.setState({recent:[id,...this.state.recent.filter(r=>r!==id)].slice(0,4)}); setTimeout(()=>this.centerOn(l),0); }
+  onQ=e=>{ if(this.state.mode!=='search') this.enterSearch(); this.setState({q:e.target.value}); };
+  enterSearch(){ if(this.state.nav){ this.addStopSearch(); return; } this.setState({mode:'search',sheetY:this.SNAP.half,elevOpen:false,heatOpen:false,viaPending:false}); }
+  onSearchFocus=()=>{ if(this.state.mode!=='search') this.enterSearch(); };
+  onSearchKey=e=>{ if(e.key==='Enter'){ const first=this.LM.filter(l=>this.matches(l)).sort((a,b)=>this.dist(this.state.rover,a)-this.dist(this.state.rover,b))[0]; if(first) this.select(first.id); e.target.blur(); } if(e.key==='Escape'){ this.leaveSearch(); e.target.blur(); } };
+  clearQ=()=>this.setState({q:''});
+  clearRecent=()=>this.setState({recent:[]});
+  leaveSearch(){ const S=this.state; this.setState({mode:S.nav?'nav':S.stops.length?'route':'home',q:'',cat:'All'}); }
+  onFilterTap=()=>{ if(this.state.mode==='search') this.leaveSearch(); else this.enterSearch(); };
+  locateRover=()=>{ this.centerOn(this.state.rover); this.setState({coord:`ROVER · ${this.latlon(this.state.rover)}`}); clearTimeout(this.coordT); this.coordT=setTimeout(()=>this.setState({coord:null}),2200); };
+  roverDown=e=>{ e.stopPropagation(); };
+  roverUp=e=>{ e.stopPropagation(); this.locateRover(); };
+  viewAdvisory=()=>{ const h=this.HZ[0]; this.setState({hazOn:true,hazTypes:{...this.state.hazTypes,weather:true},sheetY:this.SNAP.peek}); setTimeout(()=>this.centerOn(h,Math.max(this.state.s,1.3)),0); this.toast(`${h.name} · ${h.detail} · track shown on map`); };
+  goHome=()=>{ const S=this.state; this.setState({mode:S.nav?'nav':S.stops.length?'route':'home',sel:null,q:'',cat:'All',sheetY:S.nav?this.SNAP.peek:S.sheetY}); };
+  visibleLM(){ const {elev,lz}=this.state; return this.LM.filter(l=>(elev===0||l.lvl>=elev)&&(lz||l.cat!=='Landing')); }
+  matches(l){ const q=this.state.q.trim().toLowerCase(); return (this.state.cat==='All'||l.cat===this.state.cat)&&(!q||l.name.toLowerCase().includes(q)||l.cat.toLowerCase().includes(q)||l.desc.toLowerCase().includes(q)); }
+  rowFor(l,tag,tagFg){ const d=this.dist(this.state.rover,l); return {id:l.id,name:l.name,icon:this.ICON[l.cat]||'LM',sub:`${this.fmtKm(d)} away · ${this.fmtMin(d)}`,tag:tag||(this.blockedBy(l)?'HAZARD':'NAV READY'),tagFg:tagFg||(this.blockedBy(l)?'var(--danger)':'var(--warm)'),onTap:()=>this.select(l.id)}; }
+  // ---- routing to the selection
+  routeOpts(ids){ return {direct:this.memoRoute(ids,false),safe:this.memoRoute(ids,true)}; }
+  activeRoute(ids){ const o=this.routeOpts(ids); return (this.state.routeOpt===1||!o.safe.ok)?o.direct:o.safe; }
+  pickRoute1=()=>this.setState({routeOpt:1});
+  pickRoute2=()=>this.setState({routeOpt:2});
+  addStopSel=()=>{ const id=this.state.sel; if(!id) return; const stops=this.state.stops.includes(id)?this.state.stops:[...this.state.stops,id]; this.setState({stops,mode:'route',sel:null,sheetY:this.SNAP.half}); };
+  sparkline(prof){ const s=prof&&prof.samples||[]; if(s.length<2) return {line:'',area:'',steep:'',yAt:()=>22}; const W=300,H=44,tot=s[s.length-1].d||1; let lo=Infinity,hi=-Infinity; for(const p of s){ if(p.h<lo) lo=p.h; if(p.h>hi) hi=p.h; } const span=Math.max(hi-lo,120); const X=p=>(p.d/tot*W).toFixed(1), Y=p=>(H-4-(p.h-lo)/span*(H-8)).toFixed(1); const line=s.map((p,i)=>`${i?'L':'M'}${X(p)} ${Y(p)}`).join(''); const steep=[]; for(let i=1;i<s.length;i++){ const dd=s[i].d-s[i-1].d||1e-6; if(Math.atan(Math.abs(s[i].h-s[i-1].h)/(dd*250))*180/Math.PI>12) steep.push(`M${X(s[i-1])} ${Y(s[i-1])}L${X(s[i])} ${Y(s[i])}`); } const yAt=d=>{ let i=0; while(i<s.length-1&&s[i].d<d) i++; return Number(Y(s[i])); }; return {line,area:`${line}L${W} ${H}L0 ${H}Z`,steep:steep.join(''),yAt}; }
+  goSafeApproach=()=>{ const S=this.state, l=this.lm(S.sel); if(!l) return; const h=this.blockedBy(l); let p; if(h){ const k=this.hzR(h)*1.25, dh=this.dist(S.rover,h)||1; p={x:h.x+(S.rover.x-h.x)/dh*k,y:h.y+(S.rover.y-h.y)/dh*k}; } else { const r=this.memoRoute([...S.stops,l.id],false); p=r.reached||S.rover; }
+    const id='approach-'+l.id; const old=this.LM.findIndex(x=>x.id===id); if(old>=0) this.LM.splice(old,1);
+    this.LM.push({id,name:`${l.name} approach`,cat:l.cat,x:p.x,y:p.y,lvl:l.lvl,elev:this.elevOf(p),rank:1,desc:h?`Nearest safe standoff point, ${this.fmtKm(this.dist(p,l))} short of ${l.name}. Continue on foot with a tether.`:`Closest point the rover can reach under the grade limit, ${this.fmtKm(this.dist(p,l))} short of ${l.name} and ${Math.abs(this.elevOf(l)-this.elevOf(p)).toLocaleString()} m below it. Finish on foot.`,note:h?`Standoff keeps the rover out of the ${h.name.toLowerCase()} zone. EVA leg from here: ${this.fmtMin(this.dist(p,l)/4*6)}.`:`Climb from here is ${Math.round(this.slopeAt(l))}° at the top; budget ${this.fmtMin(this.dist(p,l)/2*6)} on foot with rests.`}); this.select(id); };
+  overrideRisk=()=>{ this.setState({override:this.state.sel,routeOpt:1}); this.toast('Risk acknowledged · grade and hazard limits lifted for this target only'); };
+  startNav=()=>{ const id=this.state.sel; if(!id) return; this.beginNav(this.state.stops.includes(id)?this.state.stops:[...this.state.stops,id]); };
+  cumul(pts){ const c=[0]; for(let i=1;i<pts.length;i++) c.push(c[i-1]+this.dist(pts[i-1],pts[i])); return c; }
+  posAt(nav,d){ const {pts,cum}=nav; let i=1; while(i<cum.length&&cum[i]<d) i++; if(i>=cum.length){ const e=pts[pts.length-1]; return {x:e.x,y:e.y,h:this.state.rover.h}; } const a=pts[i-1],b=pts[i],t=(d-cum[i-1])/((cum[i]-cum[i-1])||1); return {x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t,h:Math.atan2(b.x-a.x,-(b.y-a.y))*180/Math.PI}; }
+  makeNav(stops,pts,legEnds,safe){ const r=safe==null?this.activeRoute(stops):this.buildRoute(pts,safe); return {stops,pts:r.pts,legEnds:r.legEnds,cum:this.cumul(r.pts),prog:0,legIdx:0,startedAt:Date.now(),doneLegs:0}; }
+  beginNav(stops){ if(!stops.length) return; const nav=this.makeNav(stops); this.setState({nav,mode:'nav',sel:null,stops,viaPending:false,override:null,sheetY:this.SNAP.peek}); this.toast(`Navigation started · ${stops.length} leg${stops.length>1?'s':''}, ${this.fmtMin(this.minOf(nav.cum[nav.cum.length-1]))}`); setTimeout(()=>this.centerOn(this.state.rover,Math.max(this.state.s,1.9)),0); }
+  toast(msg,ms){ this.setState({toast:msg}); clearTimeout(this.toastT); this.toastT=setTimeout(()=>this.setState({toast:null}),ms||3200); }
+  tick(){
+    const S=this.state; const dz=this.HZ[0]; dz.x+=dz.vx; dz.y+=dz.vy; if(dz.y>360||dz.x>330){ dz.x=300; dz.y=318; } this.tickN=(this.tickN||0)+1;
+    if(!S.nav){ if(this.tickN%10===0) this.forceUpdate(); return; }
+    const nav={...S.nav}; const total=nav.cum[nav.cum.length-1]; const demo=this.opt('demoSpeed'); const here=this.posAt(nav,nav.prog), ahead=this.posAt(nav,Math.min(total,nav.prog+2)); const grade=Math.atan(Math.abs(this.E(ahead.x,ahead.y)-this.E(here.x,here.y))/((this.dist(here,ahead)||1e-6)*250))*180/Math.PI; const spd=this.speedFor(grade); nav.prog=Math.min(total,nav.prog+(spd*demo/0.1/36000)); nav.grade=grade; nav.spd=spd;
+    const p=this.posAt(nav,nav.prog); const rover={x:p.x,y:p.y,h:p.h};
+    let legIdx=0; for(let i=1;i<nav.legEnds.length;i++){ if(nav.prog>=nav.cum[nav.legEnds[i]]-0.01) legIdx=i; } 
+    if(legIdx>nav.legIdx&&legIdx<nav.stops.length){ this.toast(`Reached ${this.lm(nav.stops[legIdx-1]).name} · leg ${legIdx+1} of ${nav.stops.length}`); }
+    nav.legIdx=Math.min(legIdx,nav.stops.length-1);
+    if(nav.prog>=total-0.01){ const last=this.lm(nav.stops[nav.stops.length-1]); this.setState({rover,nav:null,mode:'arrived',arrived:{name:last.name,km:this.km(total),min:(Date.now()-nav.startedAt)/1000*demo/60,stops:nav.stops.length},stops:[],viaPending:false}); this.toast('Navigation ended automatically · destination reached',6000); return; }
+    this.setState({rover,nav});
+  }
+  remainingStops(){ const n=this.state.nav; return n?n.stops.slice(n.legIdx):[]; }
+  addVia(p){ const S=this.state; if(!S.nav) return; const rem=this.remainingStops(); const pts=[S.rover,p,...rem.map(id=>this.lm(id))]; const r=this.buildRoute(pts,S.routeOpt===2); const nav={...S.nav,pts:r.pts,legEnds:r.legEnds,cum:this.cumul(r.pts),prog:0,stops:rem,legIdx:0}; this.setState({nav,viaPending:false}); this.toast('Manual reroute accepted · via-point added'); }
+  autoReroute=()=>{ const S=this.state; if(!S.nav) return; const rem=this.remainingStops(); const pts=[S.rover,...rem.map(id=>this.lm(id))]; const r=this.buildRoute(pts,true); const nav={...S.nav,pts:r.pts,legEnds:r.legEnds,cum:this.cumul(r.pts),prog:0,stops:rem,legIdx:0}; this.setState({nav,routeOpt:2,viaPending:false}); this.toast('Rerouted on Route #2 · hazard-free'); };
+  toggleReroute=()=>this.setState({viaPending:!this.state.viaPending});
+  endNav=()=>{ this.setState({nav:null,mode:'home',stops:[],viaPending:false}); this.toast('Navigation ended by crew'); };
+  dismissArrived=()=>this.setState({mode:'home',arrived:null});
+  addStopSearch=()=>{ if(this.state.nav){ this.setState({stops:this.remainingStops()}); } this.setState({mode:'search',q:'',cat:'All',sheetY:this.SNAP.half,viaPending:false}); };
+  navAll=()=>this.beginNav(this.state.stops);
+  clearRoute=()=>this.setState({stops:[],mode:'home',sel:null,nav:null,viaPending:false});
+  moveStop(i,d){ const st=[...this.state.stops]; const j=i+d; if(j<0||j>=st.length) return; [st[i],st[j]]=[st[j],st[i]]; this.setState({stops:st}); }
+  removeStop(i){ const st=this.state.stops.filter((_,k)=>k!==i); this.setState({stops:st,mode:st.length?'route':'home'}); }
+  nearestHazard(p){ let best=null; for(const h of this.HZ){ if(!this.hzOn(h)) continue; const d=this.km(this.edgeDist(p,h)); if(!best||d<best.d) best={h,d:Math.max(0,d)}; } return best; }
+  navVals(){
+    const S=this.state, out={isRoute:S.mode==='route',isNav:S.mode==='nav',isArrived:S.mode==='arrived',toast:S.toast,viaPending:S.viaPending,routeDoneD:'',addStopSearch:this.addStopSearch,navAll:this.navAll,clearRoute:this.clearRoute,endNav:this.endNav,dismissArrived:this.dismissArrived,toggleReroute:this.toggleReroute,autoReroute:this.autoReroute,pickRoute2:this.pickRoute2,rerouteBg:S.viaPending?'rgba(var(--accent-rgb),.12)':'var(--raised)',rerouteBd:S.viaPending?'var(--accent)':'transparent',progStepped:(this.opt('progressCard'))==='stepped',progCompact:(this.opt('progressCard'))==='compact'};
+    if((S.mode==='route'||S.mode==='search'||S.mode==='layers')&&S.stops.length){ const r=this.activeRoute(S.stops), o=this.routeOpts(S.stops); const cum=this.cumul(r.pts); const rows=[{num:'01',name:'Rover position',tag:'START',sub:this.latlon(S.rover),editable:false}];
+      S.stops.forEach((id,i)=>{ const l=this.lm(id); const legPx=cum[r.legEnds[i+1]]-cum[r.legEnds[i]]; rows.push({num:String(i+2).padStart(2,'0'),name:l.name,tag:i===S.stops.length-1?'DESTINATION':'',sub:`+${this.fmtKm(legPx)} (${this.fmtMin(this.minOf(legPx))}) • ${this.latlon(l)}`,editable:true,up:()=>this.moveStop(i,-1),down:()=>this.moveStop(i,1),remove:()=>this.removeStop(i)}); });
+      Object.assign(out,{stopRows:rows,stopsCount:`${S.stops.length} STOP${S.stops.length>1?'S':''}`,routeTotal:`${this.fmtMin(r.min).toUpperCase()} · ${this.fmtKm(r.px)} · MAX ${Math.round(r.maxGrade)}°`,routeD:this.pathD(r.pts),routeSteepD:r.steepD,routeAltD:S.routeOpt===1&&o.safe.ok?this.pathD(o.safe.pts):'',etaPill:{...this.midOf(r.pts),text:`${this.fmtMin(r.min)} · ${this.fmtKm(r.px)}`},altPill:(S.routeOpt===1&&o.safe.ok&&o.safe.px!==r.px)?{...this.midOf(o.safe.pts),text:`${this.fmtMin(o.safe.min)} · safe`,onDown:e=>e.stopPropagation(),onUp:e=>{ e.stopPropagation(); this.pickRoute2(); }}:null,routeCrossWarn:S.routeOpt===1&&o.direct.cross.length?`ROUTE #1 CROSSES ${o.direct.cross.map(id=>this.HZ.find(h=>h.id===id).name.toUpperCase()).join(' + ')}`:''}); }
+    if(S.mode==='nav'&&S.nav){ const n=S.nav, total=n.cum[n.cum.length-1], pct=total?n.prog/total:0; const tgt=this.lm(n.stops[n.legIdx]); const legStart=n.cum[n.legEnds[n.legIdx]], legEnd=n.cum[n.legEnds[n.legIdx+1]]; const remPx=Math.max(0,legEnd-n.prog);
+      const legs=n.stops.map((id,i)=>{ const a=n.cum[n.legEnds[i]], b=n.cum[n.legEnds[i+1]]; const f=Math.max(0,Math.min(1,(n.prog-a)/((b-a)||1))); return {flex:String(Math.max(1,Math.round((b-a)/10))),fill:`${(f*100).toFixed(1)}%`}; });
+      const nh=this.nearestHazard(S.rover); let warn='',fix=false; const ahead=n.pts.slice(Math.max(1,n.cum.findIndex(c=>c>n.prog))); let prev=S.rover; for(const p of ahead){ for(const h of this.HZ){ if(this.hzOn(h)&&this.segHit(prev,p,h)&&!this.inside(this.lm(n.stops[n.stops.length-1]),h)){ warn=`ROUTE AHEAD CROSSES ${h.name.toUpperCase()} · ${h.detail}`; fix=true; } } prev=p; if(warn) break; }
+      if(!warn&&nh&&nh.d<2.5) warn=`WARNING · ${nh.h.name.toUpperCase()} ${nh.d.toFixed(1)} KM OFF THE ${nh.h.x<S.rover.x?'PORT':'STARBOARD'} SIDE`;
+      const donePts=[]; for(let i=0;i<n.pts.length&&n.cum[i]<=n.prog;i++) donePts.push(n.pts[i]); donePts.push(S.rover); const todo=[S.rover,...n.pts.filter((p,i)=>n.cum[i]>n.prog)];
+      const legPts=[S.rover,...n.pts.filter((p,i)=>n.cum[i]>n.prog&&i<=n.legEnds[n.legIdx+1])]; const legProf=this.profile(legPts); const todoProf=this.profile(todo); const sp=this.sparkline(this.profile(n.pts)); const lastLm=this.lm(n.stops[n.stops.length-1]);
+      if(!warn&&(n.grade||0)>15) warn=`STEEP SECTION · ${Math.round(n.grade)}° GRADE · ROVER AUTO-LIMITED TO ${n.spd} KM/H`;
+      Object.assign(out,{navPct:`${Math.round(pct*100)}%`,navRingOff:String((113*(1-pct)).toFixed(1)),navLegTitle:`Leg ${n.legIdx+1} of ${n.stops.length}: ${tgt.name}`,navLegShort:`Leg ${n.legIdx+1}/${n.stops.length}`,navLegs:legs,navTarget:tgt.name,navRemain:`${this.fmtKm(remPx)} (${this.fmtMin(legProf.min)}) · max ${Math.round(legProf.maxGrade)}°`,
+        navGrade:`${Math.round(n.grade||0)}°`,navSpeed:`${n.spd||8} km/h`,navProfLine:sp.line,navProfArea:sp.area,navProfSteep:sp.steep,navProfStats:`↑${Math.round(todoProf.asc)} m ↓${Math.round(todoProf.desc)} m · ${this.fmtMin(todoProf.min)} LEFT`,routeSteepD:todoProf.steepD,navPosLeft:`${(pct*100).toFixed(1)}%`,navPosTop:`${(sp.yAt(n.prog)/44*40).toFixed(1)}px`,navPosLabel:`YOU · ${this.fmtKm(n.prog)} of ${this.fmtKm(total)} · ${this.elevOf(S.rover).toLocaleString()} m`,navProfEndLabel:`${this.elevOf(lastLm).toLocaleString()} m · ${lastLm.name}`,
+        etaPill:{...this.midOf(todo),text:`${this.fmtMin(todoProf.min)} left`},altPill:null,navHazName:nh?nh.h.name:'Clear',navHazDist:nh?`${nh.d.toFixed(1)} km clear`:'no hazards tracked',navHazFg:nh&&nh.d<2.5?'var(--danger)':'var(--warm2)',navNote:tgt.note,navWarn:warn,navWarnFix:fix,routeD:this.pathD(todo),routeDoneD:this.pathD(donePts),routeAltD:'',showNotes:(this.opt('inlineNotes'))}); }
+    if(S.nav){ const n=S.nav,total=n.cum[n.cum.length-1]; const tp=this.profile([S.rover,...n.pts.filter((p,i)=>n.cum[i]>n.prog)]); const [hh,mm,ss]=S.clock.split(':').map(Number); const arr=((hh*3600+mm*60+ss+Math.round(tp.min*60))%86400+86400)%86400; const p2=v=>String(v).padStart(2,'0'); Object.assign(out,{showEta:true,etaArrive:`${p2(Math.floor(arr/3600))}:${p2(Math.floor(arr/60)%60)}`,etaRemain:this.fmtMin(tp.min),etaDist:this.fmtKm(Math.max(0,total-n.prog))}); } else out.showEta=false;
+    if(S.mode==='arrived'&&S.arrived){ const a=S.arrived; Object.assign(out,{arrivedName:a.name.toUpperCase(),arrivedStats:`${a.km.toFixed(1)} km · ${this.fmtMin(a.min)} · ${a.stops} stop${a.stops>1?'s':''}`}); }
+    return out;
+  }
+  waypointVals(){
+    const S=this.state, sel=S.sel?this.lm(S.sel):null; if(!sel||S.mode!=='waypoint') return {isWaypoint:false,routeD:'',routeAltD:'',routeSteepD:''};
+    const blocked=this.blockedBy(sel); const o=this.routeOpts([...S.stops,sel.id]); const overridden=S.override===sel.id;
+    const gradeFail=!o.direct.ok&&!o.safe.ok; const noRoute=(!!blocked&&!overridden)||(gradeFail&&!overridden)||(gradeFail&&overridden&&!o.direct.ok);
+    const useSafe=S.routeOpt===2&&o.safe.ok; const act=useSafe?o.safe:o.direct, alt=useSafe?o.direct:(o.safe.ok?o.safe:null);
+    const warn=o.direct.cross.length; const warnNames=o.direct.cross.map(id=>this.HZ.find(h=>h.id===id).name.toLowerCase()).join(', ');
+    const g=v=>`${Math.round(v)}°`; const elev=this.elevOf(sel);
+    let why=''; if(blocked&&!overridden) why=`${sel.name} sits inside the ${blocked.name.toLowerCase()} zone (${blocked.detail}). Every approach crosses it.`; else if(gradeFail){ const any=this.astar(S.rover,sel,60,null); const need=this.profile(any.pts).maxGrade; why=`No path keeps the rover under the ${this.capDirect()}° grade limit. The gentlest approach still needs about ${g(need)} on the final climb to ${elev>0?'+':''}${elev.toLocaleString()} m.`; }
+    const prof=this.sparkline(act.prof);
+    return {isWaypoint:true,isNoRoute:noRoute,isRoutable:!noRoute,selName:sel.name,selMeta:`${sel.cat.toUpperCase()} · ${this.latlon(sel)} · ${elev>0?'+':''}${elev.toLocaleString()} m`,selDesc:sel.desc,selNote:sel.note,
+      selEta:noRoute?'NO ROUTE':this.fmtMin(act.min),selKm:noRoute?(blocked&&!overridden?'inside hazard zone':`exceeds ${this.capDirect()}° limit`):`${this.fmtKm(act.px)} · max ${g(act.maxGrade)}${S.stops.length?` · via ${S.stops.length} stop${S.stops.length>1?'s':''}`:''}`,
+      noRouteWhy:why,noRouteApproach:gradeFail?'Nearest reachable point':'Nearest safe approach',noRouteOverride:gradeFail?'Override grade limit':'Override at risk',
+      r1Bg:!useSafe?'rgba(var(--accent-rgb),.1)':'var(--row)',r1Bd:!useSafe?'var(--accent)':'transparent',r1Fg:warn?'var(--danger)':'var(--accent2)',r1Sub:!o.direct.ok?`no path ≤ ${this.capDirect()}°`:warn?`${this.fmtMin(o.direct.min)} · max ${g(o.direct.maxGrade)} · crosses ${warnNames}`:`${this.fmtMin(o.direct.min)} · max ${g(o.direct.maxGrade)} · clear`,
+      r2Bg:useSafe?'rgba(var(--accent-rgb),.1)':'var(--row)',r2Bd:useSafe?'var(--accent)':'transparent',r2Sub:o.safe.ok?`${this.fmtMin(o.safe.min)} · max ${g(o.safe.maxGrade)} · ${o.safe.cross.length?'residual risk':'hazard-free'}`:`no path ≤ ${this.capSafe()}° · try Route #1`,
+      gradeLimit:`ROVER LIMIT ${this.capSafe()}° · DIRECT ${this.capDirect()}°`,profStats:`MAX ${g(act.maxGrade)} · ↑${Math.round(act.asc)} m ↓${Math.round(act.desc)} m`,profLine:prof.line,profArea:prof.area,profSteep:prof.steep,profStartLabel:`${this.elevOf(S.rover).toLocaleString()} m · rover`,profEndLabel:`${elev.toLocaleString()} m · ${sel.name}`,
+      etaPill:noRoute?null:{...this.midOf(act.pts),text:`${this.fmtMin(act.min)} · ${this.fmtKm(act.px)}`},altPill:(noRoute||!alt||alt.px===act.px)?null:{...this.midOf(alt.pts),text:`${this.fmtMin(alt.min)} · ${useSafe?'direct':'safe'}`,onDown:e=>e.stopPropagation(),onUp:e=>{ e.stopPropagation(); (useSafe?this.pickRoute1:this.pickRoute2)(); }},
+      addStopLabel:'Add stop',routeD:noRoute?'':this.pathD(act.pts),routeSteepD:noRoute?'':act.steepD,routeAltD:noRoute||!alt||alt.px===act.px?'':this.pathD(alt.pts),
+      pickRoute1:this.pickRoute1,pickRoute2:this.pickRoute2,addStopSel:this.addStopSel,goSafeApproach:this.goSafeApproach,overrideRisk:this.overrideRisk,startNav:this.startNav,openStreet:this.openStreet,showNotes:(this.opt('inlineNotes'))};
+  }
+  openStreet=()=>this.setState({street:true});
+  closeStreet=()=>this.setState({street:false});
+  streetNav=()=>{ this.setState({street:false}); this.startNav(); };
+  streetVals(){ const l=this.state.sel?this.lm(this.state.sel):null; return {street:this.state.street&&!!l,streetName:l?l.name:'',streetCoords:l?this.latlon(l):'',streetDesc:l?`${l.desc} Panorama slot: drop the Mastcam mosaic for ${l.name} here; the compass strip and heading line stay aligned to the waypoint bearing.`:'',closeStreet:this.closeStreet,streetNav:this.streetNav}; }
+  // ---- layers
+  picker(){ return this.opt('layerPicker'); }
+  toggleElev=()=>{ const S=this.state; if(this.picker()==='panel'){ const open=S.mode==='layers'; this.setState({mode:open?(S.nav?'nav':S.stops.length?'route':'home'):'layers',sheetY:open?this.SNAP.peek:this.SNAP.half,heatOpen:false,sel:null}); } else { this.setState({elevOpen:!S.elevOpen,heatOpen:false,sheetY:S.elevOpen?S.sheetY:this.SNAP.peek}); } };
+  setElev(n){ this.setState({elev:this.state.elev===n?0:n}); }
+  toggleHaz=()=>{ const on=!this.state.hazOn; this.setState({hazOn:on,heatOpen:false}); if(on) this.toast('Warning zones on · 5 hazard types tracked'); };
+  toggleHazType(t){ this.setState({hazTypes:{...this.state.hazTypes,[t]:!this.state.hazTypes[t]}}); }
+  toggleHeatOpen=()=>{ if(this.picker()==='panel'){ const open=this.state.mode==='layers'; this.setState({mode:open?'home':'layers',sheetY:open?this.SNAP.peek:this.SNAP.half,sel:null}); } else this.setState({heatOpen:!this.state.heatOpen,elevOpen:false}); };
+  heatTime(i){ const t=this.HEAT_T[Math.max(0,Math.min(20,i|0))]; return `${t.slice(0,2)}:${t.slice(2)}`; }
+  preloadHeat(){ if(this.heatImgs) return; this.heatImgs=this.HEAT_T.map(t=>{ const im=new Image(); im.src=`assets/heat/ltst_${t}.jpg`; return im; }); }
+  stopHeat(){ clearInterval(this.heatI); this.heatI=null; if(this.state.heatPlay) this.setState({heatPlay:false}); }
+  heatToggle=()=>{ const on=this.state.heat==='off'; if(on) this.preloadHeat(); else this.stopHeat(); this.setState({heat:on?'on':'off'}); };
+  onHeatT=e=>this.setState({heatT:Number(e.target.value)});
+  heatPlayToggle=()=>{ if(this.heatI){ this.stopHeat(); return; } this.preloadHeat(); this.setState({heatPlay:true,heat:'on'}); this.heatI=setInterval(()=>this.setState(s=>({heatT:(s.heatT+1)%21})),380); };
+  toggleLz=()=>this.setState({lz:!this.state.lz});
+  zoomIn=()=>{ const c=this.viewCenter(); this.zoomAt(1.5,c.x,c.y); };
+  zoomOut=()=>{ const c=this.viewCenter(); this.zoomAt(1/1.5,c.x,c.y); };
+  openAssistant=()=>this.setState({mode:'assistant',sheetY:this.SNAP.full,heatOpen:false,elevOpen:false});
+  layerVals(){
+    const S=this.state, ELC={1:'#e0bfb8',2:'#2eb21e',3:'#4c4eff'}; const seg=(on)=>({bg:on?'var(--fg)':'transparent',fg:on?'var(--raised)':'var(--fg2)'});
+    const elevChips=[1,2,3].map(n=>({l:'L',n:String(n),color:ELC[n],bd:S.elev===n?'var(--accent2)':'transparent',onTap:()=>this.setElev(n)}));
+    const elevChipsPanel=[{l:'OFF',n:'',color:'var(--fg2)',bd:S.elev===0?'var(--accent2)':'transparent',onTap:()=>this.setState({elev:0})},...elevChips];
+    const HT=[['rough','Rough terrain','#f4baa0'],['steep','Steep slopes','#ef4444'],['weather','Dust devils','#d946ef'],['radiation','Radiation','#c5c6ff'],['sand','Sand traps','#ffb4a5']];
+    const hazChips=HT.map(([t,name,color])=>{ const on=S.hazTypes[t]; return {name,color,dotOp:on?1:.35,bg:on?'var(--raised)':'transparent',bd:on?color:'var(--line)',fg:on?'var(--fg)':'var(--fg3)',onTap:()=>this.toggleHazType(t)}; });
+    const sw=(on,c)=>({bg:on?(c||'var(--accent)'):'var(--line)',knob:on?'22px':'2px',knobBg:on?'var(--bg1)':'var(--fg3)'});
+    const hs=sw(S.heat!=='off'), hz=sw(S.hazOn,'var(--cta)'), lz=sw(S.lz);
+    const nh=this.nearestHazard(S.rover); const banner=(this.opt('hazardStyle'))==='banner'&&S.hazOn&&nh?`${nh.h.name.toUpperCase()} · ${nh.d.toFixed(1)} KM · ${nh.h.detail.toUpperCase()}`:'';
+    const heatOnNow=S.heat!=='off', kmin=Math.round(Number(this.opt('legendMinK'))), kmax=Math.round(Number(this.opt('legendMaxK')));
+    const dockActive=(on)=>({bg:on?'var(--cta)':'rgba(var(--bg1-rgb),.86)',bd:on?'var(--cta)':'var(--hair)',fg:on?'var(--cta-ink)':'var(--fg)'});
+    const la=dockActive(S.elevOpen||S.mode==='layers'||S.elev>0), ha=dockActive(S.hazOn), hm=dockActive(S.heat!=='off'||S.heatOpen), ai=dockActive(S.mode==='assistant');
+    return {elevOpen:S.elevOpen,elevChips,elevChipsPanel,toggleElev:this.toggleElev,layersBg:la.bg,layersBd:la.bd,layersFg:la.fg,
+      dockFull:!S.elevOpen,toggleHaz:this.toggleHaz,hazBg:ha.bg,hazBd:ha.bd,hazFg:ha.fg,hazDot:S.hazOn?'var(--accent)':'var(--warm)',
+      heatOpen:S.heatOpen,toggleHeatOpen:this.toggleHeatOpen,heatToggle:this.heatToggle,heatSwBg:hs.bg,heatKnob:hs.knob,heatKnobBg:hs.knobBg,
+      heatLayerOn:heatOnNow,kMinLabel:`${kmin} K`,kMidLabel:String(Math.round((kmin+kmax)/2)),kMaxLabel:`${kmax} K`,kTicks:[0,.25,.5,.75,1].map(f=>Math.round(kmin+(kmax-kmin)*f)+(f===0||f===1?' K':'')),heatT:S.heatT,heatTime:this.heatTime(S.heatT),onHeatT:this.onHeatT,heatPlay:S.heatPlay,heatIdle:!S.heatPlay,heatPlayToggle:this.heatPlayToggle,heatSrc:`assets/heat/ltst_${this.HEAT_T[S.heatT]}.jpg`,hmBg:hm.bg,hmBd:hm.bd,hmFg:(S.heat!=='off'||S.heatOpen)?'var(--cta-ink)':'var(--fg)',
+      heatHint:heatOnNow?`LTST ${this.heatTime(S.heatT)} · Ls 340 · THEMIS/TES, NASA/JPL-Caltech/ASU`:`Ground temperature in kelvin (${kmin}–${kmax} K), modeled from THEMIS thermal inertia at Ls 340, 01:30 to 11:30 LTST.`,
+      openAssistant:this.openAssistant,aiBg:ai.bg,aiBd:ai.bd,aiFg:S.mode==='assistant'?'var(--cta-ink)':'var(--accent2)',zoomIn:this.zoomIn,zoomOut:this.zoomOut,
+      hazBanner:banner,hazBannerColor:nh?nh.h.color:'var(--warm)',showHazChips:S.hazOn&&['home','waypoint','route','nav'].includes(S.mode),hazChips,hazCount:`${Object.values(S.hazTypes).filter(Boolean).length}/5 ON`,
+      isLayers:S.mode==='layers',goHome:this.goHome,hazSwBg:hz.bg,hazKnob:hz.knob,hazKnobBg:hz.knobBg,lzSwBg:lz.bg,lzKnob:lz.knob,lzKnobBg:lz.knobBg};
+  }
+  // ---- assistant
+  sysPrompt(){
+    const S=this.state, r=S.rover;
+    const lms=this.LM.map(l=>{ const b=this.blockedBy(l); const rt=this.memoRoute([l.id],true); return `${l.id} | ${l.name} | ${l.cat} | ${this.fmtKm(this.dist(r,l))} from rover | elev ${this.elevOf(l)} m | local slope ${Math.round(this.slopeAt(l))}° | ${b?'BLOCKED by '+b.name:rt.ok?`reachable, safe route ${this.fmtMin(rt.min)} max grade ${Math.round(rt.maxGrade)}°`:`UNREACHABLE under ${this.capSafe()}° grade limit`} | ${l.desc}`; }).join('\n');
+    const hz=this.HZ.map(h=>`${h.id} | ${h.name} | ${h.type} | ${Math.max(0,this.km(this.edgeDist(r,h))).toFixed(1)} km from rover | ${h.detail} | filter ${S.hazTypes[h.type]?'on':'off'}`).join('\n');
+    return `You are the route assistant inside a Mars surface navigation app used by astronauts in Gale Crater. Sol 742, ${S.clock} MTC. Rover at ${this.latlon(r)}, speed 8 km/h, EVA walking 4 km/h. Surface temp -64°C (209 K), air -58°C, dust opacity tau 0.32 (low), ground slope 3.8°. Active map layers: elevation ${S.elev?'L'+S.elev:'off'}, ground-temperature heatmap ${S.heat==='off'?'off':'on at LTST '+this.heatTime(S.heatT)}, warning zones ${S.hazOn?'on':'off'}.\n\nLANDMARKS (id | name | category | distance | elevation | status | notes):\n${lms}\n\nHAZARD ZONES (id | name | type | distance | detail | filter):\n${hz}\n\nRules: Answer ONLY with compact JSON, no prose outside it: {"reply": string, "route": string[], "avoid": string[]}. "reply" is under 70 words, concrete, uses the numbers above, written for a crew member. "route" is an ordered list of landmark ids to visit (empty unless the crew asks to go somewhere or plan a traverse); never include BLOCKED landmarks unless the crew explicitly accepts the risk. "avoid" lists hazard ids the route keeps clear of. Rover grade limit is ${this.capSafe()}° (direct routes up to ${this.capDirect()}°); the app plans slope-aware paths on a 20 m DEM, so quote the "safe route" times above rather than straight-line math, plus 25 min per science stop.`;
+  }
+  scripted(text){
+    const t=text.toLowerCase(); const hit=this.LM.filter(l=>t.includes(l.name.toLowerCase().split(' ')[0].toLowerCase())&&!['the','checkpoint','relay','north'].includes(l.name.toLowerCase().split(' ')[0]));
+    const nh=this.nearestHazard(this.state.rover);
+    if(/hazard|danger|warning|safe to|risk/.test(t)&&!hit.length) return {reply:`Nearest threat is ${nh.h.name} at ${nh.d.toFixed(1)} km (${nh.h.detail}). Steep slopes ring Mount Sharp above 28°, and Bagnold Dunes is a sand trap with thermal inertia under 120. Everything on the crater floor north of Pahrump is clear right now.`,route:[],avoid:['dust','steep','sand']};
+    if(/science|traverse|plan|day|stops/.test(t)&&!hit.length) return {reply:`A three-stop science loop that stays clear of Dust Devil #84: Yellowknife Bay for the lakebed mudstone, The Rocknest for aeolian samples, then Pahrump Hills at the base of Mount Sharp. About 2 h 10 min of driving plus 75 min of stops, all below 6° grades.`,route:['yellowknife','rocknest','pahrump'],avoid:['dust','steep']};
+    if(/temp|cold|heat|weather|dust/.test(t)&&!hit.length) return {reply:`Surface is -64°C and dropping about 6°C per hour after 15:00 MTC; air at 2 m is -58°C. Dust opacity tau 0.32 is well inside EVA limits. Dust Devil #84 is tracking SSE at 18 km/h, currently ${nh&&nh.h.id==='dust'?nh.d.toFixed(1)+' km':'over 10 km'} from you.`,route:[],avoid:['dust']};
+    if(hit.length){ const ids=hit.filter(l=>!this.blockedBy(l)).map(l=>l.id); const blocked=hit.filter(l=>this.blockedBy(l)); const r=ids.length?this.buildRoute([this.state.rover,...ids.map(id=>this.lm(id))],true):null; return {reply:`${ids.length?`Route to ${ids.map(id=>this.lm(id).name).join(' then ')} on the safe track: ${this.fmtKm(r.px)}, about ${this.fmtMin(r.min)} at 8 km/h, keeping clear of ${r.cross.length?'most':'all'} active zones.`:''}${blocked.map(l=>` ${l.name} is inside the ${this.blockedBy(l).name.toLowerCase()} zone, so I left it out; the nearest safe approach is available from its waypoint card.`).join('')}`.trim(),route:ids,avoid:['dust','steep','sand']}; }
+    return {reply:`I can plan a traverse, check hazards along a route, or estimate transit times from the live telemetry. Try: "safest route to Murray Buttes", "what hazards are near Pahrump Hills", or "plan a 3-stop science day".`,route:[],avoid:[]};
+  }
+  async send(text){
+    text=(text||'').trim(); if(!text||this.state.busy) return;
+    const user={role:'user',text,raw:text}; this.setState({chat:[...this.state.chat,user],chatIn:'',busy:true});
+    let out,live=false;
+    try{ if(!window.claude||!window.claude.complete) throw new Error('no claude'); const msgs=[...this.state.chat,user].map(m=>({role:m.role,content:m.raw||m.text})); const res=await window.claude.complete({system:this.sysPrompt(),messages:msgs,max_tokens:600}); const j=JSON.parse((String(res).match(/\{[\s\S]*\}/)||['{}'])[0]); if(!j.reply) throw new Error('bad json'); out={reply:j.reply,route:(j.route||[]).filter(id=>this.lm(id)),avoid:j.avoid||[]}; live=true; }
+    catch(e){ out=this.scripted(text); }
+    this.setState({chat:[...this.state.chat,{role:'assistant',text:out.reply,raw:JSON.stringify(out),route:out.route,avoid:out.avoid,live}],busy:false});
+  }
+  componentDidUpdate(pp,ps){ if(pp.scene!==this.props.scene||pp.device!==this.props.device) this.resetScene(); const changed=Object.keys(this.DEF).filter(k=>pp[k]!==this.props[k]&&this.state.settings[k]!==undefined); if(changed.length){ const s={...this.state.settings}; changed.forEach(k=>delete s[k]); this.setState({settings:s}); }
+    const el=this.scrollRef&&this.scrollRef.current; const chatKey=this.state.chat.length+'|'+this.state.busy; if(el&&this.state.mode==='assistant'&&chatKey!==this._chatKey) el.scrollTop=el.scrollHeight; this._chatKey=chatKey; }
+  onChatIn=e=>this.setState({chatIn:e.target.value});
+  onChatKey=e=>{ if(e.key==='Enter') this.send(this.state.chatIn); };
+  sendChat=()=>this.send(this.state.chatIn);
+  loadRoute(ids){ this.setState({stops:ids,mode:'route',routeOpt:2,sel:null,sheetY:this.SNAP.half}); this.toast('Assistant route loaded · review the sequence'); }
+  assistVals(){
+    const S=this.state; if(!this.scrollRef) this.scrollRef=React.createRef(); const isA=S.mode==='assistant';
+    const chat=S.chat.map(m=>{ const u=m.role==='user'; const o={text:m.text,align:u?'flex-end':'flex-start',bg:u?'var(--raised)':'var(--card)',fg:'var(--fg)',rad:u?'20px 20px 6px 20px':'20px 20px 20px 6px',hasRoute:!!(m.route&&m.route.length)}; if(o.hasRoute){ const r=this.buildRoute([S.rover,...m.route.map(id=>this.lm(id))],true); const cum=this.cumul(r.pts); o.routeTotal=`${this.fmtKm(r.px)} · ${this.fmtMin(r.min+25*m.route.length)}`; o.routeRows=m.route.map((id,i)=>({num:String(i+1).padStart(2,'0'),name:this.lm(id).name,sub:`+${this.fmtKm(cum[r.legEnds[i+1]]-cum[r.legEnds[i]])}`})); o.avoid=(m.avoid||[]).map(id=>(this.HZ.find(h=>h.id===id)||{}).name).filter(Boolean).join(', '); o.load=()=>this.loadRoute(m.route); } return o; });
+    const sugg=['Safest route to Murray Buttes before the temperature drops','Plan a 3-stop science day that stays clear of Dust Devil #84','What hazards are between here and Pahrump Hills?'].map(text=>({text,onTap:()=>this.send(text)}));
+    const lastLive=S.chat.length?S.chat[S.chat.length-1].live:null;
+    return {isAssistant:isA,scrollRef:this.scrollRef,chat,busy:S.busy,showSuggestions:isA&&!S.chat.length&&!S.busy,suggestions:sugg,chatIn:S.chatIn,onChatIn:this.onChatIn,onChatKey:this.onChatKey,sendChat:this.sendChat,
+      assistStatus:S.chat.length?(lastLive===false?'SCRIPTED FALLBACK · live model unavailable':'LIVE MODEL · grounded in sector telemetry and hazard tracks'):'LIVE MODEL · knows every landmark, hazard track and the current telemetry'};
+  }
+  renderVals(){
+    const S=this.state, s=S.s, inv=1/s, desk=this.desk(), g=this.geo();
+    const lines=[]; for(let x=0;x<=512;x+=64) lines.push({x1:x,y1:0,x2:x,y2:683}); for(let y=0;y<=683;y+=64) lines.push({x1:0,y1:y,x2:512,y2:y});
+    const sel=S.sel?this.lm(S.sel):null;
+    const filtering=S.mode==='search'&&(S.q.trim()||S.cat!=='All');
+    const stopIdx={}; S.stops.forEach((id,i)=>stopIdx[id]=i+1);
+    const markers=this.visibleLM().map(l=>{ const isSel=l.id===S.sel, num=stopIdx[l.id]; const dim=(filtering&&!this.matches(l))||(S.sel&&!isSel&&!num&&S.mode==='waypoint'); const lzc=l.cat==='Landing';
+      const showLabel=!!(isSel||num||(filtering&&this.matches(l))||l.rank===1||(l.rank===2&&s>=1.7)||(l.rank===3&&s>=2.4));
+      return {id:l.id,x:l.x,y:l.y,showLabel,tf:`translate(-50%,-100%) translateY(7px) scale(${inv.toFixed(3)})`,op:dim?0.28:1,label:l.name.toUpperCase(),num:num||0,bg:isSel?'var(--route)':num?'rgba(var(--route-rgb),.22)':lzc?'rgba(var(--bg1-rgb),.9)':'rgba(var(--raised-rgb),.9)',fg:isSel?'var(--route-ink)':lzc?'var(--warm)':'var(--route2)',dot:lzc?'var(--warm)':'var(--route2)',
+        onDown:e=>{e.stopPropagation();},onUp:e=>{e.stopPropagation();this.select(l.id);}}; });
+    const hazShapes=S.hazOn?this.HZ.filter(h=>this.hzOn(h)).map(h=>({x:h.x,y:h.y,rx:h.rx,ry:h.ry,rot:`rotate(${h.rot} ${h.x} ${h.y})`,color:h.color})):[];
+    const hazLabels=S.hazOn?this.HZ.filter(h=>this.hzOn(h)).map(h=>({x:h.x,y:h.y-h.ry-4,tf:`translate(-50%,-100%) scale(${inv.toFixed(3)})`,color:h.color,label:h.label})):[];
+    const r=S.rover; const dustClear=Math.max(0,this.km(this.edgeDist(r,this.HZ[0])));
+    const nearby=this.LM.filter(l=>l.id!=='bradbury').sort((a,b)=>this.dist(r,a)-this.dist(r,b)).slice(0,3).map(l=>this.rowFor(l));
+    const cnt={}; this.LM.forEach(l=>{cnt[l.cat]=(cnt[l.cat]||0)+1;});
+    const icons=(this.opt('chipStyle'))==='icons';
+    const chips=this.CATS.map(c=>{ const on=S.cat===c; return {name:c,count:icons?(this.ICON[c]||'✦'):(c==='All'?this.LM.length:(cnt[c]||0)),bg:on?'var(--fg)':'var(--raised)',fg:on?'var(--bg1)':'var(--fg)',cfg:icons?(on?'var(--raised)':'var(--accent2)'):(on?'var(--fg)':'var(--fg2)'),cbg:icons?(on?'rgba(0,0,0,.08)':'rgba(var(--accent-rgb),.12)'):(on?'var(--raised)':'var(--hair)'),onTap:()=>this.setState({cat:on?'All':c,mode:'search'})}; });
+    const list=(S.q.trim()||S.cat!=='All')?this.LM.filter(l=>this.matches(l)).sort((a,b)=>this.dist(r,a)-this.dist(r,b)):S.recent.map(id=>this.lm(id)).filter(Boolean);
+    const results=list.map(l=>this.rowFor(l));
+    const barKm=[0.5,1,2,5,10,20].find(k=>k/0.1*s>=70)||20; const barPx=Math.round(barKm/0.1*s); const scaleTop=desk?g.H-44:S.sheetY-34;
+    const headerPos=desk?`position:absolute;left:0;top:0;width:${g.panelW}px;height:72px;background:var(--bg2);display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:5`:`position:absolute;left:0;top:0;width:393px;height:64px;background:linear-gradient(180deg,rgba(27,16,13,.94),rgba(27,16,13,.62));backdrop-filter:blur(18px);display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:5`;
+    const settingsPos=desk?`position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:480px;max-height:${g.H-80}px;background:var(--bg2);border-radius:var(--r-sheet);box-shadow:var(--shadow2);z-index:10;display:flex;flex-direction:column;overflow:hidden`:`position:absolute;left:0;right:0;bottom:0;max-height:740px;background:var(--bg2);border-radius:var(--r-sheet) var(--r-sheet) 0 0;box-shadow:var(--shadow-sheet);z-index:10;display:flex;flex-direction:column;overflow:hidden`;
+    const sheetPos=desk?`position:absolute;left:0;top:72px;width:${g.panelW}px;height:${g.H-72}px;background:var(--bg2);display:flex;flex-direction:column;z-index:4;box-shadow:12px 0 40px rgba(10,4,2,.45)`
+      :`position:absolute;left:0;top:${S.sheetY}px;width:393px;height:${852-S.sheetY}px;background:var(--sheet);backdrop-filter:blur(var(--blur));border-radius:var(--r-sheet) var(--r-sheet) 0 0;box-shadow:var(--shadow-sheet);display:flex;flex-direction:column;z-index:4;transition:${S.drag?'none':'top .35s cubic-bezier(.2,.8,.2,1),height .35s cubic-bezier(.2,.8,.2,1)'}`;
+    const heatTimeLabel=this.heatTime(S.heatT);
+    const scrimOp=desk?'0':Math.max(0,Math.min(.5,(400-S.sheetY)/324*.5)).toFixed(3);
+    const out={
+      scrimOp,fabTop:desk?g.H-60:S.sheetY-58,fabLeft:desk?16:12,scaleLeft:desk?72:68,legendTop:desk?g.H-116:scaleTop-66,rootW:g.W+'px',rootH:g.H+'px',mapLeft:g.mapLeft,mapW:g.mapW,dockTop:desk?16:80,overlayTop:desk?16:76,toastLeft:g.mapLeft+16,headerPos,settingsPos,isPhone:!desk,isDesk:desk,
+      stageRef:this.stageRef,onPD:this.onPD,onPM:this.onPM,onPU:this.onPU,
+      worldTf:`translate(${S.tx.toFixed(1)}px,${S.ty.toFixed(1)}px) scale(${s.toFixed(4)})`,worldTrans:S.anim?'transform .45s cubic-bezier(.2,.8,.2,1)':'none',
+      gridLines:lines,markers,hazShapes,hazLabels,rover:r,roverTf:`scale(${inv.toFixed(3)})`,
+      elev1:S.elev===1,elev2:S.elev===2,elev3:S.elev===3,heatOn:S.heat!=='off'&&!S.heatOpen,heatLabel:`GROUND TEMP · LTST ${heatTimeLabel}`,
+      routeD:'',routeDoneD:'',routeAltD:'',routeSteepD:'',
+      scaleTop,scaleMid:barKm/2>=1?String(barKm/2):(barKm/2).toFixed(2).replace(/0$/,''),scaleMax:`${barKm} km`,scaleW:`${barPx}px`,scaleHalf:`${Math.round(barPx/2)}px`,coordText:S.coord,
+      clock:S.clock,linkLabel:S.nav?`DEMO ×${this.opt('demoSpeed')}`:'OFFLINE MAPS ✓',linkFg:S.nav?'var(--warm)':'var(--fg2)',
+      sheetPos,isSheet:!desk,isSide:desk,onSheetDown:this.onSheetDown,onSheetMove:this.onSheetMove,onSheetUp:this.onSheetUp,
+      q:S.q,onQ:this.onQ,onSearchFocus:this.onSearchFocus,clearQ:this.clearQ,onFilterTap:this.onFilterTap,filterBg:S.mode==='search'?'var(--accent)':'var(--raised)',filterFg:S.mode==='search'?'var(--accent-ink)':'var(--fg)',
+      isSearch:S.mode==='search',chips,results,resultsLabel:(S.q.trim()||S.cat!=='All')?'RESULTS':'RECENT SEARCHES',resultsHint:S.stops.length?'TAP TO ADD STOP':`${results.length} SHOWN`,showClear:!(S.q.trim()||S.cat!=='All')&&S.recent.length>0&&!S.stops.length,noResults:results.length===0,noResultsText:(S.q.trim()||S.cat!=='All')?`No landmarks match "${S.q.trim()||S.cat}". Try a name, a category, or a quad like "crater".`:'No recent searches. Type a name or pick a category above; tap any marker on the map to open it.',showHint:!!(S.q.trim()||S.cat!=='All')||S.stops.length>0,clearRecent:this.clearRecent,onSearchKey:this.onSearchKey,locateRover:this.locateRover,roverDown:this.roverDown,roverUp:this.roverUp,viewAdvisory:this.viewAdvisory,
+      isHome:S.mode==='home',showSector:['home','waypoint','arrived'].includes(S.mode),roverCoords:this.latlon(r),
+      t1Label:'SURFACE TEMP',t1Val:'-64°C',t1Sub:'209 K',slopeVal:`${this.slopeAt(r).toFixed(1)}°`,slopeSub:this.slopeAt(r)>15?'STEEP':this.slopeAt(r)>8?'MODERATE':'NOMINAL',
+      advTitle:'Dust Devil Alert (Track #84)',advSub:`Moving SSE at 18 km/h • ${dustClear.toFixed(0)} km clear of route`,advBadge:dustClear>5?'SAFE':'WATCH',advBadgeFg:dustClear>5?'var(--accent2)':'var(--warm)',advBd:dustClear>5?'var(--bd-card)':'rgba(var(--warm-rgb),.4)',advColor:'#d946ef',
+      nearby,
+      ...this.layerVals(),...this.waypointVals(),...this.navVals(),...this.assistVals(),...this.streetVals(),...this.settingsVals()
+    };
+    const ptf=`translate(-50%,-100%) scale(${inv.toFixed(3)}) translateY(-10px)`;
+    if(out.etaPill) out.etaPill={...out.etaPill,tf:ptf}; if(out.altPill) out.altPill={...out.altPill,tf:ptf};
+    return out;
+  }
+}
+</script>
+</body>
+</html>

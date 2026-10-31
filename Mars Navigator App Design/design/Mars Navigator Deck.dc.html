@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;background:#140b09}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#f8ece4;-webkit-font-smoothing:antialiased}
+a{color:#cdf3ea}a:hover{color:#7fd4c1}
+</style>
+</helmet>
+<x-import component-from-global-scope="deck-stage" from="./deck-stage.js" width="1920" height="1080" hint-size="100%,100%">
+  <section data-label="Title" data-speaker-notes="Mars Navigator is a surface navigation app for crews in Gale Crater. The phone on the right is the live prototype, not a picture." style="background:#1b100d;color:#f8ece4;font-family:'Plus Jakarta Sans',sans-serif;display:grid;grid-template-columns:minmax(0,1fr) 393px;column-gap:160px;align-items:center;padding:0 200px 0 140px;box-sizing:border-box;overflow:hidden">
+    <div style="position:absolute;right:-120px;top:-220px;width:720px;height:720px;border-radius:50%;background:rgba(236,122,86,.12);pointer-events:none"></div>
+    <div style="position:absolute;left:-160px;bottom:-260px;width:560px;height:560px;border-radius:50%;background:rgba(127,212,193,.07);pointer-events:none"></div>
+    <div style="display:flex;flex-direction:column;gap:40px;position:relative">
+      <span style="font:700 26px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:4px;color:#7fd4c1">NASA SPACE APPS · PHOBOS</span>
+      <h1 style="margin:0;font:800 128px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:-5px;color:#f8ece4">Mars Navigator</h1>
+      <p style="margin:0;font:500 42px/1.3 'Plus Jakarta Sans',sans-serif;color:#dcb9a6;max-width:820px;text-wrap:pretty">Terrain-aware route planning for crews in Gale Crater.</p>
+      <span style="font:600 28px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2px;color:#ab8878">GALE CRATER · SOL 742</span>
+    </div>
+    <div style="width:393px;height:852px;border-radius:48px;overflow:hidden;box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 0 1px rgba(255,216,190,.14);background:#1b100d;position:relative"><dc-import name="Mars Navigator v2" scene="home" hint-size="393px,852px" style="width:393px;height:852px"></dc-import></div>
+  </section>
+
+  <section data-label="Sector Overview" data-speaker-notes="The home sheet: telemetry at the rover, the nearest tracked hazard, and the closest landmarks. Drag the map, pinch to zoom, tap any marker." style="background:#140b09;color:#f8ece4;font-family:'Plus Jakarta Sans',sans-serif;display:grid;grid-template-columns:minmax(0,1fr) 393px;column-gap:160px;align-items:center;padding:0 200px 0 140px;box-sizing:border-box">
+    <div style="display:flex;flex-direction:column;gap:56px">
+      <div style="display:flex;flex-direction:column;gap:22px"><span style="font:700 24px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:4px;color:#7fd4c1">01 · HOME</span><h2 style="margin:0;font:700 72px/1.08 'Plus Jakarta Sans',sans-serif;letter-spacing:-2.5px">Sector Overview</h2></div>
+      <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:34px">
+        <li style="display:flex;flex-direction:column;gap:8px"><span style="font:700 22px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2.5px;color:#ffc394">TELEMETRY</span><span style="font:500 32px/1.35 'Plus Jakarta Sans',sans-serif;color:#f8ece4;text-wrap:pretty">Surface temperature, dust opacity and ground slope at the rover's position.</span></li>
+        <li style="display:flex;flex-direction:column;gap:8px"><span style="font:700 22px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2.5px;color:#ffc394">ADVISORY</span><span style="font:500 32px/1.35 'Plus Jakarta Sans',sans-serif;color:#f8ece4;text-wrap:pretty">The nearest tracked hazard, its heading and its clearance from the route.</span></li>
+        <li style="display:flex;flex-direction:column;gap:8px"><span style="font:700 22px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2.5px;color:#ffc394">NEARBY</span><span style="font:500 32px/1.35 'Plus Jakarta Sans',sans-serif;color:#f8ece4;text-wrap:pretty">The three closest landmarks with distance and transit time.</span></li>
+      </ul>
+    </div>
+    <div style="width:393px;height:852px;border-radius:48px;overflow:hidden;box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 0 1px rgba(255,216,190,.14);background:#1b100d;position:relative"><dc-import name="Mars Navigator v2" scene="home" hint-size="393px,852px" style="width:393px;height:852px"></dc-import></div>
+  </section>
+
+  <section data-label="Map Layers" data-speaker-notes="Layers live in a floating dock: elevation strata, a THEMIS ground-temperature time series with a scrubber and timelapse, and five filterable warning zones. The dust devil track moves in real time." style="background:#1b100d;color:#f8ece4;font-family:'Plus Jakarta Sans',sans-serif;display:grid;grid-template-columns:minmax(0,1fr) 393px;column-gap:160px;align-items:center;padding:0 200px 0 140px;box-sizing:border-box">
+    <div style="display:flex;flex-direction:column;gap:56px">
+      <div style="display:flex;flex-direction:column;gap:22px"><span style="font:700 24px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:4px;color:#7fd4c1">02 · LAYERS</span><h2 style="margin:0;font:700 72px/1.08 'Plus Jakarta Sans',sans-serif;letter-spacing:-2.5px">Map Layers</h2></div>
+      <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:34px">
+        <li style="display:flex;flex-direction:column;gap:8px"><span style="font:700 22px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2.5px;color:#ffc394">ELEVATION</span><span style="font:500 32px/1.35 'Plus Jakarta Sans',sans-serif;color:#f8ece4;text-wrap:pretty">Three strata from the crater floor to the summit, with a height legend.</span></li>
+        <li style="display:flex;flex-direction:column;gap:8px"><span style="font:700 22px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2.5px;color:#ffc394">HEATMAP</span><span style="font:500 32px/1.35 'Plus Jakarta Sans',sans-serif;color:#f8ece4;text-wrap:pretty">Ground temperature modeled from THEMIS thermal inertia: 21 frames, 01:30 to 11:30 LTST, on a scrubber.</span></li>
+        <li style="display:flex;flex-direction:column;gap:8px"><span style="font:700 22px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2.5px;color:#ffc394">WARNING ZONES</span><span style="font:500 32px/1.35 'Plus Jakarta Sans',sans-serif;color:#f8ece4;text-wrap:pretty">Dust devils, steep slopes, boulder fields, radiation and sand traps, each filterable.</span></li>
+      </ul>
+    </div>
+    <div style="width:393px;height:852px;border-radius:48px;overflow:hidden;box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 0 1px rgba(255,216,190,.14);background:#1b100d;position:relative"><dc-import name="Mars Navigator v2" scene="layers" hint-size="393px,852px" style="width:393px;height:852px"></dc-import></div>
+  </section>
+
+  <section data-label="Landmark Search" data-speaker-notes="Search covers 19 landmarks in seven categories. Results sort by distance and are flagged when they sit inside a hazard zone." style="background:#140b09;color:#f8ece4;font-family:'Plus Jakarta Sans',sans-serif;display:grid;grid-template-columns:minmax(0,1fr) 393px;column-gap:160px;align-items:center;padding:0 200px 0 140px;box-sizing:border-box">
+    <div style="display:flex;flex-direction:column;gap:56px">
+      <div style="display:flex;flex-direction:column;gap:22px"><span style="font:700 24px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:4px;color:#7fd4c1">03 · SEARCH</span><h2 style="margin:0;font:700 72px/1.08 'Plus Jakarta Sans',sans-serif;letter-spacing:-2.5px">Landmark Search</h2></div>
+      <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:34px">
+        <li style="display:flex;flex-direction:column;gap:8px"><span style="font:700 22px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2.5px;color:#ffc394">CATEGORIES</span><span style="font:500 32px/1.35 'Plus Jakarta Sans',sans-serif;color:#f8ece4;text-wrap:pretty">Seven categories with live counts, from traverse checkpoints to landing pads.</span></li>
+        <li style="display:flex;flex-direction:column;gap:8px"><span style="font:700 22px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2.5px;color:#ffc394">RESULTS</span><span style="font:500 32px/1.35 'Plus Jakarta Sans',sans-serif;color:#f8ece4;text-wrap:pretty">Sorted by distance and flagged NAV READY or HAZARD.</span></li>
+        <li style="display:flex;flex-direction:column;gap:8px"><span style="font:700 22px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2.5px;color:#ffc394">RECENT</span><span style="font:500 32px/1.35 'Plus Jakarta Sans',sans-serif;color:#f8ece4;text-wrap:pretty">The last four searches, one tap to reopen.</span></li>
+      </ul>
+    </div>
+    <div style="width:393px;height:852px;border-radius:48px;overflow:hidden;box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 0 1px rgba(255,216,190,.14);background:#1b100d;position:relative"><dc-import name="Mars Navigator v2" scene="search" hint-size="393px,852px" style="width:393px;height:852px"></dc-import></div>
+  </section>
+
+  <section data-label="Waypoint and Route Choice" data-speaker-notes="Opening a waypoint plans two slope-aware routes on the DEM. The profile marks every section over 12 degrees. Blocked targets get a safe-approach point or an explicit override." style="background:#1b100d;color:#f8ece4;font-family:'Plus Jakarta Sans',sans-serif;display:grid;grid-template-columns:minmax(0,1fr) 393px;column-gap:160px;align-items:center;padding:0 200px 0 140px;box-sizing:border-box">
+    <div style="display:flex;flex-direction:column;gap:56px">
+      <div style="display:flex;flex-direction:column;gap:22px"><span style="font:700 24px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:4px;color:#7fd4c1">04 · WAYPOINT</span><h2 style="margin:0;font:700 72px/1.08 'Plus Jakarta Sans',sans-serif;letter-spacing:-2.5px">Waypoint and Route Choice</h2></div>
+      <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:34px">
+        <li style="display:flex;flex-direction:column;gap:8px"><span style="font:700 22px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2.5px;color:#ffc394">TWO ROUTES</span><span style="font:500 32px/1.35 'Plus Jakarta Sans',sans-serif;color:#f8ece4;text-wrap:pretty">#1 direct and #2 safe, each with time, steepest grade and hazard crossings.</span></li>
+        <li style="display:flex;flex-direction:column;gap:8px"><span style="font:700 22px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2.5px;color:#ffc394">GRADE PROFILE</span><span style="font:500 32px/1.35 'Plus Jakarta Sans',sans-serif;color:#f8ece4;text-wrap:pretty">Elevation along the route, with sections over 12° highlighted.</span></li>
+        <li style="display:flex;flex-direction:column;gap:8px"><span style="font:700 22px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2.5px;color:#ffc394">NO SAFE ROUTE</span><span style="font:500 32px/1.35 'Plus Jakarta Sans',sans-serif;color:#f8ece4;text-wrap:pretty">Blocked targets offer a nearest safe approach or an explicit override.</span></li>
+      </ul>
+    </div>
+    <div style="width:393px;height:852px;border-radius:48px;overflow:hidden;box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 0 1px rgba(255,216,190,.14);background:#1b100d;position:relative"><dc-import name="Mars Navigator v2" scene="waypoint" hint-size="393px,852px" style="width:393px;height:852px"></dc-import></div>
+  </section>
+
+  <section data-label="Multi-Stop Sequence" data-speaker-notes="Stops chain into a sequence. Each leg shows its added distance and time; the navigate button carries the totals." style="background:#140b09;color:#f8ece4;font-family:'Plus Jakarta Sans',sans-serif;display:grid;grid-template-columns:minmax(0,1fr) 393px;column-gap:160px;align-items:center;padding:0 200px 0 140px;box-sizing:border-box">
+    <div style="display:flex;flex-direction:column;gap:56px">
+      <div style="display:flex;flex-direction:column;gap:22px"><span style="font:700 24px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:4px;color:#7fd4c1">05 · SEQUENCE</span><h2 style="margin:0;font:700 72px/1.08 'Plus Jakarta Sans',sans-serif;letter-spacing:-2.5px">Multi-Stop Sequence</h2></div>
+      <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:34px">
+        <li style="display:flex;flex-direction:column;gap:8px"><span style="font:700 22px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2.5px;color:#ffc394">STOPS</span><span style="font:500 32px/1.35 'Plus Jakarta Sans',sans-serif;color:#f8ece4;text-wrap:pretty">Reorder or remove legs; each shows its added distance and time.</span></li>
+        <li style="display:flex;flex-direction:column;gap:8px"><span style="font:700 22px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2.5px;color:#ffc394">TOTALS</span><span style="font:500 32px/1.35 'Plus Jakarta Sans',sans-serif;color:#f8ece4;text-wrap:pretty">Traverse time, distance and steepest grade on the navigate button.</span></li>
+        <li style="display:flex;flex-direction:column;gap:8px"><span style="font:700 22px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2.5px;color:#ffc394">WARNINGS</span><span style="font:500 32px/1.35 'Plus Jakarta Sans',sans-serif;color:#f8ece4;text-wrap:pretty">A direct route through a hazard prompts a switch to Route #2.</span></li>
+      </ul>
+    </div>
+    <div style="width:393px;height:852px;border-radius:48px;overflow:hidden;box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 0 1px rgba(255,216,190,.14);background:#1b100d;position:relative"><dc-import name="Mars Navigator v2" scene="route" hint-size="393px,852px" style="width:393px;height:852px"></dc-import></div>
+  </section>
+
+  <section data-label="Expedition Progress" data-speaker-notes="During an expedition the rover drives the route in simulation. ETA stays pinned; the grade map shows where the rover is on the profile. Reroute by hand or automatically." style="background:#1b100d;color:#f8ece4;font-family:'Plus Jakarta Sans',sans-serif;display:grid;grid-template-columns:minmax(0,1fr) 393px;column-gap:160px;align-items:center;padding:0 200px 0 140px;box-sizing:border-box">
+    <div style="display:flex;flex-direction:column;gap:56px">
+      <div style="display:flex;flex-direction:column;gap:22px"><span style="font:700 24px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:4px;color:#7fd4c1">06 · EXPEDITION</span><h2 style="margin:0;font:700 72px/1.08 'Plus Jakarta Sans',sans-serif;letter-spacing:-2.5px">Expedition Progress</h2></div>
+      <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:34px">
+        <li style="display:flex;flex-direction:column;gap:8px"><span style="font:700 22px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2.5px;color:#ffc394">ETA</span><span style="font:500 32px/1.35 'Plus Jakarta Sans',sans-serif;color:#f8ece4;text-wrap:pretty">Arrival in MTC, time left and distance, pinned above the sheet.</span></li>
+        <li style="display:flex;flex-direction:column;gap:8px"><span style="font:700 22px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2.5px;color:#ffc394">LEGS</span><span style="font:500 32px/1.35 'Plus Jakarta Sans',sans-serif;color:#f8ece4;text-wrap:pretty">Per-leg progress, the target waypoint and a hazard radar readout.</span></li>
+        <li style="display:flex;flex-direction:column;gap:8px"><span style="font:700 22px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2.5px;color:#ffc394">GRADE MAP</span><span style="font:500 32px/1.35 'Plus Jakarta Sans',sans-serif;color:#f8ece4;text-wrap:pretty">Rover position on the elevation profile, with the traversed section dimmed.</span></li>
+      </ul>
+    </div>
+    <div style="width:393px;height:852px;border-radius:48px;overflow:hidden;box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 0 1px rgba(255,216,190,.14);background:#1b100d;position:relative"><dc-import name="Mars Navigator v2" scene="nav" hint-size="393px,852px" style="width:393px;height:852px"></dc-import></div>
+  </section>
+
+  <section data-label="Route Assistant" data-speaker-notes="The assistant is Claude with the full sector in its context: every landmark, hazard track and the live telemetry. Replies carry a route card that loads straight into the sequence. Offline, scripted answers keep the demo working." style="background:#140b09;color:#f8ece4;font-family:'Plus Jakarta Sans',sans-serif;display:grid;grid-template-columns:minmax(0,1fr) 393px;column-gap:160px;align-items:center;padding:0 200px 0 140px;box-sizing:border-box">
+    <div style="display:flex;flex-direction:column;gap:56px">
+      <div style="display:flex;flex-direction:column;gap:22px"><span style="font:700 24px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:4px;color:#7fd4c1">07 · ASSISTANT</span><h2 style="margin:0;font:700 72px/1.08 'Plus Jakarta Sans',sans-serif;letter-spacing:-2.5px">Route Assistant</h2></div>
+      <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:34px">
+        <li style="display:flex;flex-direction:column;gap:8px"><span style="font:700 22px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2.5px;color:#ffc394">GROUNDED</span><span style="font:500 32px/1.35 'Plus Jakarta Sans',sans-serif;color:#f8ece4;text-wrap:pretty">Claude receives every landmark, hazard track and the live telemetry.</span></li>
+        <li style="display:flex;flex-direction:column;gap:8px"><span style="font:700 22px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2.5px;color:#ffc394">PROPOSALS</span><span style="font:500 32px/1.35 'Plus Jakarta Sans',sans-serif;color:#f8ece4;text-wrap:pretty">Replies carry an ordered route card that loads into the sequence.</span></li>
+        <li style="display:flex;flex-direction:column;gap:8px"><span style="font:700 22px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2.5px;color:#ffc394">FALLBACK</span><span style="font:500 32px/1.35 'Plus Jakarta Sans',sans-serif;color:#f8ece4;text-wrap:pretty">Scripted answers keep the demo working without a connection.</span></li>
+      </ul>
+    </div>
+    <div style="width:393px;height:852px;border-radius:48px;overflow:hidden;box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 0 1px rgba(255,216,190,.14);background:#1b100d;position:relative"><dc-import name="Mars Navigator v2" scene="assistant" hint-size="393px,852px" style="width:393px;height:852px"></dc-import></div>
+  </section>
+
+  <section data-label="In-App Settings" data-speaker-notes="Settings expose the demo controls inside the app: layer controls, hazard alert style, progress card, grade limit, simulation speed, chip badges and inline notes." style="background:#1b100d;color:#f8ece4;font-family:'Plus Jakarta Sans',sans-serif;display:grid;grid-template-columns:minmax(0,1fr) 393px;column-gap:160px;align-items:center;padding:0 200px 0 140px;box-sizing:border-box">
+    <div style="display:flex;flex-direction:column;gap:56px">
+      <div style="display:flex;flex-direction:column;gap:22px"><span style="font:700 24px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:4px;color:#7fd4c1">08 · SETTINGS</span><h2 style="margin:0;font:700 72px/1.08 'Plus Jakarta Sans',sans-serif;letter-spacing:-2.5px">In-App Settings</h2></div>
+      <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:34px">
+        <li style="display:flex;flex-direction:column;gap:8px"><span style="font:700 22px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2.5px;color:#ffc394">LAYER CONTROLS</span><span style="font:500 32px/1.35 'Plus Jakarta Sans',sans-serif;color:#f8ece4;text-wrap:pretty">Floating dock or in-sheet panel; advisory card or top banner for hazards.</span></li>
+        <li style="display:flex;flex-direction:column;gap:8px"><span style="font:700 22px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2.5px;color:#ffc394">NAVIGATION</span><span style="font:500 32px/1.35 'Plus Jakarta Sans',sans-serif;color:#f8ece4;text-wrap:pretty">Progress card style, rover grade limit and simulation speed.</span></li>
+        <li style="display:flex;flex-direction:column;gap:8px"><span style="font:700 22px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:2.5px;color:#ffc394">SEARCH AND ASSISTANT</span><span style="font:500 32px/1.35 'Plus Jakarta Sans',sans-serif;color:#f8ece4;text-wrap:pretty">Category chip badges and inline waypoint notes.</span></li>
+      </ul>
+    </div>
+    <div style="width:393px;height:852px;border-radius:48px;overflow:hidden;box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 0 1px rgba(255,216,190,.14);background:#1b100d;position:relative"><dc-import name="Mars Navigator v2" scene="settings" hint-size="393px,852px" style="width:393px;height:852px"></dc-import></div>
+  </section>
+
+  <section data-label="Desktop Console" data-speaker-notes="The same app on a desktop. A fixed left panel carries the header, search and every card; the map takes the rest of the screen with the dock top-right and the scale and recenter bottom-left. Nothing moved between the two layouts." style="background:#140b09;color:#f8ece4;font-family:'Plus Jakarta Sans',sans-serif;display:flex;flex-direction:column;align-items:center;gap:40px;padding:64px 0 0;box-sizing:border-box;overflow:hidden">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;width:1124px;gap:40px">
+      <div style="display:flex;flex-direction:column;gap:18px"><span style="font:700 24px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:4px;color:#7fd4c1">09 · DESKTOP</span><h2 style="margin:0;font:700 72px/1.08 'Plus Jakarta Sans',sans-serif;letter-spacing:-2.5px">Desktop Console</h2></div>
+      <p style="margin:0 0 6px;max-width:520px;font:500 28px/1.4 'Plus Jakarta Sans',sans-serif;color:#dcb9a6;text-wrap:pretty">Same cards, same map. The panel docks left; the map takes the rest.</p>
+    </div>
+    <div style="position:relative;width:1124px;height:702px;flex:none">
+      <div style="position:absolute;left:0;top:0;width:1440px;height:900px;transform:scale(.78);transform-origin:0 0;border-radius:28px;overflow:hidden;box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 0 1px rgba(255,216,190,.14);background:#1b100d"><dc-import name="Mars Navigator v2" device="desktop" scene="waypoint" hint-size="1440px,900px" style="width:1440px;height:900px"></dc-import></div>
+    </div>
+  </section>
+</x-import>
+</x-dc>
+</body>
+</html>

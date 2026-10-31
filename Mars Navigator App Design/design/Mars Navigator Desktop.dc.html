@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>html,body{margin:0;background:#140b09}a{color:#cdf3ea}a:hover{color:#7fd4c1}</style>
+</helmet>
+<dc-import name="Mars Navigator v2" device="desktop" scene="{{ scene }}" legend-min-k="{{ legendMinK }}" legend-max-k="{{ legendMaxK }}" layer-picker="{{ layerPicker }}" hazard-style="{{ hazardStyle }}" progress-card="{{ progressCard }}" max-grade="{{ maxGrade }}" demo-speed="{{ demoSpeed }}" chip-style="{{ chipStyle }}" inline-notes="{{ inlineNotes }}" hint-size="1440px,900px" style="display:block;width:1440px;height:900px;margin:0 auto"></dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},
+&quot;scene&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;home&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;layers&quot;,&quot;search&quot;,&quot;waypoint&quot;,&quot;route&quot;,&quot;nav&quot;,&quot;assistant&quot;,&quot;settings&quot;],&quot;tsType&quot;:&quot;'home' | 'layers' | 'search' | 'waypoint' | 'route' | 'nav' | 'assistant' | 'settings'&quot;,&quot;section&quot;:&quot;Demo&quot;},
+&quot;legendMinK&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:180,&quot;min&quot;:100,&quot;max&quot;:300,&quot;step&quot;:5,&quot;unit&quot;:&quot;K&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Heatmap&quot;},
+&quot;legendMaxK&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:280,&quot;min&quot;:150,&quot;max&quot;:350,&quot;step&quot;:5,&quot;unit&quot;:&quot;K&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Heatmap&quot;},
+&quot;layerPicker&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;dock&quot;,&quot;options&quot;:[&quot;dock&quot;,&quot;panel&quot;],&quot;tsType&quot;:&quot;'dock' | 'panel'&quot;,&quot;section&quot;:&quot;Layout&quot;},
+&quot;hazardStyle&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;advisory&quot;,&quot;options&quot;:[&quot;advisory&quot;,&quot;banner&quot;],&quot;tsType&quot;:&quot;'advisory' | 'banner'&quot;,&quot;section&quot;:&quot;Hazards&quot;},
+&quot;progressCard&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;stepped&quot;,&quot;options&quot;:[&quot;stepped&quot;,&quot;compact&quot;],&quot;tsType&quot;:&quot;'stepped' | 'compact'&quot;,&quot;section&quot;:&quot;Navigation&quot;},
+&quot;maxGrade&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:18,&quot;min&quot;:8,&quot;max&quot;:30,&quot;step&quot;:1,&quot;unit&quot;:&quot;°&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Navigation&quot;},
+&quot;demoSpeed&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:60,&quot;min&quot;:10,&quot;max&quot;:240,&quot;step&quot;:10,&quot;unit&quot;:&quot;×&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Navigation&quot;},
+&quot;chipStyle&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;counts&quot;,&quot;options&quot;:[&quot;counts&quot;,&quot;icons&quot;],&quot;tsType&quot;:&quot;'counts' | 'icons'&quot;,&quot;section&quot;:&quot;Search&quot;},
+&quot;inlineNotes&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Assistant&quot;}}"></script>
+</body>
+</html>
