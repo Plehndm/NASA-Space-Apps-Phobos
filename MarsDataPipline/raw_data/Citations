@@ -1,27 +1,56 @@
-## Data used in the pipeline
+## References
 
-1. Grindrod, P. (2018): Gale Crater Stereo CTX DTMs + Orthoimages. Version 1. figshare. (Dataset; source of the 20 m elevation model and derived slope and aspect). https://doi.org/10.6084/m9.figshare.6584984.v1
+### Data
 
-2. NASA/JPL-Caltech; MRO CTX team at Malin Space Science Systems (n.d.): Gale Crater CTX block-adjusted mosaic (Gale_CTX_BlockAdj_dd). NASA Solar System Treks, Mars Trek. (Image mosaic, WMTS tile layer). https://trek.nasa.gov/tiles/Mars/EQ/Gale_CTX_BlockAdj_dd
+1. Grindrod, P. M., & Davis, J. (2018). *Gale Crater Stereo CTX DTMs + Orthoimages* (Version 1) [Data set]. figshare. https://doi.org/10.6084/m9.figshare.6584984.v1
 
-3. Gómez-Elvira, J.; REMS Team (n.d.): MSL Rover Environmental Monitoring Station (REMS) Reduced Data Records (RDR), volume mslrem_1001. NASA Planetary Data System, Atmospheres Node, New Mexico State University. (Dataset). https://pds-atmospheres.nmsu.edu/cgi-bin/getdir.pl?volume=mslrem_1001  
+2. NASA/JPL-Caltech/MSSS. (n.d.). *Gale Crater CTX block-adjusted mosaic (Gale_CTX_BlockAdj_dd)* [WMTS tile layer]. NASA Solar System Treks, Mars Trek. https://trek.nasa.gov/tiles/Mars/EQ/Gale_CTX_BlockAdj_dd
 
-4. Putzig, N. E., Mellon, M. T., 2007. Apparent thermal inertia and the surface heterogeneity of Mars, Icarus, 191, 68-94, doi: 10.1016/j.icarus.2007.05.013.
+3. Gómez-Elvira, J., & REMS Team. (n.d.). *MSL Rover Environmental Monitoring Station (REMS) Reduced Data Records, volume mslrem_1001* [Data set]. NASA Planetary Data System, Atmospheres Node, New Mexico State University. https://pds-atmospheres.nmsu.edu/cgi-bin/getdir.pl?volume=mslrem_1001
 
-5. Putzig, N. E., & Mellon, M. T. (2007): Apparent thermal inertia and the surface heterogeneity of Mars. Icarus, 191(1), 68-94. https://doi.org/10.1016/j.icarus.2007.05.013
+4. Fergason, R. L. (n.d.). *THEMIS Thermal Inertia Mosaic, Quantitative, 30S120E, 100 m/pixel* [Data set]. USGS Astrogeology Science Center. https://astrogeology.usgs.gov/search/map/themis_thermal_inertia_mosaic_quantitative_30s120e_100mpp
 
-6. Fergason, R. L.; USGS Astrogeology Science Center (n.d.): THEMIS Thermal Inertia Mosaic, Quantitative, 30S120E, 100 m/pixel. USGS Astropedia. (Dataset). https://astrogeology.usgs.gov/search/map/themis_thermal_inertia_mosaic_quantitative_30s120e_100mpp  
+5. Putzig, N. E., & Mellon, M. T. (2007). *TES albedo maps, Mars Years 24–26, 20 pixels per degree* [Data set]. Planetary Science Institute. https://se.psi.edu/inertia/2007/albedo.html
 
-7. Fergason, R. L., Christensen, P. R., & Kieffer, H. H. (2006): High-resolution thermal inertia derived from the Thermal Emission Imaging System (THEMIS): Thermal model and applications. Journal of Geophysical Research, 111, E12004. https://doi.org/10.1029/2006JE002735 
+6. Lemmon, M. T. (2024). *Mars Science Laboratory aerosol optical depths* (Version 3) [Data set]. Mendeley Data. https://doi.org/10.17632/tbh3pg39xc.3
 
-8. Christensen, P. R., et al. (2004): The Thermal Emission Imaging System (THEMIS) for the Mars 2001 Odyssey Mission. Space Science Reviews, 110, 85-130. https://doi.org/10.1023/B:SPAC.0000021008.16305.94
+### Papers
 
-9. Millour, E., Forget, F., Spiga, A., et al., and the MCD development team (2022): The Mars Climate Database, version 6.1. 7th Mars Atmosphere Modelling and Observations workshop, Paris, 14-17 Jun 2022. https://oro.open.ac.uk/86963  
+7. Christensen, P. R., Bandfield, J. L., Hamilton, V. E., Ruff, S. W., Kieffer, H. H., Titus, T. N., et al. (2001). Mars Global Surveyor Thermal Emission Spectrometer experiment: Investigation description and surface science results. *Journal of Geophysical Research*, 106(E10), 23823–23871. https://doi.org/10.1029/2000JE001370
 
-10. Lewis, S. R., et al. (1999): A climate database for Mars. Journal of Geophysical Research, 104. https://doi.org/10.1029/1999JE001024
+8. Christensen, P. R., Jakosky, B. M., Kieffer, H. H., Malin, M. C., McSween, H. Y., et al. (2004). The Thermal Emission Imaging System (THEMIS) for the Mars 2001 Odyssey Mission. *Space Science Reviews*, 110, 85–130. https://doi.org/10.1023/B:SPAC.0000021008.16305.94
 
-11. Kahanpää, H., et al. (2017): Meteorological properties of Martian dust devils (EPSC2017-294). Europlanet Science Congress 2017. https://meetingorganizer.copernicus.org/EPSC2017/EPSC2017-294.pdf 
+9. Fergason, R. L., Christensen, P. R., & Kieffer, H. H. (2006). High-resolution thermal inertia derived from the Thermal Emission Imaging System (THEMIS): Thermal model and applications. *Journal of Geophysical Research*, 111(E12), E12004. https://doi.org/10.1029/2006JE002735
 
-12. Malin, M. C., et al. (2007): Context Camera Investigation on board the Mars Reconnaissance Orbiter. Journal of Geophysical Research, 112, E05S04. https://doi.org/10.1029/2006JE002808
+10. Gómez-Elvira, J., Armiens, C., Castañer, L., Domínguez, M., Genzer, M., Gómez, F., et al. (2012). REMS: The environmental sensor suite for the Mars Science Laboratory rover. *Space Science Reviews*, 170, 583–640. https://doi.org/10.1007/s11214-012-9921-1
 
-13. Lemmon, Mark (2024), “Mars Science Laboratory aerosol optical depths”, Mendeley Data, V3, doi: 10.17632/tbh3pg39xc.3
+11. Kahanpää, H., Lemmon, M. T., Mason, E., & Battalio, M. (2017). Meteorological properties of Martian dust devils as observed by MSL. *EPSC Abstracts*, 11, EPSC2017-294. https://meetingorganizer.copernicus.org/EPSC2017/EPSC2017-294.pdf
+
+12. Lemmon, M. T., Guzewich, S. D., Battalio, J. M., Malin, M. C., Vicente-Retortillo, A., Zorzano, M.-P., et al. (2024). The Mars Science Laboratory record of optical depth measurements via solar imaging. *Icarus*, 408, 115821. https://doi.org/10.1016/j.icarus.2023.115821
+
+13. Malin, M. C., Bell, J. F., III, Cantor, B. A., Caplinger, M. A., Calvin, W. M., et al. (2007). Context Camera investigation on board the Mars Reconnaissance Orbiter. *Journal of Geophysical Research*, 112, E05S04. https://doi.org/10.1029/2006JE002808
+
+14. Putzig, N. E., & Mellon, M. T. (2007). Apparent thermal inertia and the surface heterogeneity of Mars. *Icarus*, 191(1), 68–94. https://doi.org/10.1016/j.icarus.2007.05.013
+
+### Methods and software
+
+15. Pao, Y.-H. (1989). *Adaptive Pattern Recognition and Neural Networks*. Addison-Wesley.
+
+16. Harris, C. R., Millman, K. J., van der Walt, S. J., et al. (2020). Array programming with NumPy. *Nature*, 585, 357–362. https://doi.org/10.1038/s41586-020-2649-2
+
+17. McKinney, W. (2010). Data structures for statistical computing in Python. *Proceedings of the 9th Python in Science Conference*, 56–61. https://doi.org/10.25080/Majora-92bf1922-00a
+
+18. Pedregosa, F., Varoquaux, G., Gramfort, A., et al. (2011). Scikit-learn: Machine learning in Python. *Journal of Machine Learning Research*, 12, 2825–2830.
+
+19. Hunter, J. D. (2007). Matplotlib: A 2D graphics environment. *Computing in Science & Engineering*, 9(3), 90–95. https://doi.org/10.1109/MCSE.2007.55
+
+20. Gillies, S., et al. (2013–). *Rasterio: Geospatial raster I/O for Python programmers* [Software]. https://github.com/rasterio/rasterio
+
+21. Clark, A., et al. (2010–). *Pillow (PIL Fork)* [Software]. https://python-pillow.org
+
+22. GDAL/OGR contributors. (2026). *GDAL/OGR Geospatial Data Abstraction software Library* [Software]. Open Source Geospatial Foundation. https://gdal.org. https://doi.org/10.5281/zenodo.5884351
+
+### Credit lines
+
+- CTX imagery: "Image: NASA/JPL-Caltech/MSSS"
+- Hillshade derived from the NHM DTMs: "DTM: NASA/JPL-Caltech/MSSS/NHM. The stereo DTM processing was carried out at the Natural History Museum, London."

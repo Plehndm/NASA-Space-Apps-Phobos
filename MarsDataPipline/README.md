@@ -6,12 +6,12 @@ Modelled ground and near-surface air temperature for Gale Crater, Mars, for the 
 
 | Goal | Go to |
 |---|---|
-| Look at or use the maps | `outputs/maps/README.md`: ground temperature in `outputs/maps/ground/`, air temperature in `outputs/maps/air/` |
-| Find a model score or figure | `outputs/README.md`: headline numbers and where each one lives |
+| Look at or use the maps | `processed_data/Google_Drive`: ground temperature in `heatmap/maps/ground/`, air temperature in `heatmap/maps/air/` |
+| Find a model score or figure | `heatmap/README.md`: headline numbers and where each one lives |
 | Understand the model and its limits | `docs/progress.md` (newest first), `docs/discoveries.md` |
 | See what was tried and rejected | `docs/closed_ideas.md` |
 | See what comes next | `docs/plan.md` |
-| Get the background | `docs/Handover Brief Gale Crater Temperature Heatmap (Oct 26).md`, `docs/Gale Crater Diurnal Temperature Model Plan Summary.pdf` |
+| Get the background | `docs/1D Thermal Baseline Build Steps.md`, `docs/Gale Crater Diurnal Temperature Model Plan Summary.pdf` |
 | Work on the code | `CLAUDE.md`: rules, physics spec, environment, commands |
 
 ## Folders
@@ -27,15 +27,11 @@ MarsDataPipeline/
   tests/             solver and forcing tests (Gates 1 and 2)
   notebooks/         the temperature-model notebooks, in the order they were built (see below)
   executed/          run copies of those notebooks, with their outputs
-  outputs/           results (not in git): maps/ (the deliverables) and model_scores/ (how the models were tested); see outputs/README.md
-  processed_data/    model inputs: REMS training table, terrain rasters, feature table (read-only, not in git)
-  raw_data/          original downloads: REMS files, THEMIS, TES albedo, Mastcam tau (not in git)
+  processed_data/    Google Drive: contains model inputs, map tiles, and heatmap
+  raw_data/          Citation list: REMS files, THEMIS, TES albedo, Mastcam tau (not in git)
   data_prep/         notebooks that turned raw_data/ into processed_data/
   dust_devil/        the dust devil likelihood layer (parked); has its own README
-  gale_tiles/        web-map tiles (imagery and hillshade) and the source DTMs; has its own README
   docs/              plans, progress log, findings, briefs
-  _Trash_Review/     files set aside for deletion, waiting for review (not in git; see below)
-  gale-env/          the Python environment (not in git; never edit)
 ```
 
 ## Results in one paragraph
