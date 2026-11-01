@@ -22,10 +22,10 @@ npx expo start
 
 ### Desktop (web)
 
-With `npx expo start` running, press **w** in the terminal, or open http://localhost:8081. Add these to the URL:
+With `npx expo start` running, press **w** in the terminal, or open <http://localhost:8081>. Add these to the URL:
 
 | Option | Effect |
-|---|---|
+| --- | --- |
 | `?device=phone` | Phone layout in the prototype's 393×852 frame, for side-by-side comparison |
 | `?device=desktop` | Desktop layout |
 | `?scene=settings` | Opens Settings on load |
@@ -65,7 +65,7 @@ Add libraries with `npx expo install <package>`, not `npm install`. It picks the
 
 ## Where your feature goes
 
-```
+```text
 src/
 ├── App.tsx                fonts, safe areas, status bar
 ├── theme.ts               design tokens
