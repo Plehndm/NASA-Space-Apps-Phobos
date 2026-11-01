@@ -1,76 +1,88 @@
 # Mars Navigator app
 
-React + TypeScript + Vite. This is the real app, built from the HTML prototype in `../Mars Navigator App Design/`. Read that folder's README for the exact look and behaviour of every screen.
+React Native + Expo (SDK 58) + TypeScript. One codebase runs on phones through **Expo Go** and on desktop in a **web browser**. It is built from the HTML prototype in `../Mars Navigator App Design/`; read that folder's README for the exact look and behaviour of every screen.
 
 ## Run it
 
 ```bash
 cd app
 npm install
-npm run dev          # desktop: http://localhost:5173
-npm run build        # typecheck + production build into dist/
+npx expo start
 ```
 
-### Test on your phone
+`npx expo start` prints a QR code and waits. Every save reloads on all connected devices.
 
-1. Run `npm run dev`. The terminal prints a QR code under the Local / Network addresses.
-2. Make sure your phone is on the **same Wi-Fi** as the computer.
-3. Scan the QR code with the phone's camera and open the link. Saved changes reload on the phone and the desktop at the same time.
+### Phone (Expo Go)
 
-If the phone can't load the page:
+1. Install **Expo Go** from the App Store or Google Play. It must support **SDK 58**; update Expo Go if it says the project is incompatible.
+2. Put the phone on the **same Wi-Fi** as the computer.
+3. Scan the QR code:
+   - **Android:** use the scanner inside Expo Go.
+   - **iPhone:** use the Camera app, then tap the banner to open in Expo Go.
 
-- **Windows firewall:** the first time, Windows asks whether Node.js may use the network. Allow it on **Private networks**. Then set the Wi-Fi connection itself to Private: Settings → Network & internet → Wi-Fi → your network → Network profile type → Private.
-- **Campus or public Wi-Fi** (eduroam, cafés) often blocks devices from reaching each other. Use a phone hotspot instead: connect the computer to the phone's hotspot, restart `npm run dev`, and scan the new QR code.
-- **No QR code printed:** the computer isn't on a network. Type the `Network:` address into the phone's browser by hand instead.
+### Desktop (web)
 
-### What about Expo Go?
-
-Expo Go can't open this app. Expo Go only runs **React Native** projects. This app is a **React web app** (HTML and CSS in the browser), so there is no Expo project for Expo Go to load. Scanning our QR code from inside Expo Go won't work either.
-
-Use the phone's **camera app** or a **browser** to scan the QR code above. The result is the same as Expo Go: scan once, then every save reloads on the phone.
-
-Running in Expo Go would mean rewriting every component in React Native. That is a separate decision for the team, not a setup step.
-
-URL options:
+With `npx expo start` running, press **w** in the terminal, or open http://localhost:8081. Add these to the URL:
 
 | Option | Effect |
 |---|---|
-| `?device=phone` | Phone layout. On a wide screen it shows the prototype's 393×852 frame, for side-by-side comparison. |
+| `?device=phone` | Phone layout in the prototype's 393×852 frame, for side-by-side comparison |
 | `?device=desktop` | Desktop layout |
 | `?scene=settings` | Opens Settings on load |
 
-Without `?device`, windows 900 px wide or wider get the desktop layout and narrower ones get the phone layout.
+Without `?device`, windows 900 px wide or wider get the desktop layout and narrower ones get the phone layout. Phones always get the phone layout.
+
+### If the phone can't connect
+
+- **Campus or public Wi-Fi** (eduroam, cafés) often blocks devices from reaching each other. Run `npx expo start --tunnel` instead. It works over the internet; the first time, it asks to install `@expo/ngrok`, so answer yes. Or connect the computer to the phone's hotspot.
+- **Windows firewall:** if Windows asks whether Node.js may use the network, allow **Private networks**. Then set your Wi-Fi to Private: Settings → Network & internet → Wi-Fi → your network → Network profile type → Private.
+- **"Project is incompatible with this version of Expo Go":** update Expo Go from the app store.
+
+### Checks before you push
+
+```bash
+npm run typecheck        # TypeScript
+npm run doctor           # Expo dependency and config checks
+```
+
+Add libraries with `npx expo install <package>`, not `npm install`. It picks the version that matches SDK 58. Only libraries included in Expo Go will work in Expo Go; check the library's page on docs.expo.dev for "Included in Expo Go".
 
 ## What's built (checklist section 1: App foundation)
 
-- **Design tokens + theme:** `src/styles/tokens.css` holds every colour, radius, shadow and font from the design README. Use the `var(--…)` names, never raw hex.
+- **Design tokens + theme:** `src/theme.ts`.
+  - Colours (`C`), radii (`R`), shadows (`SHADOW`), gradients, and `font(weight, size)`.
+  - Use these, never raw hex.
+  - Put all text in `<T>` from `src/ui/Text.tsx` so it gets the Plus Jakarta Sans font.
 - **Layout shells:** `src/layout/geometry.ts` and `src/shell/Sheet.tsx`.
-  - Phone: bottom sheet with peek / half / full snap points. Drag the handle, or tap it to step through the points. The map dims as the sheet rises.
+  - Phone: bottom sheet with peek / half / full snap points. Drag the handle, or tap it to step through the points. The map dims as the sheet rises. The header and sheet allow for the notch and home bar.
   - Desktop: fixed 420 px left panel. Both layouts use the same components.
 - **Header, dock, toasts:**
   - `Header.tsx`: Sol + ticking MTC clock, status pill, settings gear.
   - `Dock.tsx`: Layers, Hazards (with status dot), HM, ✦ Assistant, zoom.
   - `Toast.tsx`: transient messages, shown with `toast("…")`.
-- **Settings dialog:** `src/shell/SettingsDialog.tsx`. Every setting from the prototype. Values are saved per browser.
+  - Android's back button closes Settings, then popovers, then returns to Home.
+- **Settings dialog:** `src/shell/SettingsDialog.tsx`. Every setting from the prototype. Values are saved on the device.
 
 ## Where your feature goes
 
 ```
 src/
+├── App.tsx                fonts, safe areas, status bar
+├── theme.ts               design tokens
+├── assets.ts              every image (map, elevation strata, 21 heat frames)
 ├── state/store.tsx        app state + actions: useApp()
 ├── state/settings.ts      Settings type and defaults
 ├── state/clock.ts         MTC clock (useMtcClock, mtcSeconds, fmtClock)
-├── layout/geometry.ts     frame size, panel width, sheet snap points
-├── styles/                tokens.css, global.css
-├── ui/                    shared pieces: Card, SectionLabel, Segmented, Switch, icons
+├── layout/geometry.ts     frame size, panel width, safe areas, sheet snap points
+├── ui/                    shared pieces: T (text), Card, SectionLabel, Segmented, Switch, BlinkDot, icons
 ├── shell/                 header, dock, sheet, search bar, toast, settings, map area
 ├── layers/DockPopovers.tsx  STUB: elevation + heat popovers beside the dock
 └── cards/CardStack.tsx    one entry per sheet mode; each is a placeholder until built
 ```
 
 - **A sheet screen** (Home, Search, Waypoint, Sequence, Expedition, Arrived, Layers, Assistant): create `src/cards/<Name>.tsx`, then replace its `<Placeholder>` entry in `src/cards/CardStack.tsx`.
-- **A map layer:** add it inside the world container in `src/shell/MapArea.tsx`. World space is 512×683 px, and one world px is 100 m. Position everything in world px; the container applies the pan/zoom transform.
-- **Map engine:** `MapArea.tsx` currently draws only the base image, plus the `view` transform from the store (`{s, tx, ty}`, zoom 0.7–4.2). Pan, pinch, wheel, the coordinate pill, scale bar and recenter button are still to do. `useApp().zoomBy(k, x, y)` already zooms around a point.
+- **A map layer:** add it inside the world container (`Animated.View`) in `src/shell/MapArea.tsx`. World space is 512×683 px, and one world px is 100 m. Position everything absolutely in world px; the container applies the pan/zoom transform. Use `react-native-svg` for shapes and routes.
+- **Map engine:** `MapArea.tsx` currently draws only the base image, plus the `view` transform from the store (`{s, tx, ty}`, zoom 0.7–4.2). Pan, pinch, the coordinate pill, scale bar and recenter button are still to do. `PanResponder` handles one-finger pan and two-finger pinch in Expo Go. `useApp().zoomBy(k, x, y)` already zooms around a point.
 - **Dock popovers:** replace the stubs in `src/layers/DockPopovers.tsx`. The dock already opens and closes them.
 - **Something pinned above the search bar** (the ETA card while navigating): pass it to `<Sheet pinned={…} />`.
 
@@ -88,6 +100,11 @@ settings.maxGrade;             // resolved settings (defaults + user changes)
 
 Add the fields your feature needs to `AppState` in `store.tsx`, with a default in `AppProvider`.
 
-## Assets
+## Differences from the HTML prototype
 
-`public/assets/` is a copy of the prototype's assets: base map, elevation strata and 21 heat frames. Replace them with pipeline outputs as the data features land.
+React Native can't do everything CSS does. These are the deliberate differences:
+
+- **Map tint:** the CSS `filter` tint is baked into `assets/map/world-tinted.png`. If the base map changes, re-run `python scripts/tint_map.py assets/map/world.png assets/map/world-tinted.png`.
+- **"Pebble" corners:** these are elliptical in CSS. Here each corner is circular, using the average of its two radii.
+- **Backdrop blur:** the frosted blur behind the header, sheet and dialog is not used. The surfaces rely on the design's semi-transparent colours.
+- **Assets** in `assets/map/` are copies of the prototype's images. Replace them with pipeline outputs as the data features land, and update `src/assets.ts`.

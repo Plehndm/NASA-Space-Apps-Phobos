@@ -22,10 +22,10 @@ NASA-Space-Apps-Phobos/
 ├── README.md                    this file: overview + link to the feature checklist
 ├── mars-navigator.pptx          presentation deck (exported from the design deck)
 │
-├── app/                         THE APP (React + TypeScript + Vite); start in app/README.md
+├── app/                         THE APP (React Native + Expo: phone via Expo Go, desktop via web); start in app/README.md
 │   ├── src/shell/               header, dock, bottom sheet / side panel, settings, toasts
 │   ├── src/cards/               one screen per sheet mode (placeholders until built)
-│   └── public/assets/           map images (copied from the design for now)
+│   └── assets/map/              map images (copied from the design for now)
 │
 ├── Mars Navigator App Design/   UI DESIGN (reference only, not production code)
 │   ├── README.md                full design spec: tokens, layouts, screens, behaviour, state
