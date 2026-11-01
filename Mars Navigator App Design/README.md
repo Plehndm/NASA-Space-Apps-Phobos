@@ -1,12 +1,15 @@
 # Handoff: Mars Navigator (Gale Crater rover navigation)
 
+> **This folder is the design reference, not the application.**
+> The real app is in [`../app/`](../app/README.md) (React Native + Expo), and all feature work happens there. Use the files here to see how each screen should look and behave, then rebuild it in `app/`. Don't edit these files to change the product, and don't import from them.
+
 Surface navigation app for crews in Gale Crater: a map with elevation, THEMIS ground-temperature and hazard layers; landmark search; two-option slope-aware routing; multi-stop sequences; a simulated expedition with live ETA and grade profile; and a Claude-powered route assistant. Phone (393×852) and desktop (1440×900) layouts share one component.
 
 Companion repo: `Plehndm/NASA-Space-Apps-Phobos` (branch `main`, folder `MarsDataPipline/`) holds the data pipeline (thermal model, Gale tiles, dust-devil layer). This bundle holds the UI.
 
 ## About the design files
 
-Everything under `design/` is a **design reference built in HTML**. It is an interactive prototype that shows the intended look and behavior; it is not production code to ship. The task is to **recreate these screens in the target codebase** (React/Next, SwiftUI, Flutter, etc.) using its own patterns. If no codebase exists yet, a React + TypeScript app with an SVG/Canvas map layer is the closest fit to the prototype's structure.
+Everything under `design/` is a **design reference built in HTML**. It is an interactive prototype that shows the intended look and behavior; it is not production code to ship. The task is to **recreate these screens in the target codebase** (React/Next, SwiftUI, Flutter, etc.) using its own patterns. The target codebase is `../app/` (React Native + Expo).
 
 The prototype runs as-is: open `design/Mars Navigator v2.dc.html` (phone) or `design/Mars Navigator Desktop.dc.html` (desktop) in a browser. `support.js` is the small runtime that renders the template; `deck-stage.js` is only for the slide deck; `image-slot.js` is a drop-target placeholder used on the Street Level screen.
 

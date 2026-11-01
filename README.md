@@ -12,7 +12,10 @@ Team Phobos's entry for NASA Space Apps 2026, challenge **"Interplanetary Surviv
 - **Street Level:** walk-around rover panoramas at key waypoints.
 - **Route assistant:** a Claude-powered chat that suggests and loads routes.
 
-Status: the **data pipeline** and the **UI design** exist. The **app foundation** is in `app/`: layout, theme, header, dock, settings. Every screen and map layer is still a placeholder. The design is an HTML prototype that uses fake terrain. The work left is to build the features and connect them to the real data.
+Status: the **data pipeline** and the **UI design** exist. The **app foundation** is in `app/`: layout, theme, header, dock, settings. Every screen and map layer is still a placeholder. The work left is to build the features and connect them to the real data.
+
+> **`app/` is the actual application. `Mars Navigator App Design/` is only the reference.**
+> The design folder is an HTML mock-up with fake terrain. It shows what each screen should look like and how it should behave. Don't edit it or ship it, and don't import from it. Build features in `app/`, matching the design.
 
 ## Where everything is
 
@@ -27,7 +30,7 @@ NASA-Space-Apps-Phobos/
 │   ├── src/cards/               one screen per sheet mode (placeholders until built)
 │   └── assets/map/              map images (copied from the design for now)
 │
-├── Mars Navigator App Design/   UI DESIGN (reference only, not production code)
+├── Mars Navigator App Design/   DESIGN REFERENCE ONLY, not the app: HTML mock-up to copy from
 │   ├── README.md                full design spec: tokens, layouts, screens, behaviour, state
 │   ├── design/
 │   │   ├── Mars Navigator v2.dc.html       interactive prototype (phone); open in a browser
