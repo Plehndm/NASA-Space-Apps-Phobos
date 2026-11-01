@@ -14,7 +14,7 @@ const CARDS: Record<Mode, () => ReactNode> = {
   nav: () => <Placeholder title="Expedition" item="Expedition simulation" note="Progress card, hazard radar, grade map, END." />,
   arrived: () => <Placeholder title="Arrived" item="Arrived screen" note="Arrival summary with DONE." />,
   layers: () => <Placeholder title="Layers" item="Elevation strata layer / Temperature heat layer / Hazard zones layer" note="Shown when Settings → Layer controls = PANEL." />,
-  assistant: () => <Placeholder title="✦ Route assistant" item="Assistant chat UI" note="Chat bubbles, proposed-route card, input row." closable />,
+  assistant: () => <Placeholder title="✦ Route assistant" item="Assistant chat UI" note="Chat bubbles, proposed-route card, input row." />,
 };
 
 export function CardStack() {

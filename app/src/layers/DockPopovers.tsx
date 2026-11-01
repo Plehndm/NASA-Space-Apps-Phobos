@@ -2,26 +2,29 @@
 // STUBS: the shell opens and closes them; the layer features fill them in.
 //   ElevationPopover → checklist "Elevation strata layer"
 //   HeatPopover      → checklist "Temperature heat layer"
-import type { ReactNode } from "react";
+import { View } from "react-native";
+import { alpha, C, SHADOW } from "../theme";
+import { T } from "../ui/Text";
 
 function Stub({ title, owner, width }: { title: string; owner: string; width: number }) {
   return (
-    <div
+    <View
       style={{
-        position: "absolute", right: 54, top: 0, width, padding: 12, borderRadius: "22px 22px 8px 22px",
-        background: "rgba(var(--bg1-rgb),.95)", boxShadow: "var(--shadow2)", display: "flex", flexDirection: "column", gap: 6,
+        position: "absolute", right: 54, top: 0, width, padding: 12, gap: 6,
+        borderTopLeftRadius: 22, borderTopRightRadius: 22, borderBottomRightRadius: 8, borderBottomLeftRadius: 22,
+        backgroundColor: alpha("bg1", 0.95), boxShadow: SHADOW.s2,
       }}
     >
-      <span style={{ font: "700 10px var(--font-ui)", letterSpacing: 1, color: "var(--fg2)" }}>{title}</span>
-      <span style={{ font: "500 10px var(--font-ui)", color: "var(--fg3)", lineHeight: 1.45 }}>{owner}</span>
-    </div>
+      <T w={700} size={10} ls={1} color={C.fg2}>{title}</T>
+      <T w={500} size={10} lh={1.45} color={C.fg3}>{owner}</T>
+    </View>
   );
 }
 
-export function ElevationPopover(): ReactNode {
+export function ElevationPopover() {
   return <Stub title="ELEVATION STRATA" owner="Not built yet: see checklist item “Elevation strata layer” (src/layers/DockPopovers.tsx)." width={176} />;
 }
 
-export function HeatPopover(): ReactNode {
+export function HeatPopover() {
   return <Stub title="GROUND TEMP" owner="Not built yet: see checklist item “Temperature heat layer” (src/layers/DockPopovers.tsx)." width={216} />;
 }

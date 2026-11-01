@@ -1,55 +1,60 @@
-import type { KeyboardEvent } from "react";
+import { useRef, type ComponentRef } from "react";
+import { Pressable, TextInput, View } from "react-native";
 import { useApp } from "../state/store";
+import { C, font } from "../theme";
 import { CloseIcon, FilterIcon, SearchIcon } from "../ui/icons";
 
 /**
  * Search field pinned at the top of the sheet / panel.
- * The shell wires focus → search mode and Escape → home. Results, chips and Enter-to-select
- * belong to checklist item "Search".
+ * The shell wires focus → search mode and Escape (web) → home. Results, chips and
+ * submit-to-select belong to checklist item "Search".
  */
 export function SearchBar() {
   const { state: S, patch, setMode } = useApp();
+  const input = useRef<ComponentRef<typeof TextInput>>(null);
   const searching = S.mode === "search";
-  const leave = () => { patch({ q: "" }); setMode(S.navActive ? "nav" : "home", "peek"); };
-  const onKey = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Escape") { leave(); e.currentTarget.blur(); }
+  const leave = () => {
+    patch({ q: "" });
+    input.current?.blur();
+    setMode(S.navActive ? "nav" : "home", "peek");
   };
 
   return (
-    <div style={{ padding: "0 16px 10px", flex: "none" }}>
-      <div
+    <View style={{ paddingHorizontal: 16, paddingBottom: 10 }}>
+      <View
         style={{
-          display: "flex", alignItems: "center", gap: 10, height: 46, padding: "0 7px 0 16px", borderRadius: 999,
-          background: "var(--row)", boxShadow: "inset 0 1px 0 rgba(255,216,190,.05)",
+          flexDirection: "row", alignItems: "center", gap: 10, height: 46, paddingLeft: 16, paddingRight: 7, borderRadius: 999,
+          backgroundColor: C.row, boxShadow: "inset 0px 1px 0px rgba(255,216,190,0.05)",
         }}
       >
-        <span style={{ color: "var(--fg3)", display: "flex", flex: "none" }}><SearchIcon /></span>
-        <input
+        <SearchIcon />
+        <TextInput
+          ref={input}
           value={S.q}
-          aria-label="Search"
+          accessibilityLabel="Search"
           placeholder="Search craters, bases, coords or quad..."
-          onChange={e => patch({ q: e.target.value })}
+          placeholderTextColor={C.fg3}
+          selectionColor={C.accent}
+          returnKeyType="search"
+          onChangeText={q => patch({ q })}
           onFocus={() => { if (!searching) setMode("search", "half"); }}
-          onKeyDown={onKey}
-          style={{ flex: 1, minWidth: 0, background: "none", border: 0, outline: 0, color: "var(--fg)", font: "500 14px var(--font-ui)", padding: 0 }}
+          onKeyPress={e => { if (e.nativeEvent.key === "Escape") leave(); }}
+          style={[font(500, 14), { flex: 1, minWidth: 0, color: C.fg, padding: 0, outlineStyle: "none" } as object]}
         />
-        {S.q && (
-          <button aria-label="Clear search" onClick={() => patch({ q: "" })} style={{ width: 32, height: 32, borderRadius: "50%", background: "none", border: 0, color: "var(--fg3)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <CloseIcon size={12} />
-          </button>
+        {!!S.q && (
+          <Pressable accessibilityRole="button" accessibilityLabel="Clear search" onPress={() => patch({ q: "" })} style={{ width: 32, height: 32, alignItems: "center", justifyContent: "center" }}>
+            <CloseIcon size={12} color={C.fg3} />
+          </Pressable>
         )}
-        <button
-          aria-label={searching ? "Close search" : "Browse categories"}
-          onClick={() => (searching ? leave() : setMode("search", "half"))}
-          style={{
-            width: 32, height: 32, borderRadius: "50%", border: 0, cursor: "pointer", flex: "none", transition: "background .2s",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            background: searching ? "var(--accent)" : "var(--raised)", color: searching ? "var(--accent-ink)" : "var(--fg)",
-          }}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={searching ? "Close search" : "Browse categories"}
+          onPress={() => (searching ? leave() : setMode("search", "half"))}
+          style={{ width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", backgroundColor: searching ? C.accent : C.raised }}
         >
-          <FilterIcon />
-        </button>
-      </div>
-    </div>
+          <FilterIcon color={searching ? C.accentInk : C.fg} />
+        </Pressable>
+      </View>
+    </View>
   );
 }

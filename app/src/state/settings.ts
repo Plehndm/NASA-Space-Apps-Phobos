@@ -1,3 +1,5 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 // User-adjustable settings. Defaults match the prototype's DEF table.
 export interface Settings {
   layerPicker: "dock" | "panel";
@@ -25,10 +27,10 @@ export const DEFAULT_SETTINGS: Settings = {
 
 const STORAGE_KEY = "mn.settings";
 
-// Overrides are remembered per browser; storage can be unavailable, so never throw.
-export function loadOverrides(): Partial<Settings> {
+// Overrides are remembered on the device. Storage can fail; the app then just uses defaults.
+export async function loadOverrides(): Promise<Partial<Settings>> {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = await AsyncStorage.getItem(STORAGE_KEY);
     return raw ? (JSON.parse(raw) as Partial<Settings>) : {};
   } catch {
     return {};
@@ -36,9 +38,5 @@ export function loadOverrides(): Partial<Settings> {
 }
 
 export function saveOverrides(o: Partial<Settings>) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(o));
-  } catch {
-    /* ignore */
-  }
+  AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(o)).catch(() => {});
 }

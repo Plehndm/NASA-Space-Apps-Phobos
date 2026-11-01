@@ -1,29 +1,29 @@
-/** Segmented control: `--row` track, selected segment is `--fg` with `--raised` text. */
-export function Segmented<T extends string>({ value, options, onChange }: {
-  value: T;
-  options: [T, string][];
-  onChange: (v: T) => void;
+import { Pressable, View } from "react-native";
+import { C } from "../theme";
+import { T } from "./Text";
+
+/** Segmented control: `row` track, selected segment is `fg` with `raised` text. */
+export function Segmented<V extends string>({ value, options, onChange }: {
+  value: V;
+  options: [V, string][];
+  onChange: (v: V) => void;
 }) {
   return (
-    <div role="radiogroup" style={{ display: "flex", gap: 4, background: "var(--row)", padding: 3, borderRadius: 999 }}>
+    <View accessibilityRole="radiogroup" style={{ flexDirection: "row", gap: 4, backgroundColor: C.row, padding: 3, borderRadius: 999 }}>
       {options.map(([v, label]) => {
         const on = v === value;
         return (
-          <button
+          <Pressable
             key={v}
-            role="radio"
-            aria-checked={on}
-            onClick={() => onChange(v)}
-            style={{
-              flex: 1, height: 32, borderRadius: 999, border: 0, cursor: "pointer", transition: "background .2s",
-              background: on ? "var(--fg)" : "transparent", color: on ? "var(--raised)" : "var(--fg2)",
-              font: "700 10px var(--font-ui)", letterSpacing: ".4px",
-            }}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: on }}
+            onPress={() => onChange(v)}
+            style={{ flex: 1, height: 32, borderRadius: 999, alignItems: "center", justifyContent: "center", backgroundColor: on ? C.fg : "transparent" }}
           >
-            {label}
-          </button>
+            <T w={700} size={10} ls={0.4} color={on ? C.raised : C.fg2}>{label}</T>
+          </Pressable>
         );
       })}
-    </div>
+    </View>
   );
 }

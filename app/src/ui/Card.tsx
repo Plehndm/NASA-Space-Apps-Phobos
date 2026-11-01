@@ -1,16 +1,19 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
+import { View, type ViewStyle } from "react-native";
+import { C, R } from "../theme";
+import { T } from "./Text";
 
 /** Uppercase label above a group of cards ("NEARBY LANDMARKS", "MAP", ...). */
 export function SectionLabel({ children, first }: { children: ReactNode; first?: boolean }) {
   return (
-    <div style={{ font: "700 10.5px var(--font-ui)", letterSpacing: 1, color: "var(--fg3)", paddingLeft: 4, marginTop: first ? 0 : 6 }}>
+    <T w={700} size={10.5} ls={1} color={C.fg3} style={{ paddingLeft: 4, marginTop: first ? 0 : 6 }}>
       {children}
-    </div>
+    </T>
   );
 }
 
-/** `--card` surface. `pebble` gives the hand-drawn radius; alternate `pebble={1}` / `pebble={2}` between neighbours. */
-export function Card({ children, pebble, style }: { children: ReactNode; pebble?: 1 | 2; style?: CSSProperties }) {
-  const radius = pebble === 1 ? "var(--r-pebble)" : pebble === 2 ? "var(--r-pebble2)" : "var(--r-card)";
-  return <div style={{ background: "var(--card)", borderRadius: radius, padding: "14px 16px", ...style }}>{children}</div>;
+/** `card` surface. `pebble` gives the hand-drawn radius; alternate `pebble={1}` / `pebble={2}` between neighbours. */
+export function Card({ children, pebble, style }: { children: ReactNode; pebble?: 1 | 2; style?: ViewStyle }) {
+  const radius = pebble === 1 ? R.pebble : pebble === 2 ? R.pebble2 : { borderRadius: R.card };
+  return <View style={[{ backgroundColor: C.card, paddingVertical: 14, paddingHorizontal: 16 }, radius, style]}>{children}</View>;
 }

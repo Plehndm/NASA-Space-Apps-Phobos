@@ -1,5 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Animated, Easing, Platform } from "react-native";
 import type { Geometry } from "../layout/geometry";
+import { EASE } from "../theme";
 import { DEFAULT_SETTINGS, loadOverrides, saveOverrides, type Settings } from "./settings";
 
 /** Which card stack the sheet / side panel shows. */
@@ -11,13 +13,12 @@ export interface View {
   s: number;
   tx: number;
   ty: number;
-  anim: boolean; // animate the next transform change
+  anim: boolean; // animate to this view instead of jumping
 }
 
 export interface AppState {
   mode: Mode;
-  sheetY: number; // phone only: top edge of the bottom sheet
-  sheetDragging: boolean;
+  sheetY: number; // phone only: the snap point the bottom sheet is at (or moving to)
   settingsOpen: boolean;
   overrides: Partial<Settings>; // in-app settings changes on top of DEFAULT_SETTINGS
   toast: string | null;
@@ -39,10 +40,14 @@ function initialView(g: Geometry): View {
   return g.device === "desktop" ? { s: 2.1, tx: -28, ty: -298, anim: false } : { s: 1.3, tx: -116, ty: -284, anim: false };
 }
 
+const webScene = () => (Platform.OS === "web" && typeof location !== "undefined" ? new URLSearchParams(location.search).get("scene") : null);
+
 interface Store {
   state: AppState;
   geo: Geometry;
   settings: Settings; // resolved: defaults + overrides
+  /** Phone sheet's live top edge. Animated, so drags and snaps don't re-render the app. */
+  sheetTop: Animated.Value;
   patch: (p: Partial<AppState> | ((s: AppState) => Partial<AppState>)) => void;
   setMode: (mode: Mode, snap?: SnapName) => void;
   snapTo: (name: SnapName) => void;
@@ -61,9 +66,8 @@ export function AppProvider({ geo, children }: { geo: Geometry; children: ReactN
   const [state, setState] = useState<AppState>(() => ({
     mode: "home",
     sheetY: geo.snap.peek,
-    sheetDragging: false,
-    settingsOpen: new URLSearchParams(location.search).get("scene") === "settings",
-    overrides: loadOverrides(),
+    settingsOpen: webScene() === "settings",
+    overrides: {},
     toast: null,
     view: initialView(geo),
     elev: 0,
@@ -74,34 +78,56 @@ export function AppProvider({ geo, children }: { geo: Geometry; children: ReactN
     navActive: false,
     q: "",
   }));
+  const sheetTop = useRef(new Animated.Value(geo.snap.peek)).current;
 
-  // Keep the sheet on a valid snap point and the view sensible when the layout changes.
+  useEffect(() => {
+    loadOverrides().then(overrides => setState(s => ({ ...s, overrides: { ...overrides, ...s.overrides } })));
+  }, []);
+
+  const patch = useCallback<Store["patch"]>(p => setState(s => ({ ...s, ...(typeof p === "function" ? p(s) : p) })), []);
+
+  const moveSheet = useCallback(
+    (y: number) => {
+      Animated.timing(sheetTop, { toValue: y, duration: 350, easing: Easing.bezier(...EASE), useNativeDriver: false }).start();
+    },
+    [sheetTop],
+  );
+
+  const snapTo = useCallback(
+    (name: SnapName) => {
+      patch({ sheetY: geo.snap[name] });
+      moveSheet(geo.snap[name]);
+    },
+    [geo, patch, moveSheet],
+  );
+
+  const setMode = useCallback(
+    (mode: Mode, snap?: SnapName) => {
+      patch({ mode });
+      if (snap && geo.device === "phone") snapTo(snap);
+    },
+    [geo, patch, snapTo],
+  );
+
+  // When the layout changes (rotation, resize, phone ↔ desktop), keep the sheet on a snap point.
   const prevDevice = useRef(geo.device);
   useEffect(() => {
     const deviceChanged = prevDevice.current !== geo.device;
     prevDevice.current = geo.device;
-    setState(s => ({
-      ...s,
-      sheetY: Math.min(Math.max(s.sheetY, geo.snap.full), geo.snap.peek),
-      view: deviceChanged ? initialView(geo) : s.view,
-    }));
-  }, [geo]);
+    setState(s => {
+      const p = geo.snap;
+      const name = (["full", "half", "peek"] as SnapName[]).sort((a, b) => Math.abs(p[a] - s.sheetY) - Math.abs(p[b] - s.sheetY))[0];
+      sheetTop.setValue(p[name]);
+      return { ...s, sheetY: p[name], view: deviceChanged ? initialView(geo) : s.view };
+    });
+  }, [geo, sheetTop]);
 
-  const patch = useCallback<Store["patch"]>(p => setState(s => ({ ...s, ...(typeof p === "function" ? p(s) : p) })), []);
-
-  const snapTo = useCallback((name: SnapName) => patch({ sheetY: geo.snap[name], sheetDragging: false }), [geo, patch]);
-
-  const setMode = useCallback(
-    (mode: Mode, snap?: SnapName) => patch(snap && geo.device === "phone" ? { mode, sheetY: geo.snap[snap] } : { mode }),
-    [geo, patch],
-  );
-
-  const toastTimer = useRef<number | undefined>(undefined);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const toast = useCallback(
     (msg: string, ms = 3200) => {
       patch({ toast: msg });
       clearTimeout(toastTimer.current);
-      toastTimer.current = window.setTimeout(() => patch({ toast: null }), ms);
+      toastTimer.current = setTimeout(() => patch({ toast: null }), ms);
     },
     [patch],
   );
@@ -145,8 +171,8 @@ export function AppProvider({ geo, children }: { geo: Geometry; children: ReactN
   const settings = useMemo(() => ({ ...DEFAULT_SETTINGS, ...state.overrides }), [state.overrides]);
 
   const value = useMemo<Store>(
-    () => ({ state, geo, settings, patch, setMode, snapTo, toast, setSetting, resetSettings, zoomBy, viewCenter }),
-    [state, geo, settings, patch, setMode, snapTo, toast, setSetting, resetSettings, zoomBy, viewCenter],
+    () => ({ state, geo, settings, sheetTop, patch, setMode, snapTo, toast, setSetting, resetSettings, zoomBy, viewCenter }),
+    [state, geo, settings, sheetTop, patch, setMode, snapTo, toast, setSetting, resetSettings, zoomBy, viewCenter],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

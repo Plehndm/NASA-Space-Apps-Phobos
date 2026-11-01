@@ -1,31 +1,39 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
+import { Pressable, View, type ViewStyle } from "react-native";
 import { useApp } from "../state/store";
+import { alpha, C, SHADOW } from "../theme";
+import { T } from "../ui/Text";
 import { HazardIcon, LayersIcon } from "../ui/icons";
 import { ElevationPopover, HeatPopover } from "../layers/DockPopovers";
 
-function dockStyle(active: boolean, activeFg = "var(--cta-ink)", idleFg = "var(--fg)"): CSSProperties {
-  return {
-    width: 44, height: 44, borderRadius: "50%", flex: "none", cursor: "pointer", transition: "background .2s",
-    display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "var(--shadow1)", backdropFilter: "blur(var(--blur))",
-    background: active ? "var(--cta)" : "rgba(var(--bg1-rgb),.86)",
-    border: `1px solid ${active ? "var(--cta)" : "var(--hair)"}`,
-    color: active ? activeFg : idleFg,
-  };
-}
+const circle = (active: boolean): ViewStyle => ({
+  width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", boxShadow: SHADOW.s1,
+  backgroundColor: active ? C.cta : alpha("bg1", 0.86), borderWidth: 1, borderColor: active ? C.cta : C.hair,
+});
 
-function DockButton({ active, title, onClick, children, style }: {
-  active: boolean; title: string; onClick: () => void; children: ReactNode; style?: CSSProperties;
+/** Dock button. `children` receives the glyph colour for the current state. */
+function DockButton({ active, label, onPress, idleFg = C.fg, children }: {
+  active: boolean; label: string; onPress: () => void; idleFg?: string; children: (fg: string) => ReactNode;
 }) {
   return (
-    <button title={title} aria-label={title} aria-pressed={active} onClick={onClick} style={{ ...dockStyle(active), ...style }}>
-      {children}
-    </button>
+    <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: active }} onPress={onPress} style={circle(active)}>
+      {children(active ? C.ctaInk : idleFg)}
+    </Pressable>
   );
 }
 
-const zoomBtn: CSSProperties = {
-  width: 44, height: 40, border: 0, background: "none", color: "var(--fg)", font: "400 22px var(--font-ui)", cursor: "pointer", lineHeight: 1,
-};
+function ZoomButton({ label, glyph, onPress }: { label: string; glyph: string; onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={({ pressed }) => ({ width: 44, height: 40, alignItems: "center", justifyContent: "center", backgroundColor: pressed ? C.card : "transparent" })}
+    >
+      <T w={400} size={22} style={{ lineHeight: 24 }}>{glyph}</T>
+    </Pressable>
+  );
+}
 
 /** Right-hand column of map controls: Layers, Hazards, Heatmap, Assistant, zoom. */
 export function Dock() {
@@ -33,21 +41,18 @@ export function Dock() {
   const panel = settings.layerPicker === "panel";
   const homeMode = S.navActive ? "nav" : "home";
 
+  const toggleLayersPanel = () => {
+    const open = S.mode === "layers";
+    setMode(open ? homeMode : "layers", open ? "peek" : "half");
+    patch({ heatOpen: false, elevOpen: false });
+  };
   const toggleLayers = () => {
-    if (panel) {
-      const open = S.mode === "layers";
-      setMode(open ? homeMode : "layers", open ? "peek" : "half");
-      patch({ heatOpen: false });
-    } else {
-      patch(s => ({ elevOpen: !s.elevOpen, heatOpen: false, ...(s.elevOpen || geo.device !== "phone" ? {} : { sheetY: geo.snap.peek }) }));
-    }
+    if (panel) return toggleLayersPanel();
+    const opening = !S.elevOpen;
+    patch({ elevOpen: opening, heatOpen: false });
+    if (opening && geo.device === "phone") setMode(S.mode, "peek");
   };
-  const toggleHeat = () => {
-    if (panel) {
-      const open = S.mode === "layers";
-      setMode(open ? homeMode : "layers", open ? "peek" : "half");
-    } else patch(s => ({ heatOpen: !s.heatOpen, elevOpen: false }));
-  };
+  const toggleHeat = () => (panel ? toggleLayersPanel() : patch(s => ({ heatOpen: !s.heatOpen, elevOpen: false })));
   const toggleHaz = () => {
     const on = !S.hazOn;
     patch({ hazOn: on, heatOpen: false });
@@ -58,63 +63,45 @@ export function Dock() {
     patch({ heatOpen: false, elevOpen: false });
   };
 
-  const layersActive = S.elevOpen || S.mode === "layers" || S.elev > 0;
-  const heatActive = S.heat !== "off" || S.heatOpen;
-  const aiActive = S.mode === "assistant";
-
   return (
-    <div
-      data-nopan="1"
-      style={{
-        position: "absolute", right: 12, top: geo.device === "desktop" ? 16 : 80, zIndex: 3,
-        display: "flex", flexDirection: "column", gap: 10, alignItems: "flex-end",
-      }}
-    >
-      <div style={{ position: "relative", display: "flex", gap: 8, alignItems: "flex-start" }}>
+    <View pointerEvents="box-none" style={{ position: "absolute", right: 12, top: geo.dockTop, zIndex: 3, gap: 10, alignItems: "flex-end" }}>
+      <View style={{ position: "relative" }}>
         {S.elevOpen && <ElevationPopover />}
-        <DockButton active={layersActive} title="Layers" onClick={toggleLayers}><LayersIcon /></DockButton>
-      </div>
+        <DockButton active={S.elevOpen || S.mode === "layers" || S.elev > 0} label="Layers" onPress={toggleLayers}>
+          {fg => <LayersIcon color={fg} />}
+        </DockButton>
+      </View>
 
       {/* The elevation popover is tall, so the rest of the dock hides while it is open. */}
       {!S.elevOpen && (
         <>
-          <div style={{ position: "relative" }}>
-            <DockButton active={S.hazOn} title="Hazard zones" onClick={toggleHaz}><HazardIcon /></DockButton>
-            <span
+          <View>
+            <DockButton active={S.hazOn} label="Hazard zones" onPress={toggleHaz}>{fg => <HazardIcon color={fg} />}</DockButton>
+            <View
+              pointerEvents="none"
               style={{
-                position: "absolute", right: 0, top: 0, width: 10, height: 10, borderRadius: "50%", border: "2px solid var(--bg1)",
-                background: S.hazOn ? "var(--accent)" : "var(--warm)",
+                position: "absolute", right: 0, top: 0, width: 10, height: 10, borderRadius: 5, borderWidth: 2, borderColor: C.bg1,
+                backgroundColor: S.hazOn ? C.accent : C.warm,
               }}
             />
-          </div>
-          <div style={{ position: "relative", display: "flex", gap: 8, alignItems: "flex-start" }}>
+          </View>
+          <View style={{ position: "relative" }}>
             {S.heatOpen && <HeatPopover />}
-            <DockButton active={heatActive} title="Heatmap" onClick={toggleHeat} style={{ font: "800 11px var(--font-ui)", letterSpacing: ".6px" }}>
-              HM
+            <DockButton active={S.heat !== "off" || S.heatOpen} label="Heatmap" onPress={toggleHeat}>
+              {fg => <T w={800} size={11} ls={0.6} color={fg}>HM</T>}
             </DockButton>
-          </div>
-          <button
-            title="Route assistant"
-            aria-label="Route assistant"
-            aria-pressed={aiActive}
-            onClick={openAssistant}
-            style={{ ...dockStyle(aiActive, "var(--cta-ink)", "var(--accent2)"), fontSize: 17, lineHeight: 1 }}
-          >
-            ✦
-          </button>
+          </View>
+          <DockButton active={S.mode === "assistant"} label="Route assistant" onPress={openAssistant} idleFg={C.accent2}>
+            {fg => <T w={500} size={17} color={fg} style={{ lineHeight: 20 }}>✦</T>}
+          </DockButton>
         </>
       )}
 
-      <div
-        style={{
-          display: "flex", flexDirection: "column", borderRadius: 22, background: "rgba(var(--bg1-rgb),.9)",
-          backdropFilter: "blur(var(--blur))", boxShadow: "var(--shadow1)", overflow: "hidden", marginTop: 4,
-        }}
-      >
-        <button aria-label="Zoom in" onClick={() => zoomBy(1.5)} style={zoomBtn}>+</button>
-        <div style={{ height: 1, margin: "0 12px", background: "var(--hair)" }} />
-        <button aria-label="Zoom out" onClick={() => zoomBy(1 / 1.5)} style={zoomBtn}>−</button>
-      </div>
-    </div>
+      <View style={{ borderRadius: 22, backgroundColor: alpha("bg1", 0.9), boxShadow: SHADOW.s1, overflow: "hidden", marginTop: 4 }}>
+        <ZoomButton label="Zoom in" glyph="+" onPress={() => zoomBy(1.5)} />
+        <View style={{ height: 1, marginHorizontal: 12, backgroundColor: C.hair }} />
+        <ZoomButton label="Zoom out" glyph="−" onPress={() => zoomBy(1 / 1.5)} />
+      </View>
+    </View>
   );
 }

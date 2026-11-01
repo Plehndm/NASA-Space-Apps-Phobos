@@ -1,5 +1,9 @@
+import { Pressable, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useApp } from "../state/store";
 import { useMtcClock } from "../state/clock";
+import { alpha, C } from "../theme";
+import { T } from "../ui/Text";
 import { GearIcon } from "../ui/icons";
 
 /** Top bar: location + MTC clock on the left, status pill and settings gear on the right. */
@@ -8,51 +12,53 @@ export function Header() {
   const clock = useMtcClock();
   const desk = geo.device === "desktop";
 
+  const content = (
+    <View style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingTop: geo.insetTop }}>
+      <View style={{ gap: 3 }}>
+        <T w={700} size={15} ls={-0.2}>Gale Crater</T>
+        <T w={500} size={11} ls={0.3} color={C.fg2}>Sol 742 · {clock} MTC</T>
+      </View>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <View style={{ paddingVertical: 6, paddingHorizontal: 11, borderRadius: 999, backgroundColor: alpha("raised", 0.75) }}>
+          <T w={700} size={9.5} ls={0.6} color={state.navActive ? C.warm : C.fg2} numberOfLines={1}>
+            {state.navActive ? `DEMO ×${settings.demoSpeed}` : "OFFLINE MAPS ✓"}
+          </T>
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Settings"
+          onPress={() => patch({ settingsOpen: true, elevOpen: false, heatOpen: false })}
+          style={({ pressed }) => ({
+            width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center",
+            backgroundColor: pressed ? C.raised : alpha("raised", 0.75),
+          })}
+        >
+          <GearIcon />
+        </Pressable>
+      </View>
+    </View>
+  );
+
+  if (desk) {
+    return (
+      <View style={{ position: "absolute", left: 0, top: 0, width: geo.panelW, height: geo.headerH, backgroundColor: C.bg2, zIndex: 5 }}>
+        {content}
+      </View>
+    );
+  }
   return (
     <>
-      <header
-        style={{
-          position: "absolute", left: 0, top: 0, width: geo.panelW, height: geo.headerH, zIndex: 5,
-          display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px",
-          background: desk ? "var(--bg2)" : "linear-gradient(180deg,rgba(27,16,13,.94),rgba(27,16,13,.62))",
-          backdropFilter: desk ? undefined : "blur(18px)",
-        }}
+      <LinearGradient
+        colors={[alpha("bg1", 0.94), alpha("bg1", 0.62)]}
+        style={{ position: "absolute", left: 0, top: 0, width: geo.W, height: geo.headerH, zIndex: 5 }}
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          <span style={{ font: "700 15px var(--font-ui)", letterSpacing: "-.2px", color: "var(--fg)" }}>Gale Crater</span>
-          <span style={{ font: "500 11px var(--font-ui)", letterSpacing: ".3px", color: "var(--fg2)" }}>Sol 742 · {clock} MTC</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span
-            style={{
-              font: "700 9.5px var(--font-ui)", letterSpacing: ".6px", padding: "6px 11px", borderRadius: 999,
-              background: "rgba(var(--raised-rgb),.75)", whiteSpace: "nowrap", flex: "none",
-              color: state.navActive ? "var(--warm)" : "var(--fg2)",
-            }}
-          >
-            {state.navActive ? `DEMO ×${settings.demoSpeed}` : "OFFLINE MAPS ✓"}
-          </span>
-          <button
-            title="Settings"
-            aria-label="Settings"
-            onClick={() => patch({ settingsOpen: true, elevOpen: false, heatOpen: false })}
-            style={{
-              width: 36, height: 36, borderRadius: "50%", background: "rgba(var(--raised-rgb),.75)", border: 0,
-              color: "var(--fg)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-            }}
-          >
-            <GearIcon />
-          </button>
-        </div>
-      </header>
-      {!desk && (
-        <div
-          style={{
-            position: "absolute", left: 0, top: geo.headerH, width: geo.W, height: 36, zIndex: 5, pointerEvents: "none",
-            background: "linear-gradient(180deg,rgba(27,16,13,.5),rgba(27,16,13,0))",
-          }}
-        />
-      )}
+        {content}
+      </LinearGradient>
+      <LinearGradient
+        pointerEvents="none"
+        colors={[alpha("bg1", 0.5), alpha("bg1", 0)]}
+        style={{ position: "absolute", left: 0, top: geo.headerH, width: geo.W, height: 36, zIndex: 5 }}
+      />
     </>
   );
 }
