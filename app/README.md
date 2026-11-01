@@ -32,6 +32,18 @@ With `npx expo start` running, press **w** in the terminal, or open <http://loca
 
 Without `?device`, windows 900 px wide or wider get the desktop layout and narrower ones get the phone layout. Phones always get the phone layout.
 
+### Compare with the design reference
+
+The legacy HTML prototype in `../Mars Navigator App Design/` shows how every screen should look and behave. To run it next to the app:
+
+```bash
+npm run design           # in a second terminal, from app/
+```
+
+Open <http://localhost:8090> on the desktop. The page links the phone, desktop and slide-deck versions. On a phone on the same Wi-Fi, use the `Phone:` address it prints. Put the prototype and the app side by side, for example the app at `?device=phone` beside the prototype's phone version.
+
+The prototype is a reference only. Don't build on it or import from it.
+
 ### If the phone can't connect
 
 - **Campus or public Wi-Fi** (eduroam, cafés) often blocks devices from reaching each other. Run `npx expo start --tunnel` instead. It works over the internet; the first time, it asks to install `@expo/ngrok`, so answer yes. Or connect the computer to the phone's hotspot.

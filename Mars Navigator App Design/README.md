@@ -11,7 +11,7 @@ Companion repo: `Plehndm/NASA-Space-Apps-Phobos` (branch `main`, folder `MarsDat
 
 Everything under `design/` is a **design reference built in HTML**. It is an interactive prototype that shows the intended look and behavior; it is not production code to ship. The task is to **recreate these screens in the target codebase** (React/Next, SwiftUI, Flutter, etc.) using its own patterns. The target codebase is `../app/` (React Native + Expo).
 
-The prototype runs as-is: open `design/Mars Navigator v2.dc.html` (phone) or `design/Mars Navigator Desktop.dc.html` (desktop) in a browser. `support.js` is the small runtime that renders the template; `deck-stage.js` is only for the slide deck; `image-slot.js` is a drop-target placeholder used on the Street Level screen.
+The prototype must be served over HTTP, because it loads its own files with `fetch()` and browsers block that for files opened from disk. From `../app/`, run `npm run design` and open <http://localhost:8090>. The page links the phone (`Mars Navigator v2.dc.html`), desktop (`Mars Navigator Desktop.dc.html`) and deck versions. `support.js` is the small runtime that renders the template; `deck-stage.js` is only for the slide deck; `image-slot.js` is a drop-target placeholder used on the Street Level screen.
 
 ## Fidelity
 
