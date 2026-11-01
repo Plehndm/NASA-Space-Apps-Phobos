@@ -1,0 +1,59 @@
+@import "./tokens.css";
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  background: var(--bg0);
+}
+body {
+  font-family: var(--font-ui);
+  color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+}
+* {
+  box-sizing: border-box;
+}
+a {
+  color: var(--accent2);
+}
+a:hover {
+  color: var(--accent);
+}
+input,
+button {
+  font-family: inherit;
+}
+input::placeholder {
+  color: var(--fg3);
+}
+input[type="range"] {
+  accent-color: var(--accent);
+  width: 100%;
+  margin: 0;
+  height: 24px;
+  cursor: pointer;
+}
+
+/* Scrolling card stacks: hidden scrollbar, children keep their height */
+.mn-scroll {
+  scrollbar-width: none;
+}
+.mn-scroll::-webkit-scrollbar {
+  display: none;
+}
+.mn-stack > * {
+  flex-shrink: 0;
+}
+
+@keyframes mn-pulse {
+  0% { transform: scale(0.5); opacity: 0.9; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+@keyframes mn-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.15; }
+}
