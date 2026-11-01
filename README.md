@@ -12,7 +12,7 @@ Team Phobos's entry for NASA Space Apps 2026, challenge **"Interplanetary Surviv
 - **Street Level:** walk-around rover panoramas at key waypoints.
 - **Route assistant:** a Claude-powered chat that suggests and loads routes.
 
-Status: the **data pipeline** and the **UI design** exist. The **real app has not been built yet**. The design is an HTML prototype that uses fake terrain. The work left is to build the app and connect it to the real data.
+Status: the **data pipeline** and the **UI design** exist. The **app foundation** is in `app/`: layout, theme, header, dock, settings. Every screen and map layer is still a placeholder. The design is an HTML prototype that uses fake terrain. The work left is to build the features and connect them to the real data.
 
 ## Where everything is
 
@@ -21,6 +21,11 @@ NASA-Space-Apps-Phobos/
 ├── .github/workflows/           claim-checklist.yml: fills in names on the checklist issue
 ├── README.md                    this file: overview + link to the feature checklist
 ├── mars-navigator.pptx          presentation deck (exported from the design deck)
+│
+├── app/                         THE APP (React + TypeScript + Vite); start in app/README.md
+│   ├── src/shell/               header, dock, bottom sheet / side panel, settings, toasts
+│   ├── src/cards/               one screen per sheet mode (placeholders until built)
+│   └── public/assets/           map images (copied from the design for now)
 │
 ├── Mars Navigator App Design/   UI DESIGN (reference only, not production code)
 │   ├── README.md                full design spec: tokens, layouts, screens, behaviour, state
