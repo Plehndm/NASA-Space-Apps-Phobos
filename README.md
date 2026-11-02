@@ -17,6 +17,27 @@ Status: the **data pipeline** and the **UI design** exist. The **app foundation*
 > **`app/` is the actual application. `Mars Navigator App Design/` is only the reference.**
 > The design folder is an HTML mock-up with fake terrain. It shows what each screen should look like and how it should behave. Don't edit it or ship it, and don't import from it. Build features in `app/`, matching the design.
 
+## Run the app and the design reference
+
+You need [Node.js](https://nodejs.org) 22.13 or newer (24 LTS recommended), which Expo SDK 58 requires. Run everything from `app/`, in two terminals:
+
+```bash
+cd app
+npm install              # first time only
+
+npx expo start           # terminal 1: the app
+npm run design           # terminal 2: the design reference (legacy HTML prototype)
+```
+
+| What | Desktop | Phone (same Wi-Fi) |
+| --- | --- | --- |
+| **The app** | Press **w** in terminal 1, or open <http://localhost:8081>. Add `?device=phone` for the phone layout. | Scan terminal 1's QR code with **Expo Go**: on Android in the app, on iPhone with the Camera. |
+| **Design reference** | Open <http://localhost:8090> and pick Phone, Desktop or Slide deck. | Open the `Phone:` address that terminal 2 prints. |
+
+**Checking your work:** put the app and the reference side by side at the same size. For example, the app at `?device=phone` next to the reference's Phone version. Compare layout, colours, spacing and copy, then click through the same steps in both and compare behaviour. The reference uses fake terrain and sample data, so match how it looks and behaves, not its numbers.
+
+More detail, including campus Wi-Fi workarounds and where each feature goes: [`app/README.md`](app/README.md).
+
 ## Where everything is
 
 ```text
