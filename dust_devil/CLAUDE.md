@@ -38,7 +38,7 @@ inputs, grid conventions and known pitfalls. This file covers how to work here a
 
 ## Current task: multi-sol outputs with a shared reference
 
-**Status (Oct 30): read `plan.md` first.** It holds the next steps, progress and closed ideas, and records later user
+**Status (Nov 2): done; read `plan.md` first.** It holds the next steps, progress and closed ideas, and records later user
 decisions that override parts of this section: the maps and the reference now use a fixed LTST grid (96 quarter-hour
 centres, daily mean over the 28 in 9-16 LTST), each sol's REMS bins are used only for the rover check, and Gate 1 was
 rewritten accordingly.

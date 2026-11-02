@@ -1,6 +1,6 @@
 # Dust devil layer: multi-sol plan, progress and closed ideas
 
-Handover for the next session (last updated Oct 30, 2026). Read `CLAUDE.md` and `README.md` in this folder first;
+Handover for the next session (last updated Nov 2, 2026). Read `CLAUDE.md` and `README.md` in this folder first;
 this file says where the work stands and what to do next. Where this file and `CLAUDE.md` disagree, this file
 records a later user decision (see "Decisions changed since CLAUDE.md").
 
@@ -8,91 +8,39 @@ records a later user decision (see "Decisions changed since CLAUDE.md").
 
 ## 1. Where things stand (one paragraph)
 
-The multi-sol model is implemented and tested in `dev/multisol.py`; the full suite passes (`53 passed in 50.84s`).
-A real-data sanity run over sols 799-804 behaves physically (share above threshold follows tau; max day-to-day change
-in the daily-mean score 0.012). **Not done:** the notebook (`dust_devil_pipeline.ipynb` is still the old single-sol
-version), the README, a real run that exercises the tau climatology, and a commit. Nothing from this work is committed.
+The multi-sol task in `CLAUDE.md` is done (Nov 2). `dust_devil_pipeline.ipynb` is the multi-sol version, run top to bottom
+in one kernel on the real data (two runs: sols 799-804 and the climatology sols 21, 22, 23, 26, 1770, 1775, 1860), with its
+outputs stored in the notebook. README rewritten. Suite `57 passed in 76.65s`. The main run is bit-identical to the Oct 30
+sanity run. **Open problem:** clearer sols saturate against the dusty sol-800 reference (56-85% of pixels reach the cap on
+the climatology sols, 27-35% above the threshold), so their maps show little contrast. Nothing further is scheduled.
 
 ---
 
-## 2. Next steps (in order)
+## 2. Next steps
 
-### Step A. Ask the user the four open questions (before writing code)
+Nothing is scheduled. Ask the user before starting any of these:
 
-1. **Cache records the LTST grid and `LIKELY_TOP_PCT`?** `load_reference` cannot tell a reference built on the old
-   REMS-bin scheme from one built on the fixed grid, and does not check `LIKELY_TOP_PCT` (the threshold depends on it).
-   Fixing it needs a small change to `tests/test_dd_7_reference_cache.py` (add the keys to `REF` and two mismatch cases).
-   Recommend: yes. Do not change the test without the user's OK (standing rule: fix code, not tests).
-2. **Notebook command.** `gale-env/Scripts/jupyter.exe nbconvert` picked up Anaconda's `jupyter-nbconvert`/`zmq` from PATH
-   (warning paths were `C:\Users\aypen\anaconda3\...`), although `gale-env` itself is clean (`include-system-site-packages = false`,
-   its own `zmq` and `nbconvert`). Recommend `gale-env/Scripts/python.exe -m nbconvert ...`. This changes the command in the
-   root `CLAUDE.md`, so it is the user's call. Mixing conda and pip caused the past 0xC06D007F crashes.
-3. **Which sols for the final notebook run** (`SOLS`). Recommend: `[799, 800, 801, 802, 803, 804]` plus the climatology
-   sols `[21, 22, 23, 26]` and the Mastcam-gap sols `[1770, 1775, 1860]` (see Step D). Note the GIF then spans years; it may
-   be better as two runs (two GIFs). User decides.
-4. **Commit now?** Workflow says commit after each gate passes. `dev/` and `tests/` are untracked; the suite passes.
-   Suggested message: "Dust devil multi-sol: tests gates 1-8 + rover check + fixed LTST grid, dev implementation".
+1. **Saturation on clear sols** (the main weakness, see section 5). Options, none decided: a clearer reference sol
+   (would change every map and the threshold; Gate 1's sol-800 framing would need rework), `SCORE_CAP = None` (breaks the
+   0-1 contract for the web map), or accept it and say so on the map. Any choice is a user decision; it changes
+   `CLAUDE.md` decision 2 or the cap.
+2. **Sol 21** has the lowest rover correlation (0.80, exactly 40 bins). Worth a look at its rover table before using it.
+3. **Tiling** the new GeoTIFFs into the web map is not part of this folder's task.
 
-### Step B. Update `dust_devil_pipeline.ipynb` (the deliverable)
+Commands (from the project root):
 
-The notebook must be self-contained: copy the working code from `dev/multisol.py` into cells; do not import from `dev/`.
+```bash
+gale-env/Scripts/python.exe -m pytest dust_devil/tests -q      # full suite, about 75 s
+gale-env/Scripts/python.exe -m nbconvert --to notebook --execute dust_devil/dust_devil_pipeline.ipynb   --output-dir executed --ExecutePreprocessor.timeout=3600 --ExecutePreprocessor.kernel_name=gale-env   # about 4.5 min
+```
 
-- **Config cell** gains (names exactly as in `dev/run_sanity.py`): `SOLS`, `REF_SOL = 800`, `SCORE_CAP = 1.0`,
-  `RUN_REFERENCE = "auto"`, `MIN_BINS = 40`, `TAU_CLIM_LS_WINDOW = 10.0`, `TAU_CLIM_EXCLUDE = (2082, 2133)`,
-  `TAU_CLIM_MIN_SOLS = 5`, `REFERENCE_JSON = PROC / "dust_devil_reference_sol800.json"`, `GIF_W = 1000`, `GIF_MS = 800`.
-  Remove the placeholder `TAU` from the multi-sol path (`TAU_CSV = None` must not be an option any more).
-  Keep `DEMO_SOL` only for stage 1 (`meta.json`); stage 2 never reads the rover from `meta.json`.
-- **Stages 0 and 1 unchanged.**
-- **Replace stages 2-4** with these cells (each with a short markdown explanation):
-  1. Helpers: `ls_deg`, `sun_vector`, `solar_const`, `MAP_LTST`, `load_grid`, `sols_with_min_bins` (print the list), `rover_pixel`, `tau_for_sol`.
-  2. Model: `_surface`, `_proxy`, `bin_proxy`, `slope_weight`, `reference_proxy`, `score_maps`, `rover_series`, `rover_check`.
-  3. Reference: `build_reference` / `save_reference` / `load_reference` with the `RUN_REFERENCE` flag; print ref proxy, threshold, tau.
-  4. Per-sol loop: `run_sol`, npz, 2-band GeoTIFF, rover table, overlays; print the per-sol line (DEM vs REMS, rover corr, tau source).
-  5. Summary CSV and GIF.
-- Keep the wording "heuristic, not a probability" in every title and legend.
-- **Run top to bottom in one kernel** on the real data. Outputs go to `../processed_data/` and overwrite the old sol-800
-  npz/tif/table/overlays; that is fine because the old ones are in `../processed_data/baseline_sol800/`.
-- **Acceptance check:** for sols 799-804 the notebook's npz arrays must equal `processed_data/dust_devil_sanity/*.npz`
-  (same code; expect bit-identical, or report the max abs diff). Also compare the reference JSON values.
-- **Memory:** only about 1.7 GB of 11.4 GB RAM was free on Oct 30. The reference buffer is about 0.4 GB (lit bins x
-  2.12 M pixels, float32); per-sol scoring holds a few full-grid float32 arrays. Free large arrays between stages
-  (`del`, `gc.collect()`). The sanity run took 57 s for 6 sols.
-
-### Step C. Update `README.md`
-
-- Stage 2 description: unitless proxy, shared sol-800 reference (`REF_PROXY` = p99.5 over 96 fixed bins x all pixels),
-  fixed threshold (p90 of sol 800's daily mean), fixed LTST grid, REMS bins only for the rover check.
-- Settings table: the new config names from Step B.
-- Caveats:
-  - Shared reference: sols clearer or sunnier than sol 800 (tau about 1.5, dusty) saturate at `SCORE_CAP`.
-    `frac_at_cap` is about 6-11% even for sols 799-804; it counts pixels that reach the cap in at least one bin.
-  - The kelvin scale is per sol and only for the rover check; it is max/max, so one spike in REMS moves it.
-  - Climatology tau comes from other Mars years at the same Ls; it is labelled in every output.
-- New outputs table (copy from `CLAUDE.md`), plus `dust_devil_reference_sol800.json`.
-- Replace "The score is relative ... top 10% always shows something" (no longer true: the share now varies by sol).
-- Update the "sols with >= 40 bins" note: the current REMS file has 263 such sols.
-
-### Step D. Real-data checks to run and report
-
-- Rerun the full suite after the notebook work: `gale-env/Scripts/python.exe -m pytest dust_devil/tests -q` (paste the summary line).
-- **Climatology on real sols (never run end to end yet):** sols 21, 22, 23, 26 (before Mastcam starts at sol 33) and
-  1770, 1775, 1860 (Mastcam gaps) all fall back to the climatology; `tau_for_sol` gives n = 65-82 sols in the window and
-  tau 0.48-0.80. Run at least one of each group through the full path, check the label in the npz, summary CSV,
-  overlay title and GIF frame.
-- **Check that the "±" renders** in the overlay PNG title and GIF frame (PIL default font). In the terminal it printed
-  garbled (console code page only; the CSV is UTF-8). If the font cannot draw it, write "+-" in the image text only, and
-  say so.
-- For every sol, report the DEM-vs-REMS elevation difference and the rover correlation; call out low correlations and
-  climatology tau (CLAUDE.md "Done means").
-
-### Step E. Done means (from CLAUDE.md, still valid)
-
-Full suite passes (paste output); notebook updated and run top to bottom in one kernel; sol 800 checked (now: regression
-gates in `tests/test_dd_1_regression.py`, see below); per-sol DEM and correlation reviewed; README updated.
+The notebook in `dust_devil/` is the executed copy (outputs included); to refresh it, run the command above and copy
+`executed/dust_devil_pipeline.ipynb` over it. The notebook's stage 2-4 cells are copied verbatim from `dev/multisol.py`
+(the Nov 2 build checked the copied code by AST); change both together.
 
 ---
 
-## 3. Decisions changed since CLAUDE.md (user decisions, Oct 30)
+## 3. Decisions changed since CLAUDE.md (user decisions, Oct 30 and Nov 2)
 
 | Topic | CLAUDE.md says | Now |
 |---|---|---|
@@ -101,10 +49,45 @@ gates in `tests/test_dd_1_regression.py`, see below); per-sol DEM and correlatio
 | `frac_at_cap` | "how many pixels hit the cap" | Fraction of valid pixels (finite TI) whose uncapped ratio proxy / ref_proxy reaches `SCORE_CAP` in at least one of the 96 bins; 0 when `SCORE_CAP = None`. |
 | Rover pixel | `col = (lon - T_C)/T_A`, `row = (lat - T_F)/T_E` | Same formula with `floor`, not `int()`: `int()` maps positions up to one pixel north/west of the edge to row/col 0. No in-template pixel changes (sols 799-804 stay at (304, 372)). |
 | Rover check | max/max scale, correlation | Unchanged, plus a test file for noisy and missing REMS temperatures (`tests/test_dd_9_rover_check.py`, user request). |
+| Reference cache | ref_sol, tau band, slope scale, day window, cap | **Also `likely_top_pct` and `map_ltst`** (the 96 bin centres); loading a cache without them (old scheme) or with other values fails. Gate 7 extended (user OK, Nov 2). |
+| Summary CSV name | `dust_devil_multisol_summary.csv` | `dust_devil_multisol_summary_<first>-<last>.csv`, like the GIF, so runs do not overwrite each other (Nov 2). |
+| Sols for the notebook | example 799-804 | Two runs: `SOLS = [799..804]` and `SOLS_CLIM_CHECK = [21, 22, 23, 26, 1770, 1775, 1860]`, one GIF each (Nov 2). |
+| Notebook command | `jupyter.exe nbconvert` | `gale-env/Scripts/python.exe -m nbconvert` (root `CLAUDE.md` and `README.md` updated, Nov 2). |
 
 ---
 
-## 4. Progress log (Oct 30, 2026)
+## 4. Progress log
+
+### Nov 2, 2026
+
+- Answered the four open questions (user: "go with your suggestions").
+- Suite rerun `53 passed in 77.81s`; committed `5a03c54` (dev implementation + tests).
+- Gate 7 extended first (4 new cases failed), then `_settings` records `likely_top_pct` and `map_ltst`. Summary CSV named
+  by range (Gate 8 changed first, failed, then fixed). Suite `57 passed`; committed `56ff998` with the command change.
+- Notebook rebuilt by a script that copies the `dev/multisol.py` functions verbatim (AST check: the geometry cell's
+  functions equal multisol's, docstrings aside). Run with `python.exe -m nbconvert`: 4 min 28 s, no errors; zmq now
+  loads from `gale-env`. Free RAM at the start was 1.1 GB.
+- Checks in the notebook: reference equal to the sanity run (`ref_proxy_p995 12.785097122192383`, `threshold
+  0.5932551622390747`); maps of sols 799-804 bit-identical to `dust_devil_sanity/`; sol 800 vs `baseline_sol800/` max abs
+  diff 0.0347 (mean) / 0.0147 (max), NaN pattern identical (the expected fixed-grid change).
+- "±" renders in the overlay title and GIF frame (PIL default font); checked visually on sol 21.
+
+Climatology run (first end-to-end use of the fallback):
+
+| Sol | Ls | tau (climatology, n) | bins | above threshold | at cap | rover (row, col) | corr | scale (K) | DEM - REMS (m) |
+|---|---|---|---|---|---|---|---|---|---|
+| 21 | 162.0 | 0.793 (69) | 40 | 34.5 % | 83.6 % | (261, 410) | **0.80** | 3.013 | +3.3 |
+| 22 | 162.5 | 0.797 (68) | 41 | 34.5 % | 83.7 % | (261, 410) | 0.90 | 3.194 | +4.2 |
+| 23 | 163.1 | 0.800 (65) | 41 | 34.5 % | 83.8 % | (261, 410) | 0.94 | 3.160 | +4.2 |
+| 26 | 164.7 | 0.797 (66) | 43 | 35.2 % | 85.4 % | (261, 411) | 0.97 | 2.762 | -1.5 |
+| 1770 | 40.2 | 0.634 (80) | 51 | 27.5 % | 59.0 % | (339, 367) | 0.95 | 3.346 | +27.9 |
+| 1775 | 42.5 | 0.631 (77) | 54 | 26.6 % | 56.2 % | (339, 367) | 0.92 | 3.366 | +27.9 |
+| 1860 | 80.9 | 0.477 (82) | 62 | 27.7 % | 56.5 % | (342, 370) | 0.94 | 2.034 | +19.8 |
+
+Main run (799-804): identical to the Oct 30 table below.
+
+### Oct 30, 2026
+
 
 **Step 0, baseline.** `rover_sol800_table.csv` existed; the sol-800 npz and tif were missing everywhere (not in
 `dust_devil.zip`, `outputs/`, `_Trash_Review/`). Recreated by re-running the unmodified notebook (commit a8de56f) via
@@ -150,6 +133,12 @@ shares 9.1-12.5 % ordered by tau and max day-to-day change 0.012. User approved 
 
 ## 5. Discoveries (evidence)
 
+- **Clear sols saturate against the sol-800 reference** (Nov 2). Climatology sols (tau 0.48-0.80, other seasons) reach
+  the cap on 56-85% of pixels and clear the threshold on 27-35%, against 6-11% and 9-12.5% for sols 799-804 (tau about
+  1.5). Sols 21-26 (Ls 162-165: about mean Sun distance, declination about +3 deg, so the noon Sun is nearly overhead at
+  Gale, 4.6 S) saturate more than 1770-1860 (Ls 40-81: near aphelion, declination +14 to +25 deg) despite higher tau,
+  consistent with stronger sunlight. The maps for such sols show little spatial contrast.
+- **Climatology path works end to end on real data** (Nov 2): labels in npz, summary CSV, overlay title and GIF frame.
 - **REMS coverage, not dust, drove day-to-day map changes** under the per-sol-bin scheme (see progress table). The maps
   are pure model and do not need REMS times.
 - **Gate 2 monotonicity holds in practice.** The diffuse term grows with tau, so in principle more dust can raise the
