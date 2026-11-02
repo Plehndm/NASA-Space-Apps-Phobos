@@ -257,14 +257,18 @@ def rover_check(proxy_rover, gap_obs_k):
 
 
 def _settings(cfg):
+    """Settings the reference depends on, including the LTST grid it was scored on (MAP_LTST) and LIKELY_TOP_PCT,
+    which sets the threshold."""
     cap = cfg["SCORE_CAP"]
     return dict(ref_sol=int(cfg["REF_SOL"]), tau_band=str(cfg["TAU_BAND"]), slope_scale_deg=float(cfg["SLOPE_SCALE_DEG"]),
-                day_ltst=[float(cfg["DAY_LTST"][0]), float(cfg["DAY_LTST"][1])], score_cap=None if cap is None else float(cap))
+                day_ltst=[float(cfg["DAY_LTST"][0]), float(cfg["DAY_LTST"][1])], score_cap=None if cap is None else float(cap),
+                likely_top_pct=float(cfg["LIKELY_TOP_PCT"]), map_ltst=MAP_LTST.tolist())
 
 
 def _assert_same_settings(reference, cfg):
     for k, v in _settings(cfg).items():
-        got = list(reference[k]) if k == "day_ltst" else reference[k]
+        assert k in reference, f"reference has no {k!r} (built by an older version); rebuild it (RUN_REFERENCE = True)"
+        got = list(reference[k]) if k in ("day_ltst", "map_ltst") else reference[k]
         assert got == v, f"reference was built with {k}={got!r} but the config has {v!r}; rebuild it (RUN_REFERENCE = True)"
 
 
@@ -275,8 +279,7 @@ def build_reference(grid, day, ls, tau, tau_source, cfg):
     ref_proxy = reference_proxy(grid, ls, MAP_LTST, tau)
     m = score_maps(grid, ls, MAP_LTST, tau, ref_proxy, cfg["SLOPE_SCALE_DEG"], cfg["DAY_LTST"], cfg["SCORE_CAP"])
     threshold = float(np.nanpercentile(m["likelihood_mean"], 100 - cfg["LIKELY_TOP_PCT"]))
-    return dict(ref_proxy_p995=ref_proxy, threshold=threshold, tau=float(tau), tau_source=str(tau_source),
-                likely_top_pct=float(cfg["LIKELY_TOP_PCT"]), **_settings(cfg))
+    return dict(ref_proxy_p995=ref_proxy, threshold=threshold, tau=float(tau), tau_source=str(tau_source), **_settings(cfg))
 
 
 def save_reference(path, reference):
@@ -286,7 +289,8 @@ def save_reference(path, reference):
 
 
 def load_reference(path, cfg):
-    """Read the reference JSON; assert ref_sol, tau_band, slope_scale_deg, day_ltst and score_cap equal cfg."""
+    """Read the reference JSON; assert ref_sol, tau_band, slope_scale_deg, day_ltst, score_cap, likely_top_pct and
+    map_ltst equal cfg (and MAP_LTST)."""
     reference = json.loads(Path(path).read_text(encoding="utf-8"))
     _assert_same_settings(reference, cfg)
     return reference
@@ -505,7 +509,7 @@ def run_multisol(cfg):
         del res
 
     summary = pd.DataFrame(rows, columns=SUMMARY_COLS)
-    summary.to_csv(out / "dust_devil_multisol_summary.csv", index=False)
+    summary.to_csv(out / f"dust_devil_multisol_summary_{sols[0]}-{sols[-1]}.csv", index=False)   # by range, like the GIF
     frames[0].save(out / f"dust_devil_multisol_{sols[0]}-{sols[-1]}.gif", save_all=True, append_images=frames[1:],
                    duration=cfg["GIF_MS"], loop=0)
     return summary

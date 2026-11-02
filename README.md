@@ -51,7 +51,7 @@ Windows, from this folder, in Git Bash. Always use the project environment by pa
 gale-env/Scripts/python.exe -m pytest tests -q
 
 # run a notebook into executed/
-gale-env/Scripts/jupyter.exe nbconvert --to notebook --execute notebooks/<name>.ipynb \
+gale-env/Scripts/python.exe -m nbconvert --to notebook --execute notebooks/<name>.ipynb \
   --output-dir executed --ExecutePreprocessor.timeout=3600 --ExecutePreprocessor.kernel_name=gale-env
 ```
 

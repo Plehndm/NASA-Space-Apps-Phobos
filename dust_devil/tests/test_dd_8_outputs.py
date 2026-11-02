@@ -69,7 +69,8 @@ def test_rover_tables(run):
 
 def test_summary_csv(run):
     cfg, summary = run
-    csv = pd.read_csv(cfg["OUT_DIR"] / "dust_devil_multisol_summary.csv")
+    csv = pd.read_csv(cfg["OUT_DIR"] / "dust_devil_multisol_summary_800-900.csv")   # named by sol range, like the GIF (Nov 2)
+    assert not (cfg["OUT_DIR"] / "dust_devil_multisol_summary.csv").exists()
     assert list(csv.columns) == SUMMARY_COLS
     assert csv.sol.tolist() == sorted(SOLS) and len(csv) == len(SOLS)
     assert summary.sol.tolist() == csv.sol.tolist()

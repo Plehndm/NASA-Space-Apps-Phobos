@@ -49,7 +49,7 @@ Do not add a physics term or a fitted parameter that is not listed in this file.
 - Project root: `MarsDataPipeline/`. Absolute path: `C:\Users\aypen\Downloads\MarsDataPipeline`.
 - Python: `C:\Users\aypen\Downloads\MarsDataPipeline\gale-env\Scripts\python.exe`.
 - The virtual environment `gale-env/` lives inside the project root. Never edit, search or index it, and keep it out of git.
-- Always call the environment's executables by path from the project root: `gale-env/Scripts/python.exe` and `gale-env/Scripts/jupyter.exe`. Never use a bare `python` or `jupyter`: in Git Bash those may resolve to a different Python.
+- Always call the environment's executables by path from the project root: `gale-env/Scripts/python.exe` (also for nbconvert, as `python.exe -m nbconvert`). Never use a bare `python` or `jupyter`: in Git Bash those may resolve to a different Python.
 - Jupyter kernel for nbconvert: `gale-env` (registered, confirmed Oct 27).
 - Do not install, upgrade or remove packages. If something is missing, stop and report it.
 - Allowed libraries:
@@ -68,7 +68,8 @@ Do not add a physics term or a fitted parameter that is not listed in this file.
 gale-env/Scripts/python.exe -m pytest tests -q
 
 # execute a notebook into executed/ (sources stay unchanged)
-gale-env/Scripts/jupyter.exe nbconvert --to notebook --execute notebooks/<name>.ipynb \
+# python -m nbconvert, not jupyter.exe nbconvert: the latter found Anaconda's nbconvert/zmq on PATH (Oct 30; user decision Nov 2)
+gale-env/Scripts/python.exe -m nbconvert --to notebook --execute notebooks/<name>.ipynb \
   --output-dir executed \
   --ExecutePreprocessor.timeout=3600 \
   --ExecutePreprocessor.kernel_name=gale-env
