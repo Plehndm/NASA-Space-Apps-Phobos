@@ -8,11 +8,11 @@ records a later user decision (see "Decisions changed since CLAUDE.md").
 
 ## 1. Where things stand (one paragraph)
 
-The multi-sol task in `CLAUDE.md` is done (Nov 2). `dust_devil_pipeline.ipynb` is the multi-sol version, run top to bottom
-in one kernel on the real data (two runs: sols 799-804 and the climatology sols 21, 22, 23, 26, 1770, 1775, 1860), with its
-outputs stored in the notebook. README rewritten. Suite `57 passed in 76.65s`. The main run is bit-identical to the Oct 30
-sanity run. **Open problem:** clearer sols saturate against the dusty sol-800 reference (56-85% of pixels reach the cap on
-the climatology sols, 27-35% above the threshold), so their maps show little contrast. Nothing further is scheduled.
+The multi-sol task is done, now with **reference sol 1850** (user decision Nov 2; sol 800 kept as the dusty-season
+example). `dust_devil_pipeline.ipynb` runs three runs top to bottom in one kernel (clear 1830-1865, dusty 799-804,
+climatology sols), outputs stored in the notebook. README updated. Suite `59 passed` (Gate 11 added). Saturation is much
+reduced but not gone: a single fixed reference cannot cover the 2x spread of sunlight across the record, and the dusty
+sols' overlays are nearly blank (0.2-0.4% above threshold). Nothing further is scheduled.
 
 ---
 
@@ -20,23 +20,27 @@ the climatology sols, 27-35% above the threshold), so their maps show little con
 
 Nothing is scheduled. Ask the user before starting any of these:
 
-1. **Saturation on clear sols** (the main weakness, see section 5). Options, none decided: a clearer reference sol
-   (would change every map and the threshold; Gate 1's sol-800 framing would need rework), `SCORE_CAP = None` (breaks the
-   0-1 contract for the web map), or accept it and say so on the map. Any choice is a user decision; it changes
-   `CLAUDE.md` decision 2 or the cap.
-2. **Sol 21** has the lowest rover correlation (0.80, exactly 40 bins). Worth a look at its rover table before using it.
-3. **Tiling** the new GeoTIFFs into the web map is not part of this folder's task.
+1. **Dusty-sol display.** Sols 799-804 show 0.2-0.4% above the threshold, so their overlays and GIF are nearly blank.
+   That is the intended message, but the spatial pattern only survives in the GeoTIFF/npz values. A continuous colour
+   ramp of the daily mean (fixed 0-1 scale, same for all sols) would show both. User decision.
+2. **Remaining saturation.** About 100 of 263 sols would still have > 20% of pixels at the cap against sol 1850
+   (subsampled estimate). A design change (a reference pooled over all sols, or one per season) would change
+   `CLAUDE.md` decision 2 again. User decision.
+3. **Sols 2875 and 2878** have 110 and 124 REMS bins (max 96): probably duplicated rows. Check the REMS table
+   (`../data_prep/`) before using them.
+4. **Sols 21 and 1830** have the lowest rover correlations (0.80, 0.84).
+5. **Tiling** the GeoTIFFs into the web map is not part of this folder's task.
 
 Commands (from the project root):
 
 ```bash
-gale-env/Scripts/python.exe -m pytest dust_devil/tests -q      # full suite, about 75 s
-gale-env/Scripts/python.exe -m nbconvert --to notebook --execute dust_devil/dust_devil_pipeline.ipynb   --output-dir executed --ExecutePreprocessor.timeout=3600 --ExecutePreprocessor.kernel_name=gale-env   # about 4.5 min
+gale-env/Scripts/python.exe -m pytest dust_devil/tests -q      # full suite, about 80 s
+gale-env/Scripts/python.exe -m nbconvert --to notebook --execute dust_devil/dust_devil_pipeline.ipynb   --output-dir executed --ExecutePreprocessor.timeout=3600 --ExecutePreprocessor.kernel_name=gale-env   # about 6 min
 ```
 
 The notebook in `dust_devil/` is the executed copy (outputs included); to refresh it, run the command above and copy
-`executed/dust_devil_pipeline.ipynb` over it. The notebook's stage 2-4 cells are copied verbatim from `dev/multisol.py`
-(the Nov 2 build checked the copied code by AST); change both together.
+`executed/dust_devil_pipeline.ipynb` over it. The notebook's stage 2-4 cells are copied verbatim from `dev/multisol.py`;
+change both together.
 
 ---
 
@@ -53,10 +57,38 @@ The notebook in `dust_devil/` is the executed copy (outputs included); to refres
 | Summary CSV name | `dust_devil_multisol_summary.csv` | `dust_devil_multisol_summary_<first>-<last>.csv`, like the GIF, so runs do not overwrite each other (Nov 2). |
 | Sols for the notebook | example 799-804 | Two runs: `SOLS = [799..804]` and `SOLS_CLIM_CHECK = [21, 22, 23, 26, 1770, 1775, 1860]`, one GIF each (Nov 2). |
 | Notebook command | `jupyter.exe nbconvert` | `gale-env/Scripts/python.exe -m nbconvert` (root `CLAUDE.md` and `README.md` updated, Nov 2). |
+| Reference sol | `REF_SOL = 800` (decision 2) | **`REF_SOL = 1850`** (Nov 2): median of the reference statistic over the 263 sols with >= 40 bins; sol 800 was the 12th dimmest, so 243 sols had > 20% of pixels at the cap. Sol 800 stays in the runs as the dusty-season example. Tests keep sol 800 (they check arithmetic, and `baseline_sol800/` is sol 800); Gate 11 checks another reference sol. |
+| Runs in the notebook | `SOLS` | `SOLS_CLEAR = [1830, 1840, 1845, 1850, 1860, 1865]`, `SOLS_DUSTY = [799..804]`, `SOLS_CLIM_CHECK` (Nov 2). |
 
 ---
 
 ## 4. Progress log
+
+### Nov 2, 2026 (second part): reference sol 1850
+
+Candidate search (scratch script, subsampled grid every 6th row/col; sol 800 p995 12.798 vs 12.785 full grid):
+
+| Ref | Ls | tau | rover corr | median % at cap (263 sols) | sols > 20% at cap | median % above thr | sols < 1% above |
+|---|---|---|---|---|---|---|---|
+| 800 | 228 | 1.50 | 0.97 | 76 % | 243 | 32 % | 0 |
+| 90 (sunniest) | 202 | 0.62 | 0.93 | 0.002 % | 0 | 0.04 % | most |
+| **1850** | 76 | 0.44 | 0.97 | 9 % | 100 | 12 % | 21 |
+| 2905 | 292 | 0.92 | 0.96 | 4 % | 81 | 7 % | 32 |
+
+- Excluded: sol 3095 (sealed test block 8), sol 2878 (124 bins), sols 82-90 (tau from one measurement 3-5 sols away),
+  sol 640 (rover corr 0.67).
+- Gate 11 (`tests/test_dd_11_reference_sol.py`) written; it passed at once (the code never hard-coded sol 800). Suite
+  `59 passed`.
+- Notebook run (5 min 39 s): reference `ref_proxy_p995 16.4738`, `threshold 0.5903`; threshold equals p90 of sol 1850's
+  map exactly; sol 1850 10.00 % above.
+
+| Run | above threshold | at cap | tau |
+|---|---|---|---|
+| clear 1830-1865 | 6.4-10.0 % | 3.2-6.3 % | 0.44-0.51 |
+| dusty 799-804 | 0.2-0.4 % | 0.0-0.1 % | 1.44-1.52 |
+| climatology | 5.9-17.3 % | 2.3-19.7 % | 0.48-0.80 |
+
+Rover: sols 1830-1865 corr 0.84 (1830) to 0.97, DEM - REMS +6 to +20 m.
 
 ### Nov 2, 2026
 

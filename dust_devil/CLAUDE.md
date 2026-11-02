@@ -48,7 +48,7 @@ rewritten accordingly.
 1. **Sols**: an observed list or range set in the config, e.g. `SOLS = [799, 800, 801, 802, 803, 804]`.
    Each sol uses its own REMS bins (`rems_binned_all_sols.csv`) and its own rover position.
    Provide a helper that lists sols with >= `MIN_BINS` (40) bins so the user can pick.
-2. **Shared reference = sol 800** (`REF_SOL = 800`). Replace the per-sol 99.5th percentile with ONE reference
+2. **Shared reference = sol 800** (`REF_SOL = 800`). **Changed to sol 1850 on Nov 2 (user decision; see `plan.md`).** Replace the per-sol 99.5th percentile with ONE reference
    value computed from sol 800, used for every sol, so dusty / low-sun sols show less activity.
 3. **Fixed threshold**: the highlight cutoff is the 90th percentile of sol 800's daily-mean score
    (`LIKELY_TOP_PCT = 10` now only defines the cutoff on the reference sol). Other sols use that same

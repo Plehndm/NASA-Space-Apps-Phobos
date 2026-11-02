@@ -1,4 +1,4 @@
-"""Multi-sol dust devil layer with a shared sol-800 reference (dev module; final code goes into the notebook).
+"""Multi-sol dust devil layer with a shared reference sol (REF_SOL; dev module; final code goes into the notebook).
 
 Conventions
 - `grid` is a dict: shape (H, W), transform (a, b, c, d, e, f) as in meta.json, and float arrays of shape (H, W):
