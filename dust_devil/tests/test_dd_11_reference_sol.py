@@ -20,16 +20,16 @@ def test_reference_follows_ref_sol(ms, grid, tmp_path):
 
     ref = json.loads(cfg["REFERENCE_JSON"].read_text(encoding="utf-8"))
     assert ref["ref_sol"] == 801
-    z801 = np.load(out / "gale_dust_devil_likelihood_sol801.npz")
+    z801 = np.load(out / "gale_dust_devil_heating_index_sol801.npz")
     assert ref["threshold"] == float(np.nanpercentile(z801["likelihood_mean"], 90)), "threshold is not the top 10% of sol 801"
     assert abs(summary.frac_above_threshold[801] - 0.10) < 0.01, "the reference sol should have about 10% above its own threshold"
 
     for s in SOLS:
-        z = np.load(out / f"gale_dust_devil_likelihood_sol{s}.npz")
+        z = np.load(out / f"gale_dust_devil_heating_index_sol{s}.npz")
         assert int(z["ref_sol"]) == 801 and float(z["threshold"]) == ref["threshold"]
-        with rasterio.open(out / f"gale_dust_devil_likelihood_sol{s}.tif") as t:
+        with rasterio.open(out / f"gale_dust_devil_heating_index_sol{s}.tif") as t:
             assert all("ref_sol801" in d for d in t.descriptions), t.descriptions
-    assert pd.read_csv(out / "dust_devil_multisol_summary_800-801.csv").sol.tolist() == [800, 801]
+    assert pd.read_csv(out / "dust_devil_heating_index_summary_800-801.csv").sol.tolist() == [800, 801]
 
 
 def test_ref_sol_need_not_be_in_sols(ms, grid, tmp_path):

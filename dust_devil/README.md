@@ -1,11 +1,46 @@
-# Gale Crater dust devil pipeline (`dust_devil_pipeline.ipynb`) and Mastcam tau table (`../data_prep/build_mastcam_tau_table.ipynb`)
+# Gale Crater Dust Devil Heating Index (`dust_devil_pipeline.ipynb`) and Mastcam tau table (`../data_prep/build_mastcam_tau_table.ipynb`)
 
 Two notebooks for the dust devil layer of the NASA Space Apps 2026 entry "Interplanetary Survival Guide: Martian Map".
 
-- `dust_devil_pipeline.ipynb` runs the whole layer in one kernel: dust opacity table, per-pixel feature table, a shared reference from sol 1850, then per sol the score maps, GeoTIFF, rover check and overlay previews, and per run a summary CSV and an animated GIF.
+- `dust_devil_pipeline.ipynb` runs the whole layer in one kernel: dust opacity table, per-pixel feature table, a shared reference from sol 1850, then per sol the heating index maps, GeoTIFF, rover check and overlay previews, and per run a summary CSV and an animated GIF.
 - `../data_prep/build_mastcam_tau_table.ipynb` is stage 0 of the pipeline as a standalone notebook. Use it only to build or inspect the tau table on its own; the pipeline already contains the same code.
 
-**What the layer is.** A per-pixel, per-sol *heuristic* score (0 to 1) of dust devil activity on the 100 m THEMIS grid (1436 x 1477 pixels, 136.75 to 139.24 E, 6.57 to 4.15 S). It is not a calibrated probability and not a set of detected dust devils. All weights are assumptions, not fitted. Every sol is scored against the same reference (sol 1850), so scores can be compared between sols: a dusty sol such as 800 shows little activity, a clear one more.
+**What the layer is.** The **Dust Devil Heating Index**: a per-pixel, per-sol *heuristic* (0 to 1) of how strongly the Sun heats the ground, the main ingredient dust devils need, on the 100 m THEMIS grid (1436 x 1477 pixels, 136.75 to 139.24 E, 6.57 to 4.15 S). It is not a probability of dust devils and not a set of detected dust devils. All weights are assumptions, not fitted. Every sol is scored against the same reference (sol 1850), so the index can be compared between sols: a dusty sol such as 800 heats less, a clear one more.
+
+Naming: output files say `heating_index` (renamed from `likelihood` on Nov 2). Inside the npz files the two arrays keep their original keys, `likelihood_mean` and `likelihood_max`, so the regression tests and the `baseline_sol800/` fixture still compare like with like.
+
+## How to explain it (for the judges)
+
+**30-second explanation**
+
+> Dust devils form when sunlight heats the ground much faster than the air above it. The hot surface layer becomes unstable, rises and starts to spin. Our map estimates that heating for every 100-metre pixel in Gale Crater: how much sunlight reaches the ground (time of day, season, slope, dust in the air), how much the surface absorbs (dark ground absorbs more), and how quickly it warms (loose sand heats fast, bedrock slowly).
+>
+> Red means the strongest heating: the top 10% of a typical clear day. Because every sol uses the same scale, you can see the seasons change: in the dusty season the whole crater heats less and the map fades from red to yellow.
+
+**What we claim, and the evidence**
+
+| Claim | Evidence |
+|---|---|
+| The heating estimate tracks real ground heating | At the rover's position, the modelled ground-minus-air temperature gap correlates 0.94-0.98 with Curiosity's REMS measurements on sols 799-804, and 0.80-0.97 on the other sols run (clear-season and climatology sols). |
+| Dust reduces heating | On sol 800 (dust optical depth 1.5) the example pixel's average sunlight drops from 219 to 174 W/m2 and its index from 0.59 (high) to 0.47 (moderate). Dusty sols 799-804 have 0.2-0.4% of the crater in the high level, against 6-10% for the clear sols 1830-1865. |
+| Comparisons between sols are fair | Every sol is scored against one fixed reference, sol 1850, chosen at the median of the 263 sols with enough REMS data; not each sol against itself. |
+
+The correlation checks the **heating**, not dust devils. Say so if asked.
+
+**Do not claim**
+
+- A probability ("59% chance of a dust devil") or a dust devil density: the index has not been compared with observed dust devils.
+- That dust devils occur in the red areas: red means the conditions favour them most.
+- That dust moves activity around: tau is one value per sol for the whole crater, so dust only dims or brightens the map.
+
+**Likely questions**
+
+- *Why is heating enough?* It is not the whole story: dust devils also need loose dust, some wind to start the rotation and a deep enough unstable layer of air. We model the ingredient that varies most across the crater floor and that we can check against rover data.
+- *Did you check it against real dust devils?* Not yet. The next step is to compare with Curiosity's camera surveys or the short pressure dips REMS records when a dust devil passes (needs the raw 1 Hz pressure data).
+- *Why do some sunny sols saturate?* Sunlight varies about 2x over the record; with one fixed scale and a 0-1 range the sunniest sols reach the top. The median-sol reference balances this.
+- *Where do the weights come from?* The structure follows the physics (absorbed sunlight / sqrt(thermal inertia) sets how fast a surface heats); the slope penalty and the reference choice are documented assumptions.
+
+**Why it is useful for the survival guide:** it shows where and when the ground heats strongly enough to lift dust: where to expect dust devils, dust on solar panels and reduced visibility, and when (late morning to mid-afternoon, clear seasons).
 
 ## Quick start
 
@@ -36,30 +71,30 @@ Two notebooks for the dust devil layer of the NASA Space Apps 2026 entry "Interp
 |---|---|---|---|
 | 0 | Mastcam tau table | Parses the two tau tables, takes the median tau per sol (floor of the fractional sol), reports how many REMS sols have a measurement. | `mastcam_tau_per_sol.csv` (sol, tau, n, tau_min, tau_max, ls_deg, band) |
 | 1 | Feature table | Resamples DEM and slope (area average), aspect (average of sin and cos), albedo (bilinear) and THEMIS thermal inertia onto the 100 m template and joins them, one row per pixel. Pixels missing any layer are dropped. | `gale_dust_devil_features_100m.csv`, `gale_dust_devil_meta.json` |
-| 2 | Inputs, score, shared reference | Loads the grid, REMS bins and tau. Per LTST bin, the unitless proxy `(1 - albedo) * tilted flux / sqrt(clip(TI, 50))`; the score is `clip(proxy / REF_PROXY, 0, SCORE_CAP) * exp(-(slope / 10 deg)^2)`. `REF_PROXY` is the 99.5th percentile of the reference sol's proxy over 96 LTST bins x all pixels; the three level cuts are its daily-mean score at the top 50 / 30 / 10% (the last is the threshold). All are cached. | `dust_devil_reference_sol1850.json` |
-| 3 | Per sol | Scores the sol on a fixed grid of 96 quarter-hour LTST bins (daily mean over the 28 bins in 9 to 16 LTST, daily max over all 96), accumulating one bin at a time. Then the rover check on the sol's own REMS bins. Writes the maps, GeoTIFF, rover table and overlays (three levels: low yellow, moderate orange, high red; rover as a cyan ring). | `gale_dust_devil_likelihood_sol<N>.npz`, `gale_dust_devil_likelihood_sol<N>.tif`, `rover_sol<N>_table.csv`, `likelihood_overlay_sol<N>.png`, `..._imagery.png`, `..._hillshade.png` |
-| 4 | Per run | One summary row per sol and one GIF frame per sol on the hillshade, labelled with sol, Ls, tau, tau source and the share in each level. Then checks that the threshold and level cuts equal the reference sol's percentiles and compares the runs. | `dust_devil_multisol_summary_<first>-<last>.csv`, `dust_devil_multisol_<first>-<last>.gif` |
+| 2 | Inputs, score, shared reference | Loads the grid, REMS bins and tau. Per LTST bin, the unitless proxy `(1 - albedo) * tilted flux / sqrt(clip(TI, 50))`; the score is `clip(proxy / REF_PROXY, 0, SCORE_CAP) * exp(-(slope / 10 deg)^2)`. `REF_PROXY` is the 99.5th percentile of the reference sol's proxy over 96 LTST bins x all pixels; the three level cuts are its daily-mean score at the top 50 / 30 / 10% (the last is the threshold). All are cached. | `dust_devil_heating_index_reference_sol1850.json` |
+| 3 | Per sol | Scores the sol on a fixed grid of 96 quarter-hour LTST bins (daily mean over the 28 bins in 9 to 16 LTST, daily max over all 96), accumulating one bin at a time. Then the rover check on the sol's own REMS bins. Writes the maps, GeoTIFF, rover table and overlays (three levels: low yellow, moderate orange, high red; rover as a cyan ring). | `gale_dust_devil_heating_index_sol<N>.npz`, `gale_dust_devil_heating_index_sol<N>.tif`, `rover_sol<N>_table.csv`, `heating_index_overlay_sol<N>.png`, `..._imagery.png`, `..._hillshade.png` |
+| 4 | Per run | One summary row per sol and one GIF frame per sol on the hillshade, labelled with sol, Ls, tau, tau source and the share in each level. Then checks that the threshold and level cuts equal the reference sol's percentiles and compares the runs. | `dust_devil_heating_index_summary_<first>-<last>.csv`, `dust_devil_heating_index_<first>-<last>.gif` |
 
 ### Outputs (in `../processed_data/`)
 
 | File | Content |
 |---|---|
-| `gale_dust_devil_likelihood_sol<N>.npz` | `likelihood_mean`, `likelihood_max` (float32, H x W), sol, ls_deg, tau, tau_source, ref_sol, ref_proxy, threshold, class_cuts, score_cap, day_ltst, rover_row, rover_col |
-| `gale_dust_devil_likelihood_sol<N>.tif` | band 1 daily mean, band 2 daily max; template CRS and transform; band descriptions name the reference sol |
+| `gale_dust_devil_heating_index_sol<N>.npz` | `likelihood_mean`, `likelihood_max` (float32, H x W), sol, ls_deg, tau, tau_source, ref_sol, ref_proxy, threshold, class_cuts, score_cap, day_ltst, rover_row, rover_col |
+| `gale_dust_devil_heating_index_sol<N>.tif` | band 1 daily mean, band 2 daily max; template CRS and transform; band descriptions `heating_index_mean_9-16LTST_shared_ref_sol1850` and `heating_index_max_over_day_shared_ref_sol1850` |
 | `rover_sol<N>_table.csv` | per REMS bin: observed ground-minus-air gap, modelled gap in kelvin (this sol's own rover scale), score at the rover pixel |
-| `likelihood_overlay_sol<N>[_imagery\|_hillshade].png` | three levels shaded; the legend names the fixed score bands ("High >= 0.590 (top 10% of sol 1850)") and this sol's share in each |
-| `dust_devil_reference_sol1850.json` | ref_proxy_p995, threshold, tau and tau_source of the reference sol, and the settings they depend on (tau band, slope scale, day window, score cap, `LIKELY_TOP_PCT`, `CLASS_TOP_PCTS`, the 96 LTST bin centres), plus `class_cuts` |
-| `dust_devil_multisol_summary_<first>-<last>.csv` | per sol: ls_deg, tau, tau_source, n_bins, frac_above_threshold, frac_at_cap, rover_corr, rover_scale_k, dem_minus_rems_m, frac_low, frac_moderate, frac_high (`frac_high` = `frac_above_threshold`) |
-| `dust_devil_multisol_<first>-<last>.gif` | one frame per sol (800 ms, loops) |
+| `heating_index_overlay_sol<N>[_imagery\|_hillshade].png` | three levels shaded; the legend names the fixed score bands ("High >= 0.590 (top 10% of sol 1850)") and this sol's share in each |
+| `dust_devil_heating_index_reference_sol1850.json` | ref_proxy_p995, threshold, tau and tau_source of the reference sol, and the settings they depend on (tau band, slope scale, day window, score cap, `LIKELY_TOP_PCT`, `CLASS_TOP_PCTS`, the 96 LTST bin centres), plus `class_cuts` |
+| `dust_devil_heating_index_summary_<first>-<last>.csv` | per sol: ls_deg, tau, tau_source, n_bins, frac_above_threshold, frac_at_cap, rover_corr, rover_scale_k, dem_minus_rems_m, frac_low, frac_moderate, frac_high (`frac_high` = `frac_above_threshold`) |
+| `dust_devil_heating_index_<first>-<last>.gif` | one frame per sol (800 ms, loops) |
 
-`baseline_sol800/` holds the pre-multi-sol single-sol output of sol 800 (used by the regression tests; do not overwrite). `dust_devil_sanity/` holds the Oct 30 development run of sols 799-804 (sol-800 reference). `dust_devil_reference_sol800.json` is the superseded sol-800 reference; the pipeline no longer reads it.
+`baseline_sol800/` holds the pre-multi-sol single-sol output of sol 800 (used by the regression tests; do not overwrite). `dust_devil_sanity/` holds the Oct 30 development run of sols 799-804 (sol-800 reference). Both keep the old `likelihood` file names. `dust_devil_reference_sol800.json` is the superseded sol-800 reference; the pipeline no longer reads it.
 
 ## Settings (config cell)
 
 | Setting | Meaning |
 |---|---|
 | `RUN_TAU_TABLE`, `RUN_FEATURES` | `"auto"` (default) runs the stage only if its output file is missing; `True` forces a rebuild; `False` skips. |
-| `RUN_REFERENCE` | `"auto"` loads `dust_devil_reference_sol<REF_SOL>.json` if it exists, otherwise builds it; `True` rebuilds. Loading fails if the cache was built with different settings (rebuild with `True`). |
+| `RUN_REFERENCE` | `"auto"` loads `dust_devil_heating_index_reference_sol<REF_SOL>.json` if it exists, otherwise builds it; `True` rebuilds. Loading fails if the cache was built with different settings (rebuild with `True`). |
 | `SOLS_CLEAR` | Clear-season run around the reference (default 1830, 1840, 1845, 1850, 1860, 1865; Ls 67-83). `[]` skips it. |
 | `SOLS_DUSTY` | Dusty-season run (default 799-804: tau about 1.5, Ls 228-231). `[]` skips it. |
 | `SOLS_CLIM_CHECK` | Second run (default 21, 22, 23, 26, 1770, 1775, 1860: sols whose tau comes from the climatology). `[]` skips it. |

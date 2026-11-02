@@ -8,10 +8,10 @@ records a later user decision (see "Decisions changed since CLAUDE.md").
 
 ## 1. Where things stand (one paragraph)
 
-Done (Nov 2): reference sol 1850, and the overlays and GIFs now shade **three fixed levels** (low / moderate / high, cut at
+Done (Nov 2): the layer is now the **Dust Devil Heating Index** (outputs renamed from `likelihood`); reference sol 1850, and the overlays and GIFs now shade **three fixed levels** (low / moderate / high, cut at
 the top 50 / 30 / 10% of sol 1850's map: 0.348 / 0.474 / 0.590). The dusty sols 799-804 show their pattern in low (27%)
 and moderate (7-10%) instead of a nearly blank map. Notebook run top to bottom (three runs), README updated (new
-"What the score means" section). Suite `69 passed` (Gate 12 added). Nothing further is scheduled; see "Later" in section 3.
+"What the score means" section). Suite `70 passed`. Nothing further is scheduled; see "Later" in section 3.
 
 ---
 
@@ -122,6 +122,25 @@ change both together.
 ---
 
 ## 5. Progress log
+
+### Nov 2, 2026 (fourth part): renamed to Dust Devil Heating Index
+
+- User decision: the layer is the **Dust Devil Heating Index** (a heuristic of surface heating), not a likelihood.
+  Output names: `gale_dust_devil_heating_index_sol<N>.npz/.tif`, `heating_index_overlay_sol<N>[_imagery|_hillshade].png`,
+  `dust_devil_heating_index_summary_<a>-<b>.csv`, `dust_devil_heating_index_<a>-<b>.gif`,
+  `dust_devil_heating_index_reference_sol1850.json` (moved, content unchanged). GeoTIFF bands `heating_index_mean_...`,
+  `heating_index_max_...`. Titles "Dust Devil Heating Index (heuristic) ... Relative surface heating, not a probability".
+- Kept: npz array keys `likelihood_mean` / `likelihood_max` (tests, oracle and `baseline_sol800/` use them), the
+  `baseline_sol800/` and `dust_devil_sanity/` file names, `rover_sol<N>_table.csv`.
+- Tests first: names changed in Gates 1, 8, 11, 12 and a new Gate 8 test (no output name says "likelihood"; bands say
+  heating_index); 9 failed before the code change. Suite `70 passed`.
+- Found and fixed: the notebook's hand-written run loop did not save `class_cuts` in the npz (the tested `run_multisol` did).
+  Both now call `write_sol_outputs` / `write_run_outputs` in `multisol.py`, so the notebook copies tested code.
+- Notebook rerun 5 min 40 s: maps identical to the previous run; all 90 per-sol files and 6 run files present. The 96
+  old-named copies at the top of `processed_data/` were then deleted.
+- README: new "How to explain it (for the judges)" section (30-second explanation, claims and evidence, do-not-claim,
+  likely questions). Root README line and a stale notebook pointer in `data_prep/build_mastcam_tau_table.ipynb` updated.
+  `dev/run_sanity.py` marked superseded (not updated or run).
 
 ### Nov 2, 2026 (third part): three-level overlay
 

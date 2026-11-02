@@ -58,7 +58,7 @@ def test_reference_threshold_is_top_10_percent_of_ref_sol(ms, grid):
 def test_end_to_end_sols_800_matches_oracle(ms, grid, tmp_path):
     cfg = multisol_cfg(tmp_path, {800: (10, 12)}, grid)
     ms.run_multisol(cfg)
-    z = np.load(cfg["OUT_DIR"] / "gale_dust_devil_likelihood_sol800.npz")
+    z = np.load(cfg["OUT_DIR"] / "gale_dust_devil_heating_index_sol800.npz")
     loaded = ms.load_grid(cfg["FEATURES_CSV"], cfg["META_JSON"])
     tau = float(np.interp(800, [799, 801], [1.517, 1.478]))
     exp_mean, exp_max = oracle_maps(loaded, cfg, tau=tau)

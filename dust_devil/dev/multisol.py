@@ -1,4 +1,5 @@
-"""Multi-sol dust devil layer with a shared reference sol (REF_SOL; dev module; final code goes into the notebook).
+"""Dust Devil Heating Index (a heuristic), multi-sol, with a shared reference sol (REF_SOL; dev module; final code goes
+into the notebook).
 
 Conventions
 - `grid` is a dict: shape (H, W), transform (a, b, c, d, e, f) as in meta.json, and float arrays of shape (H, W):
@@ -6,7 +7,7 @@ Conventions
   albedo (albedo_mean), ti (THEMIS TIU, NaN where missing), dem (m). Missing pixels are NaN.
 - `day` is one sol's rows of rems_binned_all_sols.csv, sorted by bin.
 - `cfg` uses the notebook's config names (upper case), e.g. SLOPE_SCALE_DEG, DAY_LTST, SCORE_CAP, REF_SOL, TAU_BAND.
-- The score is a heuristic, not a probability.
+- The score is a heating index, a heuristic, not a probability of dust devils.
 """
 import json
 from pathlib import Path
@@ -364,9 +365,9 @@ def write_geotiff(path, res, reference, template_tif, day_ltst):
     profile = dict(driver="GTiff", dtype="float32", count=2, height=shape[0], width=shape[1], crs=crs, transform=tf, nodata=np.nan)
     with rasterio.open(path, "w", **profile) as dst:
         dst.write(res["likelihood_mean"].astype("float32"), 1)
-        dst.set_band_description(1, f"score_mean_{day_ltst[0]:g}-{day_ltst[1]:g}LTST_shared_ref_sol{ref}")
+        dst.set_band_description(1, f"heating_index_mean_{day_ltst[0]:g}-{day_ltst[1]:g}LTST_shared_ref_sol{ref}")
         dst.write(res["likelihood_max"].astype("float32"), 2)
-        dst.set_band_description(2, f"score_max_over_day_shared_ref_sol{ref}")
+        dst.set_band_description(2, f"heating_index_max_over_day_shared_ref_sol{ref}")
 
 
 class Previews:
@@ -446,8 +447,8 @@ def write_overlays(out_dir, res, reference, previews, cfg):
     colours = _colours(cfg)
     levels = score_levels(res["likelihood_mean"], reference["class_cuts"])
     d0, d1 = cfg["DAY_LTST"]
-    title = (f"Dust devil activity heuristic, sol {sol}, Ls {res['ls_deg']:.1f}, mean {d0:g}-{d1:g} LTST, tau={res['tau']:.2f} "
-             f"({res['tau_source']}). Shared reference sol {ref}. Relative score, not a probability.")
+    title = (f"Dust Devil Heating Index (heuristic), sol {sol}, Ls {res['ls_deg']:.1f}, mean {d0:g}-{d1:g} LTST, tau={res['tau']:.2f} "
+             f"({res['tau_source']}). Shared reference sol {ref}. Relative surface heating, not a probability.")
     items = _legend_items(res, reference)
     bounds = f"lon {previews.west:.3f}..{previews.east:.3f} E, lat {previews.south:.3f}..{previews.north:.3f}"
     args = (levels, res["rover_lon"], res["rover_lat"], colours, cfg["ALPHA"])
@@ -462,7 +463,7 @@ def write_overlays(out_dir, res, reference, previews, cfg):
     d.text((8, 8), title, fill="black", font=font)
     d.text((8, 28), f"Left: CTX imagery   Right: hillshade   |   {bounds}", fill="black", font=font)
     _draw_legend(d, 8, head + ph + 10, items, colours, font, step)
-    canvas.save(Path(out_dir) / f"likelihood_overlay_sol{sol}.png")
+    canvas.save(Path(out_dir) / f"heating_index_overlay_sol{sol}.png")
 
     for tag, name in (("imagery", "CTX imagery"), ("hillshade", "Hillshade")):
         im = previews.panel(tag, cfg["SEPARATE_W"], *args)
@@ -473,7 +474,7 @@ def write_overlays(out_dir, res, reference, previews, cfg):
         d.text((8, 8), f"{name}: {title}", fill="black", font=font)
         d.text((8, 30), bounds, fill="black", font=font)
         _draw_legend(d, 8, head + im.height + 12, items, colours, font, step)
-        sheet.save(Path(out_dir) / f"likelihood_overlay_sol{sol}_{tag}.png")
+        sheet.save(Path(out_dir) / f"heating_index_overlay_sol{sol}_{tag}.png")
 
 
 def gif_frame(res, reference, previews, cfg):
@@ -486,14 +487,46 @@ def gif_frame(res, reference, previews, cfg):
     frame = Image.new("RGB", (im.width, head + im.height), "white")
     frame.paste(im, (0, head))
     d = ImageDraw.Draw(frame)
-    d.text((8, 6), f"sol {res['sol']}   Ls {res['ls_deg']:.1f}   tau {res['tau']:.2f} ({res['tau_source']}).   "
-                   f"Heuristic, not a probability.", fill="black", font=font)
+    d.text((8, 6), f"Dust Devil Heating Index   sol {res['sol']}   Ls {res['ls_deg']:.1f}   tau {res['tau']:.2f} ({res['tau_source']}).   "
+                   f"Heuristic: relative surface heating, not a probability.", fill="black", font=font)
     _draw_legend(d, 8, 26, _legend_items(res, reference), colours, font, 20)
     return frame
 
 
 SUMMARY_COLS = ["sol", "ls_deg", "tau", "tau_source", "n_bins", "frac_above_threshold", "frac_at_cap", "rover_corr",
                 "rover_scale_k", "dem_minus_rems_m", "frac_low", "frac_moderate", "frac_high"]
+
+
+def write_sol_outputs(out, res, reference, previews, cfg):
+    """Write one sol's npz, 2-band GeoTIFF, rover table and overlays to `out`; print its summary line.
+    Returns its GIF frame."""
+    s, out = res["sol"], Path(out)
+    np.savez_compressed(out / f"gale_dust_devil_heating_index_sol{s}.npz",
+                        likelihood_mean=res["likelihood_mean"].astype("float32"), likelihood_max=res["likelihood_max"].astype("float32"),
+                        sol=s, ls_deg=res["ls_deg"], tau=res["tau"], tau_source=res["tau_source"], ref_sol=reference["ref_sol"],
+                        ref_proxy=reference["ref_proxy_p995"], threshold=reference["threshold"],
+                        score_cap=np.nan if cfg["SCORE_CAP"] is None else float(cfg["SCORE_CAP"]),
+                        day_ltst=np.array(cfg["DAY_LTST"]), rover_row=res["rover_row"], rover_col=res["rover_col"],
+                        class_cuts=np.array(reference["class_cuts"]))
+    write_geotiff(out / f"gale_dust_devil_heating_index_sol{s}.tif", res, reference, cfg["TEMPLATE_TIF"], cfg["DAY_LTST"])
+    res["table"].to_csv(out / f"rover_sol{s}_table.csv", index=False)
+    write_overlays(out, res, reference, previews, cfg)
+    print(f"sol {s}: Ls {res['ls_deg']:.1f}, tau {res['tau']:.3f} ({res['tau_source']}), {res['n_bins']} bins, low/moderate/high "
+          f"{res['frac_low']:.1%}/{res['frac_moderate']:.1%}/{res['frac_high']:.1%}, at cap {res['frac_at_cap']:.1%}, "
+          f"rover (row {res['rover_row']}, col {res['rover_col']}) corr {res['rover_corr']:.2f}, "
+          f"scale {res['rover_scale_k']:.3f} K, DEM - REMS {res['dem_minus_rems_m']:+.1f} m")
+    return gif_frame(res, reference, previews, cfg)
+
+
+def write_run_outputs(out, rows, frames, sols, cfg):
+    """Write the run's summary CSV and GIF, both named by sol range. Returns the summary DataFrame."""
+    out = Path(out)
+    summary = pd.DataFrame(rows, columns=SUMMARY_COLS)
+    summary.to_csv(out / f"dust_devil_heating_index_summary_{sols[0]}-{sols[-1]}.csv", index=False)   # by range, like the GIF
+    frames[0].save(out / f"dust_devil_heating_index_{sols[0]}-{sols[-1]}.gif", save_all=True, append_images=frames[1:],
+                   duration=cfg["GIF_MS"], loop=0)
+    print(f"wrote summary and GIF for sols {sols[0]}-{sols[-1]} ({len(frames)} frames)")
+    return summary
 
 
 # ---------------- end to end ----------------
@@ -541,25 +574,9 @@ def run_multisol(cfg):
         ls = float(ls_deg(s))
         tau, src = tau_of(s)
         res = run_sol(s, day_of(s), grid, ls, tau, src, reference, cfg)
-        np.savez_compressed(out / f"gale_dust_devil_likelihood_sol{s}.npz",
-                            likelihood_mean=res["likelihood_mean"].astype("float32"), likelihood_max=res["likelihood_max"].astype("float32"),
-                            sol=s, ls_deg=ls, tau=tau, tau_source=src, ref_sol=reference["ref_sol"], ref_proxy=reference["ref_proxy_p995"],
-                            threshold=reference["threshold"], score_cap=np.nan if cfg["SCORE_CAP"] is None else float(cfg["SCORE_CAP"]),
-                            day_ltst=np.array(cfg["DAY_LTST"]), rover_row=res["rover_row"], rover_col=res["rover_col"],
-                            class_cuts=np.array(reference["class_cuts"]))
-        write_geotiff(out / f"gale_dust_devil_likelihood_sol{s}.tif", res, reference, cfg["TEMPLATE_TIF"], cfg["DAY_LTST"])
-        res["table"].to_csv(out / f"rover_sol{s}_table.csv", index=False)
-        write_overlays(out, res, reference, previews, cfg)
-        frames.append(gif_frame(res, reference, previews, cfg))
+        frames.append(write_sol_outputs(out, res, reference, previews, cfg))
         rows.append({k: res[k] for k in SUMMARY_COLS})
-        print(f"sol {s}: Ls {ls:.1f}, tau {tau:.3f} ({src}), {res['n_bins']} bins, low/moderate/high {res['frac_low']:.1%}/"
-              f"{res['frac_moderate']:.1%}/{res['frac_high']:.1%}, "
-              f"at cap {res['frac_at_cap']:.1%}, rover (row {res['rover_row']}, col {res['rover_col']}) corr {res['rover_corr']:.2f}, "
-              f"scale {res['rover_scale_k']:.3f} K, DEM - REMS {res['dem_minus_rems_m']:+.1f} m")
         del res
 
-    summary = pd.DataFrame(rows, columns=SUMMARY_COLS)
-    summary.to_csv(out / f"dust_devil_multisol_summary_{sols[0]}-{sols[-1]}.csv", index=False)   # by range, like the GIF
-    frames[0].save(out / f"dust_devil_multisol_{sols[0]}-{sols[-1]}.gif", save_all=True, append_images=frames[1:],
-                   duration=cfg["GIF_MS"], loop=0)
+    summary = write_run_outputs(out, rows, frames, sols, cfg)
     return summary

@@ -31,7 +31,7 @@ MarsDataPipeline/
   processed_data/    model inputs: REMS training table, terrain rasters, feature table (read-only, not in git)
   raw_data/          original downloads: REMS files, THEMIS, TES albedo, Mastcam tau (not in git)
   data_prep/         notebooks that turned raw_data/ into processed_data/
-  dust_devil/        the dust devil likelihood layer (parked); has its own README
+  dust_devil/        the Dust Devil Heating Index layer (parked); has its own README
   gale_tiles/        web-map tiles (imagery and hillshade) and the source DTMs; has its own README
   docs/              plans, progress log, findings, briefs
   _Trash_Review/     files set aside for deletion, waiting for review (not in git; see below)

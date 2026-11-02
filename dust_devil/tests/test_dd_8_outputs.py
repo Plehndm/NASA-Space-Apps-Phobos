@@ -27,8 +27,8 @@ def test_per_sol_files(run):
     cfg, _ = run
     out = cfg["OUT_DIR"]
     for s in SOLS:
-        for name in (f"gale_dust_devil_likelihood_sol{s}.npz", f"gale_dust_devil_likelihood_sol{s}.tif", f"rover_sol{s}_table.csv",
-                     f"likelihood_overlay_sol{s}.png", f"likelihood_overlay_sol{s}_imagery.png", f"likelihood_overlay_sol{s}_hillshade.png"):
+        for name in (f"gale_dust_devil_heating_index_sol{s}.npz", f"gale_dust_devil_heating_index_sol{s}.tif", f"rover_sol{s}_table.csv",
+                     f"heating_index_overlay_sol{s}.png", f"heating_index_overlay_sol{s}_imagery.png", f"heating_index_overlay_sol{s}_hillshade.png"):
             assert (out / name).exists(), f"missing {name}"
     assert cfg["REFERENCE_JSON"].exists()
 
@@ -36,11 +36,11 @@ def test_per_sol_files(run):
 def test_npz_contents(run):
     cfg, _ = run
     for s, (r, c) in SOLS.items():
-        z = np.load(cfg["OUT_DIR"] / f"gale_dust_devil_likelihood_sol{s}.npz")
+        z = np.load(cfg["OUT_DIR"] / f"gale_dust_devil_heating_index_sol{s}.npz")
         assert NPZ_KEYS <= set(z.files), NPZ_KEYS - set(z.files)
         assert int(z["sol"]) == s and int(z["ref_sol"]) == 800 and (int(z["rover_row"]), int(z["rover_col"])) == (r, c)
         assert z["likelihood_mean"].shape == (H, W) and z["likelihood_mean"].dtype == np.float32
-    z900 = np.load(cfg["OUT_DIR"] / "gale_dust_devil_likelihood_sol900.npz")
+    z900 = np.load(cfg["OUT_DIR"] / "gale_dust_devil_heating_index_sol900.npz")
     assert str(z900["tau_source"]) == "climatology Ls±10, n=6 sols", str(z900["tau_source"])
 
 
@@ -50,11 +50,11 @@ def test_geotiff_matches_template(run):
     with rasterio.open(cfg["TEMPLATE_TIF"]) as t:
         t_tf, t_crs, t_shape = t.transform, t.crs, (t.height, t.width)
     for s in SOLS:
-        with rasterio.open(cfg["OUT_DIR"] / f"gale_dust_devil_likelihood_sol{s}.tif") as d:
+        with rasterio.open(cfg["OUT_DIR"] / f"gale_dust_devil_heating_index_sol{s}.tif") as d:
             assert (d.height, d.width) == t_shape and d.count == 2
             assert d.transform == t_tf and d.crs == t_crs
             assert all(desc and "800" in desc and "ref" in desc.lower() for desc in d.descriptions), d.descriptions
-            z = np.load(cfg["OUT_DIR"] / f"gale_dust_devil_likelihood_sol{s}.npz")
+            z = np.load(cfg["OUT_DIR"] / f"gale_dust_devil_heating_index_sol{s}.npz")
             np.testing.assert_array_equal(d.read(1), z["likelihood_mean"])
             np.testing.assert_array_equal(d.read(2), z["likelihood_max"])
 
@@ -69,8 +69,8 @@ def test_rover_tables(run):
 
 def test_summary_csv(run):
     cfg, summary = run
-    csv = pd.read_csv(cfg["OUT_DIR"] / "dust_devil_multisol_summary_800-900.csv")   # named by sol range, like the GIF (Nov 2)
-    assert not (cfg["OUT_DIR"] / "dust_devil_multisol_summary.csv").exists()
+    csv = pd.read_csv(cfg["OUT_DIR"] / "dust_devil_heating_index_summary_800-900.csv")   # named by sol range, like the GIF (Nov 2)
+    assert not (cfg["OUT_DIR"] / "dust_devil_heating_index_summary.csv").exists()
     assert list(csv.columns) == SUMMARY_COLS
     assert csv.sol.tolist() == sorted(SOLS) and len(csv) == len(SOLS)
     assert summary.sol.tolist() == csv.sol.tolist()
@@ -83,9 +83,21 @@ def test_summary_csv(run):
 def test_gif(run):
     from PIL import Image
     cfg, _ = run
-    gif = cfg["OUT_DIR"] / "dust_devil_multisol_800-900.gif"
+    gif = cfg["OUT_DIR"] / "dust_devil_heating_index_800-900.gif"
     assert gif.exists()
     with Image.open(gif) as im:
         assert im.n_frames == len(SOLS)
         assert abs(im.width - cfg["GIF_W"]) <= 2
         assert im.info.get("loop") == 0 and im.info.get("duration") == cfg["GIF_MS"]
+
+
+def test_names_say_heating_index(run):
+    """User decision Nov 2: the layer is the Dust Devil Heating Index (a heuristic), not a likelihood. No output file name
+    says "likelihood"; GeoTIFF bands are described as heating index."""
+    import rasterio
+    cfg, _ = run
+    names = [p.name for p in cfg["OUT_DIR"].iterdir()]
+    assert not [n for n in names if "likelihood" in n.lower()], names
+    for s in SOLS:
+        with rasterio.open(cfg["OUT_DIR"] / f"gale_dust_devil_heating_index_sol{s}.tif") as d:
+            assert all(desc.startswith("heating_index_") for desc in d.descriptions), d.descriptions

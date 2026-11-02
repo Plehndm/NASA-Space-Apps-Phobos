@@ -36,7 +36,7 @@ inputs, grid conventions and known pitfalls. This file covers how to work here a
 - Be objective: lead with risks and flaws, not agreement. Flag bad assumptions.
 - The score is a heuristic, not a probability. Keep that wording in titles and legends.
 
-## Current task: multi-sol outputs with a shared reference
+## Current task: multi-sol outputs with a shared reference (outputs renamed to `heating_index` on Nov 2; see `plan.md`)
 
 **Status (Nov 2): done; read `plan.md` first.** It holds the next steps, progress and closed ideas, and records later user
 decisions that override parts of this section: the maps and the reference now use a fixed LTST grid (96 quarter-hour

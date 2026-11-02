@@ -68,7 +68,7 @@ def run(ms, grid, tmp_path):
 
 def test_summary_and_npz_levels(run):
     cfg, summary = run
-    csv = pd.read_csv(cfg["OUT_DIR"] / "dust_devil_multisol_summary_800-801.csv").set_index("sol")
+    csv = pd.read_csv(cfg["OUT_DIR"] / "dust_devil_heating_index_summary_800-801.csv").set_index("sol")
     assert {"frac_low", "frac_moderate", "frac_high"} <= set(csv.columns)
     assert np.allclose(csv.frac_high, csv.frac_above_threshold)
     assert (csv[["frac_low", "frac_moderate", "frac_high"]].sum(axis=1) <= 1 + 1e-12).all()
@@ -76,7 +76,7 @@ def test_summary_and_npz_levels(run):
     assert abs(csv.frac_low[800] - 0.2) < 0.01 and abs(csv.frac_moderate[800] - 0.2) < 0.01 and abs(csv.frac_high[800] - 0.1) < 0.01
     ref = json.loads(cfg["REFERENCE_JSON"].read_text(encoding="utf-8"))
     for s in (800, 801):
-        z = np.load(cfg["OUT_DIR"] / f"gale_dust_devil_likelihood_sol{s}.npz")
+        z = np.load(cfg["OUT_DIR"] / f"gale_dust_devil_heating_index_sol{s}.npz")
         assert z["class_cuts"].tolist() == ref["class_cuts"]
 
 
