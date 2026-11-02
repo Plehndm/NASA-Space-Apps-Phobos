@@ -8,34 +8,93 @@ records a later user decision (see "Decisions changed since CLAUDE.md").
 
 ## 1. Where things stand (one paragraph)
 
-The multi-sol task is done, now with **reference sol 1850** (user decision Nov 2; sol 800 kept as the dusty-season
-example). `dust_devil_pipeline.ipynb` runs three runs top to bottom in one kernel (clear 1830-1865, dusty 799-804,
-climatology sols), outputs stored in the notebook. README updated. Suite `59 passed` (Gate 11 added). Saturation is much
-reduced but not gone: a single fixed reference cannot cover the 2x spread of sunlight across the record, and the dusty
-sols' overlays are nearly blank (0.2-0.4% above threshold). Nothing further is scheduled.
+Done (Nov 2): reference sol 1850, and the overlays and GIFs now shade **three fixed levels** (low / moderate / high, cut at
+the top 50 / 30 / 10% of sol 1850's map: 0.348 / 0.474 / 0.590). The dusty sols 799-804 show their pattern in low (27%)
+and moderate (7-10%) instead of a nearly blank map. Notebook run top to bottom (three runs), README updated (new
+"What the score means" section). Suite `69 passed` (Gate 12 added). Nothing further is scheduled; see "Later" in section 3.
 
 ---
 
-## 2. Next steps
+## 2. What the score means (agreed with the user, Nov 2)
 
-Nothing is scheduled. Ask the user before starting any of these:
+**One sentence:** a score of 0.59 means that, averaged over 9:00-16:00 local solar time, this pixel's surface heating is
+59% of the near-maximum heating on the reference sol (1850). It is a relative measure of how hard the Sun drives the
+ground, not a probability and not a count of dust devils.
 
-1. **Dusty-sol display.** Sols 799-804 show 0.2-0.4% above the threshold, so their overlays and GIF are nearly blank.
-   That is the intended message, but the spatial pattern only survives in the GeoTIFF/npz values. A continuous colour
-   ramp of the daily mean (fixed 0-1 scale, same for all sols) would show both. User decision.
-2. **Remaining saturation.** About 100 of 263 sols would still have > 20% of pixels at the cap against sol 1850
+**Why heating:** dust devils form when the ground is much hotter than the air above it. The score estimates that
+ground-air gap from three things: sunlight reaching the surface (time of day, season, slope orientation, dust),
+the share absorbed (`1 - albedo`; dark ground absorbs more), and how fast the surface heats (`1 / sqrt(TI)`; loose sand
+heats fast, bedrock slowly).
+
+**Recipe:** per quarter-hour, `proxy = (1 - albedo) * sunlight / sqrt(TI)`; divide by `REF_PROXY` (16.47: only 0.5% of
+sol 1850's pixel x quarter-hour values are higher), cap at 1, multiply by the slope weight `exp(-(slope / 10 deg)^2)`
+(1.0 flat, 0.78 at 5 deg, 0.37 at 10 deg); average the 28 quarter-hours from 9:00 to 16:00.
+
+**Worked example** (pixel row 834, col 905, crater floor: slope 1 deg, albedo 0.14, TI 363):
+
+| | sol 1850 (tau 0.44) | sol 800 (tau 1.50) |
+|---|---|---|
+| sunlight at 11:52 (peak) | 277 W/m2, per-bin score 0.76 | 229 W/m2, 0.62 |
+| 9:00-16:00 average sunlight | 219 W/m2 | 174 W/m2 |
+| map value (x slope weight 0.99) | **0.591** (high) | **0.469** (moderate) |
+
+**Rough kelvin reading:** with sol 1850's rover calibration (2.7 K per proxy unit) a score of 1.0 is about a 45 K
+ground-air gap, so 0.59 is about 26 K averaged over the day. Loose: the calibration is fitted at one rover pixel and is
+max/max (one REMS spike moves it), which is why it stays out of the maps.
+
+**Not:** a probability, a dust devil density, or calibrated against observed dust devils. All weights are assumptions.
+Because tau is one value per sol for the whole crater, dust only scales the map up or down; it cannot move where
+activity is likely (sol 800's map correlates 0.996 with sol 1850's).
+
+---
+
+## 3. Next steps
+
+### Done: three-level overlay (user go-ahead Nov 2; design kept for reference)
+
+**Problem.** One binary threshold (0.590, top 10% of sol 1850) sits just above sol 800's 99th percentile (0.548), so the
+dusty overlays show 0.3%. The pattern is there (correlation 0.996 with sol 1850), only below the cutoff.
+
+**Design.**
+- Three fixed levels, cut at the top 50 / 30 / 10% of the reference sol's daily-mean map: on sol 1850 the cuts are
+  0.348, 0.474, 0.590. Same cut values for every sol.
+- Levels: none (< 0.348, no shading), low (0.348-0.474), moderate (0.474-0.590), high (>= 0.590). A pixel is in a level
+  if its score is >= that level's cut (same rule as the current threshold). NaN pixels are unshaded.
+- Expected shares (from the saved maps): sol 1850 50/20/20/10 %, sol 800 64.9/27.4/7.4/0.3 %, sol 21 47.3/16.9/19.8/16.1 %.
+- Config: `CLASS_TOP_PCTS = (50, 30, 10)`, strictly decreasing, and its last value must equal `LIKELY_TOP_PCT`, so the
+  high cut is the existing threshold, bit for bit.
+- Reference cache gains `class_top_pcts` and `class_cuts` (ascending); `class_top_pcts` joins the settings checked at load.
+- npz gains `class_cuts`. Summary CSV gains `frac_low`, `frac_moderate`, `frac_high` (shares of valid pixels in each
+  band; `frac_high` equals `frac_above_threshold`, kept for continuity).
+- Overlays and GIF: one colour per level, light to dark, `LEVEL_COLOURS = ("#FACC15", "#F97316", "#DC2626")` (yellow,
+  orange, red) at the existing `ALPHA`. Replaces `HIGHLIGHT`. Legend names score bands, not shares of the shown sol:
+  "Low 0.348-0.474", "Moderate 0.474-0.590", "High >= 0.590 (top 10% of sol 1850)", plus this sol's share per level.
+  Keep "heuristic, not a probability".
+- GeoTIFF unchanged (it already holds the continuous score).
+
+**Tests first** (`tests/test_dd_12_levels.py`): cuts equal the reference sol's percentiles and the high cut equals the
+threshold exactly; bad `CLASS_TOP_PCTS` fails; a cache with other `CLASS_TOP_PCTS` fails to load; level assignment at the
+boundaries and for NaN; summary shares sum to 1 with `frac_high == frac_above_threshold`; the overlay panel blends each
+level's colour exactly. Needed test-helper changes: `CLASS_TOP_PCTS` in `dd_synth.base_cfg`, the new keys in Gate 7's
+`REF`, the new columns in Gate 8's `SUMMARY_COLS`.
+
+**Done means:** suite passes, notebook rerun (three runs), dusty overlays show the pattern, README legend section updated.
+
+### Later (ask the user first)
+
+1. **Remaining saturation.** About 100 of 263 sols would still have > 20% of pixels at the cap against sol 1850
    (subsampled estimate). A design change (a reference pooled over all sols, or one per season) would change
    `CLAUDE.md` decision 2 again. User decision.
-3. **Sols 2875 and 2878** have 110 and 124 REMS bins (max 96): probably duplicated rows. Check the REMS table
+2. **Sols 2875 and 2878** have 110 and 124 REMS bins (max 96): probably duplicated rows. Check the REMS table
    (`../data_prep/`) before using them.
-4. **Sols 21 and 1830** have the lowest rover correlations (0.80, 0.84).
-5. **Tiling** the GeoTIFFs into the web map is not part of this folder's task.
+3. **Sols 21 and 1830** have the lowest rover correlations (0.80, 0.84).
+4. **Tiling** the GeoTIFFs into the web map is not part of this folder's task.
 
 Commands (from the project root):
 
 ```bash
 gale-env/Scripts/python.exe -m pytest dust_devil/tests -q      # full suite, about 80 s
-gale-env/Scripts/python.exe -m nbconvert --to notebook --execute dust_devil/dust_devil_pipeline.ipynb   --output-dir executed --ExecutePreprocessor.timeout=3600 --ExecutePreprocessor.kernel_name=gale-env   # about 6 min
+gale-env/Scripts/python.exe -m nbconvert --to notebook --execute dust_devil/dust_devil_pipeline.ipynb \n  --output-dir executed --ExecutePreprocessor.timeout=3600 --ExecutePreprocessor.kernel_name=gale-env   # about 6 min
 ```
 
 The notebook in `dust_devil/` is the executed copy (outputs included); to refresh it, run the command above and copy
@@ -44,7 +103,7 @@ change both together.
 
 ---
 
-## 3. Decisions changed since CLAUDE.md (user decisions, Oct 30 and Nov 2)
+## 4. Decisions changed since CLAUDE.md (user decisions, Oct 30 and Nov 2)
 
 | Topic | CLAUDE.md says | Now |
 |---|---|---|
@@ -62,7 +121,26 @@ change both together.
 
 ---
 
-## 4. Progress log
+## 5. Progress log
+
+### Nov 2, 2026 (third part): three-level overlay
+
+- "What the score means" written into this plan (section 2) and the README first, as the user asked.
+- Tests first: `tests/test_dd_12_levels.py` (10 tests) plus helper changes (`CLASS_TOP_PCTS` and `LEVEL_COLOURS` in
+  `dd_synth`, new keys in Gate 7's `REF`, new columns in Gate 8). 12 failed + 7 errors before the change; then
+  `score_levels`, `level_shares`, `class_cuts` in the reference, per-level panel blending and legends. Suite `69 passed`.
+- The cached sol-1850 reference (no `class_top_pcts`) was refused at load, as designed; deleted and rebuilt (it is derived).
+- Notebook: cuts equal sol 1850's p50 / p70 / p90 exactly; sol 1850 shares 20.0 / 20.0 / 10.0%.
+
+| Run | low | moderate | high |
+|---|---|---|---|
+| clear 1830-1865 | 20.0-22.2 % | 19.3-20.0 % | 6.4-10.0 % |
+| dusty 799-804 | 27.2-27.4 % | 6.7-9.7 % | 0.2-0.4 % |
+| climatology | 16.4-22.5 % | 19.2-19.8 % | 5.9-17.3 % |
+
+- Run time: 23 min 45 s with about 1.1 GB free RAM (paging), 5 min 50 s on a rerun with 2.65 GB free; outputs of the two
+  runs identical apart from "built" vs "loaded" reference. Overlay code itself: about 8 s per sol.
+- GIF frames use a 256-colour palette: swatch colours shift slightly and the cyan rover ring can drop out. PNG overlays exact.
 
 ### Nov 2, 2026 (second part): reference sol 1850
 
@@ -163,7 +241,7 @@ shares 9.1-12.5 % ordered by tau and max day-to-day change 0.012. User approved 
 
 ---
 
-## 5. Discoveries (evidence)
+## 6. Discoveries (evidence)
 
 - **Clear sols saturate against the sol-800 reference** (Nov 2). Climatology sols (tau 0.48-0.80, other seasons) reach
   the cap on 56-85% of pixels and clear the threshold on 27-35%, against 6-11% and 9-12.5% for sols 799-804 (tau about
@@ -186,7 +264,7 @@ shares 9.1-12.5 % ordered by tau and max day-to-day change 0.012. User approved 
 
 ---
 
-## 6. Closed ideas (do not retry without new evidence)
+## 7. Closed ideas (do not retry without new evidence)
 
 | Idea | Why closed | Evidence |
 |---|---|---|
@@ -202,7 +280,7 @@ shares 9.1-12.5 % ordered by tau and max day-to-day change 0.012. User approved 
 
 ---
 
-## 7. File map
+## 8. File map
 
 | Path | What it is |
 |---|---|
@@ -225,7 +303,7 @@ gale-env/Scripts/python.exe -m pytest dust_devil/tests -q -m "not realdata"   # 
 gale-env/Scripts/python.exe dust_devil/dev/run_sanity.py              # real sanity run, about 60 s
 ```
 
-## 8. Known weaknesses to keep in view
+## 9. Known weaknesses to keep in view
 
 - The rover kelvin scale is max/max: one REMS spike moves it (documented by `test_single_spike_moves_scale`). It only
   affects the rover table and the printed check, never the maps.

@@ -8,7 +8,8 @@ from dd_synth import base_cfg
 
 REF = dict(ref_sol=800, ref_proxy_p995=1.234567, threshold=0.4321, tau=1.4975, tau_source="Mastcam 880 nm, nearest 1 sol(s) away",
            tau_band="880", slope_scale_deg=10.0, day_ltst=[9.0, 16.0], score_cap=1.0, likely_top_pct=10.0,
-           map_ltst=(np.arange(96) * 0.25 + 0.125).tolist())
+           map_ltst=(np.arange(96) * 0.25 + 0.125).tolist(), class_top_pcts=[50.0, 30.0, 10.0],
+           class_cuts=[0.2, 0.3, 0.4321])
 
 
 def test_roundtrip_with_same_config(ms, tmp_path):

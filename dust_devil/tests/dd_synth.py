@@ -60,7 +60,7 @@ def make_day(sol, row, col, gap_amp_k=25.0, elev_m=-4461.2, move=False, transfor
 
 
 def base_cfg(**over):
-    cfg = dict(REF_SOL=800, SCORE_CAP=1.0, SLOPE_SCALE_DEG=10.0, DAY_LTST=(9.0, 16.0), LIKELY_TOP_PCT=10, TAU_BAND="880",
+    cfg = dict(REF_SOL=800, SCORE_CAP=1.0, SLOPE_SCALE_DEG=10.0, DAY_LTST=(9.0, 16.0), LIKELY_TOP_PCT=10, CLASS_TOP_PCTS=(50, 30, 10), TAU_BAND="880",
                MAX_TAU_GAP_SOLS=5, TAU_CLIM_LS_WINDOW=10.0, TAU_CLIM_EXCLUDE=(2082, 2133), TAU_CLIM_MIN_SOLS=5, MIN_BINS=40)
     cfg.update(over)
     return cfg
@@ -113,7 +113,7 @@ def write_synthetic_inputs(folder, sols_positions, grid):
                 TAU_CSV=folder / "tau.csv", TEMPLATE_TIF=folder / "template.tif", IMAGERY_PREVIEW=folder / "imagery.png",
                 HILLSHADE_PREVIEW=folder / "hillshade.png", PREVIEW_BOUNDS=None,
                 OUT_DIR=folder / "out", REFERENCE_JSON=folder / "out" / "dust_devil_reference_sol800.json",
-                HIGHLIGHT="#EF4444", ALPHA=0.55, PANEL_W=200, SEPARATE_W=300, GIF_W=1000, GIF_MS=800)
+                LEVEL_COLOURS=("#FACC15", "#F97316", "#DC2626"), ALPHA=0.55, PANEL_W=200, SEPARATE_W=300, GIF_W=1000, GIF_MS=800)
 
 
 def multisol_cfg(folder, sols_positions, grid, **over):

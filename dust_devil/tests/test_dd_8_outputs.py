@@ -9,7 +9,7 @@ from dd_synth import H, W, TRANSFORM, multisol_cfg
 
 SOLS = {800: (10, 12), 801: (11, 14), 900: (3, 27)}
 SUMMARY_COLS = ["sol", "ls_deg", "tau", "tau_source", "n_bins", "frac_above_threshold", "frac_at_cap", "rover_corr",
-                "rover_scale_k", "dem_minus_rems_m"]
+                "rover_scale_k", "dem_minus_rems_m", "frac_low", "frac_moderate", "frac_high"]
 NPZ_KEYS = {"likelihood_mean", "likelihood_max", "sol", "ls_deg", "tau", "tau_source", "ref_sol", "ref_proxy", "threshold",
             "rover_row", "rover_col"}
 TABLE_COLS = ["sol", "bin", "ltst_bin_center_hr", "air_temp_k", "ground_temp_k", "pressure_pa", "gap_obs_k", "ls_deg", "tau",

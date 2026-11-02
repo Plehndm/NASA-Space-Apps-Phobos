@@ -257,29 +257,56 @@ def rover_check(proxy_rover, gap_obs_k):
 
 
 def _settings(cfg):
-    """Settings the reference depends on, including the LTST grid it was scored on (MAP_LTST) and LIKELY_TOP_PCT,
-    which sets the threshold."""
+    """Settings the reference depends on, including the LTST grid it was scored on (MAP_LTST), LIKELY_TOP_PCT,
+    which sets the threshold, and CLASS_TOP_PCTS, which set the three level cuts."""
     cap = cfg["SCORE_CAP"]
+    pcts = [float(p) for p in cfg["CLASS_TOP_PCTS"]]
+    assert len(pcts) == 3 and all(a > b for a, b in zip(pcts, pcts[1:])), \
+        f"CLASS_TOP_PCTS must be three strictly decreasing percentages (low, moderate, high), got {cfg['CLASS_TOP_PCTS']}"
+    assert pcts[-1] == float(cfg["LIKELY_TOP_PCT"]), \
+        f"the high level must be the threshold: CLASS_TOP_PCTS[-1] = {pcts[-1]:g} but LIKELY_TOP_PCT = {cfg['LIKELY_TOP_PCT']}"
     return dict(ref_sol=int(cfg["REF_SOL"]), tau_band=str(cfg["TAU_BAND"]), slope_scale_deg=float(cfg["SLOPE_SCALE_DEG"]),
                 day_ltst=[float(cfg["DAY_LTST"][0]), float(cfg["DAY_LTST"][1])], score_cap=None if cap is None else float(cap),
-                likely_top_pct=float(cfg["LIKELY_TOP_PCT"]), map_ltst=MAP_LTST.tolist())
+                likely_top_pct=float(cfg["LIKELY_TOP_PCT"]), map_ltst=MAP_LTST.tolist(), class_top_pcts=pcts)
 
 
 def _assert_same_settings(reference, cfg):
     for k, v in _settings(cfg).items():
         assert k in reference, f"reference has no {k!r} (built by an older version); rebuild it (RUN_REFERENCE = True)"
-        got = list(reference[k]) if k in ("day_ltst", "map_ltst") else reference[k]
+        got = list(reference[k]) if k in ("day_ltst", "map_ltst", "class_top_pcts") else reference[k]
         assert got == v, f"reference was built with {k}={got!r} but the config has {v!r}; rebuild it (RUN_REFERENCE = True)"
 
 
 def build_reference(grid, day, ls, tau, tau_source, cfg):
     """Reference dict for cfg["REF_SOL"]: ref_sol, ref_proxy_p995, threshold (90th pct of its daily mean),
+    class_cuts (its daily mean at the top CLASS_TOP_PCTS %, ascending; the last equals the threshold),
     tau, tau_source, tau_band, slope_scale_deg, day_ltst, score_cap. Scored on MAP_LTST; `day` only identifies the sol."""
     assert (day.sol == cfg["REF_SOL"]).all(), f"reference must be built from sol {cfg['REF_SOL']}"
+    settings = _settings(cfg)
     ref_proxy = reference_proxy(grid, ls, MAP_LTST, tau)
     m = score_maps(grid, ls, MAP_LTST, tau, ref_proxy, cfg["SLOPE_SCALE_DEG"], cfg["DAY_LTST"], cfg["SCORE_CAP"])
     threshold = float(np.nanpercentile(m["likelihood_mean"], 100 - cfg["LIKELY_TOP_PCT"]))
-    return dict(ref_proxy_p995=ref_proxy, threshold=threshold, tau=float(tau), tau_source=str(tau_source), **_settings(cfg))
+    cuts = [float(np.nanpercentile(m["likelihood_mean"], 100 - p)) for p in settings["class_top_pcts"]]
+    assert cuts[-1] == threshold and cuts == sorted(cuts), f"level cuts {cuts} inconsistent with threshold {threshold}"
+    return dict(ref_proxy_p995=ref_proxy, threshold=threshold, class_cuts=cuts, tau=float(tau), tau_source=str(tau_source),
+                **settings)
+
+
+def score_levels(mean, cuts):
+    """Level per pixel: 0 none, 1 low, 2 moderate, 3 high; a pixel is in a level when its score is >= that level's cut.
+    NaN -> 0 (unshaded). uint8, same shape as `mean`."""
+    assert len(cuts) == 3 and list(cuts) == sorted(cuts), f"cuts must be three ascending values, got {cuts}"
+    lv = np.zeros(mean.shape, "uint8")
+    for c in cuts:
+        lv += np.nan_to_num(mean, nan=-np.inf) >= c
+    return lv
+
+
+def level_shares(mean, cuts):
+    """Share of valid (finite) pixels in each level: dict frac_low, frac_moderate, frac_high."""
+    v = mean[np.isfinite(mean)]
+    lv = score_levels(v, cuts)
+    return dict(frac_low=float(np.mean(lv == 1)), frac_moderate=float(np.mean(lv == 2)), frac_high=float(np.mean(lv == 3)))
 
 
 def save_reference(path, reference):
@@ -322,7 +349,7 @@ def run_sol(sol, day, grid, ls, tau, tau_source, reference, cfg):
                 rover_scale_k=rc["scale_k"], rover_corr=rc["corr"],
                 frac_above_threshold=float(np.mean(mean[np.isfinite(mean)] >= reference["threshold"])),
                 frac_at_cap=m["frac_at_cap"], dem_minus_rems_m=float(grid["dem"][r, c]) - float(day.elevation_m.iloc[0]),
-                table=tbl)
+                **level_shares(mean, reference["class_cuts"]), table=tbl)
 
 
 # ---------------- outputs ----------------
@@ -370,11 +397,16 @@ class Previews:
             self.cache[(tag, w)] = np.asarray(self.images[tag].resize((w, round(w * self.H / self.W)), Image.LANCZOS), dtype="float32")
         return self.cache[(tag, w)]
 
-    def panel(self, tag, w, mask, rover_lon, rover_lat, rgb, alpha):
+    def panel(self, tag, w, levels, rover_lon, rover_lat, colours, alpha):
+        """Preview `tag` at width w with level k (1..3) blended in colours[k-1] at `alpha`; level 0 unshaded. Rover as a ring."""
         from PIL import Image, ImageDraw
         ph = round(w * self.H / self.W)
-        m = np.asarray(Image.fromarray(mask.astype("uint8") * 255).resize((w, ph), Image.NEAREST), dtype="float32")[..., None] / 255
-        out = self.base(tag, w) * (1 - alpha * m) + np.array(rgb, "float32") * (alpha * m)
+        lv = np.asarray(Image.fromarray(levels.astype("uint8")).resize((w, ph), Image.NEAREST))
+        base = self.base(tag, w)
+        out = base.copy()
+        for k, col in enumerate(colours, start=1):
+            sel = lv == k
+            out[sel] = (base * (1 - alpha) + np.array(col, "float32") * alpha)[sel]
         im = Image.fromarray(out.round().astype("uint8"))
         d = ImageDraw.Draw(im)
         px = (rover_lon - self.west) / (self.east - self.west) * w
@@ -385,67 +417,83 @@ class Previews:
         return im
 
 
+LEVEL_NAMES = ("Low", "Moderate", "High")
+
+
+def _colours(cfg):
+    assert len(cfg["LEVEL_COLOURS"]) == 3, "LEVEL_COLOURS needs one colour per level (low, moderate, high)"
+    return [tuple(int(h[i:i+2], 16) for i in (1, 3, 5)) for h in cfg["LEVEL_COLOURS"]]
+
+
+def _legend_items(res, reference):
+    """(label, share of this sol) per level. Labels name fixed score bands, not shares of the sol shown."""
+    c, p, ref = reference["class_cuts"], reference["class_top_pcts"], reference["ref_sol"]
+    bands = [f"{c[0]:.3f}-{c[1]:.3f}", f"{c[1]:.3f}-{c[2]:.3f}", f">= {c[2]:.3f}"]
+    shares = [res["frac_low"], res["frac_moderate"], res["frac_high"]]
+    return [(f"{n} {b} (top {pc:g}% of sol {ref}): {sh:.1%} of this sol", sh) for n, b, pc, sh in zip(LEVEL_NAMES, bands, p, shares)]
+
+
+def _draw_legend(d, x, y, items, colours, font, step):
+    for k, ((label, _), col) in enumerate(zip(items, colours)):
+        d.rectangle([x, y + k*step, x + 20, y + k*step + 14], fill=col)
+        d.text((x + 28, y + k*step + 1), label, fill="black", font=font)
+
+
 def write_overlays(out_dir, res, reference, previews, cfg):
     from PIL import Image, ImageDraw, ImageFont
     font = ImageFont.load_default()
-    sol, ref, thr = res["sol"], reference["ref_sol"], reference["threshold"]
-    rgb = tuple(int(cfg["HIGHLIGHT"][i:i+2], 16) for i in (1, 3, 5))
-    mean = res["likelihood_mean"]
-    mask = np.isfinite(mean) & (mean >= thr)
+    sol, ref = res["sol"], reference["ref_sol"]
+    colours = _colours(cfg)
+    levels = score_levels(res["likelihood_mean"], reference["class_cuts"])
     d0, d1 = cfg["DAY_LTST"]
     title = (f"Dust devil activity heuristic, sol {sol}, Ls {res['ls_deg']:.1f}, mean {d0:g}-{d1:g} LTST, tau={res['tau']:.2f} "
              f"({res['tau_source']}). Shared reference sol {ref}. Relative score, not a probability.")
-    legend = f"score >= {thr:.3f} (top {cfg['LIKELY_TOP_PCT']:g}% of sol {ref}); {res['frac_above_threshold']:.1%} of this sol"
+    items = _legend_items(res, reference)
     bounds = f"lon {previews.west:.3f}..{previews.east:.3f} E, lat {previews.south:.3f}..{previews.north:.3f}"
-    args = (mask, res["rover_lon"], res["rover_lat"], rgb, cfg["ALPHA"])
+    args = (levels, res["rover_lon"], res["rover_lat"], colours, cfg["ALPHA"])
 
     pw = cfg["PANEL_W"]
     ph = round(pw * previews.H / previews.W)
-    head, foot, gap = 54, 40, 12
+    head, foot, gap, step = 54, 72, 12, 20
     canvas = Image.new("RGB", (2*pw + gap, head + ph + foot), "white")
     for k, tag in enumerate(("imagery", "hillshade")):
         canvas.paste(previews.panel(tag, pw, *args), (k*(pw + gap), head))
     d = ImageDraw.Draw(canvas)
     d.text((8, 8), title, fill="black", font=font)
     d.text((8, 28), f"Left: CTX imagery   Right: hillshade   |   {bounds}", fill="black", font=font)
-    d.rectangle([8, head+ph+12, 28, head+ph+28], fill=rgb)
-    d.text((36, head+ph+14), legend, fill="black", font=font)
+    _draw_legend(d, 8, head + ph + 10, items, colours, font, step)
     canvas.save(Path(out_dir) / f"likelihood_overlay_sol{sol}.png")
 
     for tag, name in (("imagery", "CTX imagery"), ("hillshade", "Hillshade")):
         im = previews.panel(tag, cfg["SEPARATE_W"], *args)
-        head, foot = 56, 48
+        head, foot = 56, 80
         sheet = Image.new("RGB", (im.width, head + im.height + foot), "white")
         sheet.paste(im, (0, head))
         d = ImageDraw.Draw(sheet)
         d.text((8, 8), f"{name}: {title}", fill="black", font=font)
         d.text((8, 30), bounds, fill="black", font=font)
-        y = head + im.height + 14
-        d.rectangle([8, y, 28, y+16], fill=rgb)
-        d.text((36, y+2), legend, fill="black", font=font)
+        _draw_legend(d, 8, head + im.height + 12, items, colours, font, step)
         sheet.save(Path(out_dir) / f"likelihood_overlay_sol{sol}_{tag}.png")
 
 
 def gif_frame(res, reference, previews, cfg):
     from PIL import Image, ImageDraw, ImageFont
     font = ImageFont.load_default()
-    mean = res["likelihood_mean"]
-    mask = np.isfinite(mean) & (mean >= reference["threshold"])
-    rgb = tuple(int(cfg["HIGHLIGHT"][i:i+2], 16) for i in (1, 3, 5))
-    im = previews.panel("hillshade", cfg["GIF_W"], mask, res["rover_lon"], res["rover_lat"], rgb, cfg["ALPHA"])
-    head = 44
+    colours = _colours(cfg)
+    levels = score_levels(res["likelihood_mean"], reference["class_cuts"])
+    im = previews.panel("hillshade", cfg["GIF_W"], levels, res["rover_lon"], res["rover_lat"], colours, cfg["ALPHA"])
+    head = 92
     frame = Image.new("RGB", (im.width, head + im.height), "white")
     frame.paste(im, (0, head))
     d = ImageDraw.Draw(frame)
-    d.text((8, 6), f"sol {res['sol']}   Ls {res['ls_deg']:.1f}   tau {res['tau']:.2f} ({res['tau_source']})   "
-                   f"{res['frac_above_threshold']:.1%} above threshold", fill="black", font=font)
-    d.text((8, 24), f"score >= {reference['threshold']:.3f} (top {cfg['LIKELY_TOP_PCT']:g}% of sol {reference['ref_sol']}). "
-                    f"Heuristic, not a probability.", fill="black", font=font)
+    d.text((8, 6), f"sol {res['sol']}   Ls {res['ls_deg']:.1f}   tau {res['tau']:.2f} ({res['tau_source']}).   "
+                   f"Heuristic, not a probability.", fill="black", font=font)
+    _draw_legend(d, 8, 26, _legend_items(res, reference), colours, font, 20)
     return frame
 
 
 SUMMARY_COLS = ["sol", "ls_deg", "tau", "tau_source", "n_bins", "frac_above_threshold", "frac_at_cap", "rover_corr",
-                "rover_scale_k", "dem_minus_rems_m"]
+                "rover_scale_k", "dem_minus_rems_m", "frac_low", "frac_moderate", "frac_high"]
 
 
 # ---------------- end to end ----------------
@@ -497,13 +545,15 @@ def run_multisol(cfg):
                             likelihood_mean=res["likelihood_mean"].astype("float32"), likelihood_max=res["likelihood_max"].astype("float32"),
                             sol=s, ls_deg=ls, tau=tau, tau_source=src, ref_sol=reference["ref_sol"], ref_proxy=reference["ref_proxy_p995"],
                             threshold=reference["threshold"], score_cap=np.nan if cfg["SCORE_CAP"] is None else float(cfg["SCORE_CAP"]),
-                            day_ltst=np.array(cfg["DAY_LTST"]), rover_row=res["rover_row"], rover_col=res["rover_col"])
+                            day_ltst=np.array(cfg["DAY_LTST"]), rover_row=res["rover_row"], rover_col=res["rover_col"],
+                            class_cuts=np.array(reference["class_cuts"]))
         write_geotiff(out / f"gale_dust_devil_likelihood_sol{s}.tif", res, reference, cfg["TEMPLATE_TIF"], cfg["DAY_LTST"])
         res["table"].to_csv(out / f"rover_sol{s}_table.csv", index=False)
         write_overlays(out, res, reference, previews, cfg)
         frames.append(gif_frame(res, reference, previews, cfg))
         rows.append({k: res[k] for k in SUMMARY_COLS})
-        print(f"sol {s}: Ls {ls:.1f}, tau {tau:.3f} ({src}), {res['n_bins']} bins, above threshold {res['frac_above_threshold']:.1%}, "
+        print(f"sol {s}: Ls {ls:.1f}, tau {tau:.3f} ({src}), {res['n_bins']} bins, low/moderate/high {res['frac_low']:.1%}/"
+              f"{res['frac_moderate']:.1%}/{res['frac_high']:.1%}, "
               f"at cap {res['frac_at_cap']:.1%}, rover (row {res['rover_row']}, col {res['rover_col']}) corr {res['rover_corr']:.2f}, "
               f"scale {res['rover_scale_k']:.3f} K, DEM - REMS {res['dem_minus_rems_m']:+.1f} m")
         del res
