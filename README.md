@@ -21,11 +21,19 @@ Status: the **data pipeline** and the **UI design** exist. The **app foundation*
 
 You need [Node.js](https://nodejs.org) 22.13 or newer (24 LTS recommended), which Expo SDK 58 requires. Run everything from `app/`, in two terminals:
 
+First time installation:
 ```bash
 cd app
-npm install              # first time only
+npm install              
+```
 
+To run the current app run the following in the `app/` directory:
+```bash
 npx expo start           # terminal 1: the app
+```
+
+To run the design reference execute the following in the `app/` directory:
+```bash
 npm run design           # terminal 2: the design reference (legacy HTML prototype)
 ```
 
