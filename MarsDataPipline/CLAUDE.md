@@ -15,7 +15,7 @@ Read the relevant section there before changing a rule in this file.
 
 ## Current status
 
-Steps 0-4 are done (Oct 28): Gates 1 and 2 pass, and the fitted baseline does not beat the benchmark in leave-one-block-out scoring (macro RMSE 6.72 K vs 5.38 K). Step 5 (residual model) is done for ground temperature (Oct 28). The map uses `flann_safe_no_ti` (user decision Oct 28: FLANN ridge without albedo or TI terms, clamped covariates; LOBO macro 4.86 K against the benchmark's 5.38 K), from `notebooks/residual_flann_lobo.ipynb`. Step 6 (the map) is done (Oct 28): full grid exported in all four formats to `outputs/maps/ground/`, all automated checks pass (`map_export.py`, `notebooks/map_run.ipynb`). The user's QGIS check passed. Step 5b (air model) was scored on Oct 29 (`notebooks/air_lobo.ipynb`): `air_hybrid` fails the adoption rule (macro 4.05 K vs benchmark 4.04 K, 4 of 9 blocks) and is published under the fallback. Step 6b (air map) is done (Oct 29): `outputs/maps/air/`, all checks pass (`notebooks/air_map_run.ipynb`); the user chose to publish with the caveats stated (night air is nearly uniform, from a ground-model error, not physics). The air map uses the ground colour scale (150-320 K; user decision Oct 29). Step 7 (sealed test) is done (Oct 29, user go-ahead, `notebooks/sealed_test.ipynb`): ground model 5.25 K vs benchmark 5.06 K, air 4.10 K vs 4.19 K, macro over blocks 4 and 8. The test blocks are spent: never use them to choose or tune anything. Nothing further is scheduled; see `docs/plan.md`.
+Steps 0-4 are done (Oct 28): Gates 1 and 2 pass, and the fitted baseline does not beat the benchmark in leave-one-block-out scoring (macro RMSE 6.72 K vs 5.38 K). Step 5 (residual model) is done for ground temperature (Oct 28). The map uses `flann_safe_no_ti` (user decision Oct 28: FLANN ridge without albedo or TI terms, clamped covariates; LOBO macro 4.86 K against the benchmark's 5.38 K), from `heatmap/notebooks/residual_flann_lobo.ipynb`. Step 6 (the map) is done (Oct 28): full grid exported in all four formats to `heatmap/outputs/maps/ground/`, all automated checks pass (`map_export.py`, `heatmap/notebooks/map_run.ipynb`). The user's QGIS check passed. Step 5b (air model) was scored on Oct 29 (`heatmap/notebooks/air_lobo.ipynb`): `air_hybrid` fails the adoption rule (macro 4.05 K vs benchmark 4.04 K, 4 of 9 blocks) and is published under the fallback. Step 6b (air map) is done (Oct 29): `heatmap/outputs/maps/air/`, all checks pass (`heatmap/notebooks/air_map_run.ipynb`); the user chose to publish with the caveats stated (night air is nearly uniform, from a ground-model error, not physics). The air map uses the ground colour scale (150-320 K; user decision Oct 29). Step 7 (sealed test) is done (Oct 29, user go-ahead, `heatmap/notebooks/sealed_test.ipynb`): ground model 5.25 K vs benchmark 5.06 K, air 4.10 K vs 4.19 K, macro over blocks 4 and 8. The test blocks are spent: never use them to choose or tune anything. Nothing further is scheduled; see `docs/plan.md`.
 
 Project notes in `docs/`, read before starting work:
 - `plan.md`: the next step's concrete design.
@@ -49,7 +49,7 @@ Do not add a physics term or a fitted parameter that is not listed in this file.
 - Project root: `MarsDataPipeline/`. Absolute path: `C:\Users\aypen\Downloads\MarsDataPipeline`.
 - Python: `C:\Users\aypen\Downloads\MarsDataPipeline\gale-env\Scripts\python.exe`.
 - The virtual environment `gale-env/` lives inside the project root. Never edit, search or index it, and keep it out of git.
-- Always call the environment's executables by path from the project root: `gale-env/Scripts/python.exe` and `gale-env/Scripts/jupyter.exe`. Never use a bare `python` or `jupyter`: in Git Bash those may resolve to a different Python.
+- Always call the environment's executables by path from the project root: `gale-env/Scripts/python.exe` (also for nbconvert, as `python.exe -m nbconvert`). Never use a bare `python` or `jupyter`: in Git Bash those may resolve to a different Python.
 - Jupyter kernel for nbconvert: `gale-env` (registered, confirmed Oct 27).
 - Do not install, upgrade or remove packages. If something is missing, stop and report it.
 - Allowed libraries:
@@ -64,12 +64,13 @@ Do not add a physics term or a fitted parameter that is not listed in this file.
 ### Commands
 
 ```bash
-# tests (Gates 1 and 2)
-gale-env/Scripts/python.exe -m pytest tests -q
+# tests (Gates 1 and 2); pytest picks up heatmap/pytest.ini
+gale-env/Scripts/python.exe -m pytest heatmap -q
 
-# execute a notebook into executed/ (sources stay unchanged)
-gale-env/Scripts/jupyter.exe nbconvert --to notebook --execute notebooks/<name>.ipynb \
-  --output-dir executed \
+# execute a notebook into heatmap/executed/ (sources stay unchanged)
+# python -m nbconvert, not jupyter.exe nbconvert: the latter found Anaconda's nbconvert/zmq on PATH (Oct 30; user decision Nov 2)
+gale-env/Scripts/python.exe -m nbconvert --to notebook --execute heatmap/notebooks/<name>.ipynb \
+  --output-dir heatmap/executed \
   --ExecutePreprocessor.timeout=3600 \
   --ExecutePreprocessor.kernel_name=gale-env
 ```
@@ -80,29 +81,31 @@ gale-env/Scripts/jupyter.exe nbconvert --to notebook --execute notebooks/<name>.
 MarsDataPipeline/
   README.md              # team guide: what each folder holds, where the maps are
   CLAUDE.md
-  paths.py               # every folder path: DATA_DIR = REPO_ROOT / "processed_data", OUT_DIR = .../outputs/model_scores/1_physics_baseline, MAP_OUT_DIR = .../outputs/maps/ground, ...
-  thermal1d.py           # grid, solver, surface energy balance, solar geometry, data loader
-  residual.py            # Step 5: residual-model predictors, learner, benchmark
-  map_export.py          # Step 6: static grid, per-Ls worker, residual, map encoders
-  tests/                 # test_thermal1d.py, test_forcing.py (Gates 1 and 2)
-  notebooks/             # baseline_diagnostic, baseline_fit_lobo, residual_lobo, residual_flann_lobo, ti_sensitivity_lobo, block0_diagnostic, map_run, air_lobo, air_map_run, sealed_test
-  executed/              # nbconvert output (git-ignored)
-  outputs/               # git-ignored; outputs/README.md is the index (reorganized Oct 29)
-    maps/ground/         # Step 6 ground map; maps/README.md explains both maps; working arrays and logs in _working/
-    maps/air/            # Step 6b air map (same layout)
-    model_scores/1_physics_baseline/   # Steps 3-4 (paths.OUT_DIR)
-    model_scores/2_ground_correction/  # Step 5 (paths.RESIDUAL_OUT_DIR)
-    model_scores/3_ti_sensitivity/     # TI-scale sensitivity run
-    model_scores/4_block0_diagnostic/  # block 0 diagnostic
-    model_scores/5_air_model/          # Step 5b (paths.AIR_OUT_DIR)
-    model_scores/6_sealed_test/        # Step 7 (paths.SEALED_OUT_DIR)
-  processed_data/        # inputs, read-only (git-ignored)
+  heatmap/               # this project (moved here Nov 2, user request; mirrors dust_devil/)
+    paths.py             # every folder path: HEATMAP_DIR = this folder, REPO_ROOT = its parent, DATA_DIR = REPO_ROOT / "processed_data", OUT_DIR = HEATMAP_DIR / "outputs/model_scores/1_physics_baseline", MAP_OUT_DIR = HEATMAP_DIR / "outputs/maps/ground", ...
+    thermal1d.py         # grid, solver, surface energy balance, solar geometry, data loader
+    residual.py          # Step 5: residual-model predictors, learner, benchmark
+    map_export.py        # Step 6: static grid, per-Ls worker, residual, map encoders
+    pytest.ini           # testpaths = tests, pythonpath = . (both relative to heatmap/)
+    tests/               # test_thermal1d.py, test_forcing.py (Gates 1 and 2)
+    notebooks/           # baseline_diagnostic, baseline_fit_lobo, residual_lobo, residual_flann_lobo, ti_sensitivity_lobo, block0_diagnostic, map_run, air_lobo, air_map_run, sealed_test; ROOT = Path.cwd().parent = heatmap/
+    executed/            # nbconvert output (git-ignored)
+    outputs/             # git-ignored
+      maps/ground/       # Step 6 ground map; maps/README.md explains both maps; working arrays and logs in _working/
+      maps/air/          # Step 6b air map (same layout)
+      model_scores/1_physics_baseline/   # Steps 3-4 (paths.OUT_DIR)
+      model_scores/2_ground_correction/  # Step 5 (paths.RESIDUAL_OUT_DIR)
+      model_scores/3_ti_sensitivity/     # TI-scale sensitivity run
+      model_scores/4_block0_diagnostic/  # block 0 diagnostic
+      model_scores/5_air_model/          # Step 5b (paths.AIR_OUT_DIR)
+      model_scores/6_sealed_test/        # Step 7 (paths.SEALED_OUT_DIR)
+  dust_devil/            # the parked dust devil layer: pipeline notebook, dev/, tests/, executed/, outputs/ (git-ignored; outputs/_dev/ holds baseline_sol800/ and dust_devil_sanity/); own README and CLAUDE.md
+  processed_data/        # shared inputs, read-only (git-ignored)
   raw_data/              # downloads the data_prep notebooks read (git-ignored)
   data_prep/             # notebooks that built processed_data/ (REMS table, tau, THEMIS, albedo, feature table); paths are relative to data_prep/
-  dust_devil/            # the parked dust devil layer: pipeline notebooks and README
   gale_tiles/            # map-tile notebook, README, out_tiles/ and dtm_src/ (both git-ignored)
-  docs/                  # plan, progress, discoveries, closed ideas, handover brief, build steps, plan summary PDF
-  _Trash_Review/         # files set aside for deletion on Oct 29, pending the user's review (git-ignored)
+  docs/                  # plan, progress, discoveries, closed ideas, handover brief, build steps, plan summary PDF; figures/
+  _Trash_Review/         # files set aside for deletion, pending the user's review (git-ignored)
   gale-env/              # virtual environment (git-ignored, never edit)
 ```
 
@@ -294,7 +297,7 @@ Reference yardstick, not a target: a simple tree model scored 4.3-6.7 K per bloc
 
 ### Outputs
 
-Write CSVs and PNGs to `paths.OUT_DIR` (`outputs/model_scores/1_physics_baseline/`), and the fitted parameters per fold to `fit_params.csv` there.
+Write CSVs and PNGs to `paths.OUT_DIR` (`heatmap/outputs/model_scores/1_physics_baseline/`), and the fitted parameters per fold to `fit_params.csv` there.
 
 If the baseline does not beat the benchmark, say so plainly. The response is never to add parameters or tune toward the score.
 
