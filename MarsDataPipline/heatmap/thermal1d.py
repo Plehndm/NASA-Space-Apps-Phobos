@@ -28,7 +28,7 @@ F_IR = 0.04                  # sky-IR fraction of noon flat sunlight, fitted, bo
 TI_SCALE = 1.0               # thermal-inertia scale factor, fitted, bounds [0.7, 1.3]
 PARAM_NAMES = ("g_diff", "f_ir", "ti_scale")
 PARAM_BOUNDS = np.array([[0.0, 1.0], [0.0, 0.15], [0.7, 1.3]])
-TI_SCALE_LO_SENSITIVITY = 0.5  # ti_scale lower bound for the reported sensitivity run only (Oct 28, user request)
+TI_SCALE_LO_SENSITIVITY = 0.5  # ti_scale lower bound for the reported sensitivity run only
 
 # --- fitting --------------------------------------------------------------
 FIT_GRID_POINTS = 5           # coarse grid points per parameter, bounds included
@@ -50,7 +50,7 @@ NEWTON_TOL = 1e-6             # W m^-2, surface energy-balance residual
 SPINUP_TOL_K = 0.01           # K, max |dT| between consecutive sols, all depths
 SPINUP_MAX_SOLS = 50
 
-# --- REMS training table (gale_rems_training.csv, checked Oct 27) --------
+# --- REMS training table (gale_rems_training.csv) --------
 # Bins are 15 minutes, bin start = bin / 4 h. Each REMS value is the mean of 1 Hz readings
 # in [start, start + 15 min), so the model is compared at the bin centre, start + 0.125 h.
 # ltst_bin_center_hr in the table is rounded to 0.01 h; the table's flux and sun_elev_deg
@@ -63,7 +63,7 @@ TABLE_COLUMNS = {
     "elev_dem_m": float, "sun_elev_deg": float, "flux_flat_wm2": float, "flux_tilted_wm2": float,
     "tau": float, "tau_source": str, "tau_is_placeholder": bool, "ground_missing": bool,
     "core_sol": bool, "block": int, "split_role": str,
-    "air_temp_k": float, "air_missing": bool,   # Step 5b (Oct 29); not used for filtering here
+    "air_temp_k": float, "air_missing": bool,   # Step 5b; not used for filtering here
 }
 
 
