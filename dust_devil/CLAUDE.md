@@ -7,10 +7,11 @@ inputs, grid conventions and known pitfalls. This file covers how to work here a
 ## Folder layout and paths
 
 - This folder: `dust_devil/` (inside `MarsDataPipeline/`). Main deliverable: `dust_devil_pipeline.ipynb`.
-- Notebook paths are relative to this folder: inputs and outputs in `../processed_data/`,
+- Notebook paths are relative to this folder: inputs in `../processed_data/`, outputs in `outputs/`
+  (moved from `../processed_data/` on Nov 2, user request; git-ignored), executed copies in `executed/`,
   Mastcam tau tables in `../raw_data/`, zoom-11 previews in `../gale_tiles/out_tiles/`.
 - Put iteration scripts in `dev/` and tests in `tests/` (create them). Do not write into `../raw_data/`.
-- Before overwriting any existing sol-800 output, copy it to `../processed_data/baseline_sol800/`
+- Before overwriting any existing sol-800 output, copy it to `outputs/_dev/baseline_sol800/`
   (`gale_dust_devil_likelihood_sol800.npz`, `.tif`, `rover_sol800_table.csv`). The regression test needs it.
 
 ## Environment
@@ -89,7 +90,7 @@ rewritten accordingly.
 - `tau_source` must say `climatology Ls±10, n=<k> sols` and appear in the npz, the summary CSV, the overlay title and the GIF frame.
 - In practice this mostly covers sols 1-32 (Mastcam starts at sol 33), using a different Mars year at the same Ls.
 
-### Outputs (all in `../processed_data/`)
+### Outputs (originally all in `../processed_data/`; now in `outputs/`, see Folder layout)
 
 | File | Content |
 |---|---|

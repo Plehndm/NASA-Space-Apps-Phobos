@@ -2,8 +2,8 @@
 (CLASS_TOP_PCTS, LEVEL_COLOURS) and the heating_index file names, so it no longer runs as is; use the notebook.
 
 Sanity run of the multi-sol path on the real data: sols 799-804 around the reference sol.
-Writes to processed_data/dust_devil_sanity/ (not the final output folder), then reports the sol-800 regression
-diff against processed_data/baseline_sol800/ and the day-to-day differences between consecutive sols.
+Writes to dust_devil/outputs/_dev/dust_devil_sanity/ (not the final output folder), then reports the sol-800 regression
+diff against dust_devil/outputs/_dev/baseline_sol800/ and the day-to-day differences between consecutive sols.
 
 Run from the project root:  gale-env/Scripts/python.exe dust_devil/dev/run_sanity.py
 """
@@ -17,7 +17,8 @@ import multisol as ms
 DD = Path(__file__).resolve().parents[1]
 PROC = DD.parent / "processed_data"
 TILES = DD.parent / "gale_tiles" / "out_tiles"
-OUT = PROC / "dust_devil_sanity"
+DEV_OUT = DD / "outputs" / "_dev"
+OUT = DEV_OUT / "dust_devil_sanity"
 
 SOLS_SANITY = [799, 800, 801, 802, 803, 804]
 
@@ -38,7 +39,7 @@ pd.set_option("display.width", 250)
 print("\n" + summary.to_string(index=False))
 
 # ---- regression: sol 800 against the single-sol baseline ----
-base = np.load(PROC / "baseline_sol800" / "gale_dust_devil_likelihood_sol800.npz")
+base = np.load(DEV_OUT / "baseline_sol800" /"gale_dust_devil_likelihood_sol800.npz")
 new = np.load(OUT / "gale_dust_devil_likelihood_sol800.npz")
 print("\nsol 800, fixed LTST grid vs baseline_sol800/ (old REMS-bin scheme; an expected change, not a regression;"
       " the regression gates are in tests/test_dd_1_regression.py):")
@@ -46,7 +47,7 @@ for k in ("likelihood_mean", "likelihood_max"):
     same_nan = np.array_equal(np.isnan(new[k]), np.isnan(base[k]))
     d = np.abs(new[k].astype("float64") - base[k])
     print(f"  {k}: max abs diff {np.nanmax(d):.3g}, mean abs diff {np.nanmean(d):.3g}, NaN pattern identical: {same_nan}")
-bt, nt = pd.read_csv(PROC / "baseline_sol800" / "rover_sol800_table.csv"), pd.read_csv(OUT / "rover_sol800_table.csv")
+bt, nt = pd.read_csv(DEV_OUT / "baseline_sol800" /"rover_sol800_table.csv"), pd.read_csv(OUT / "rover_sol800_table.csv")
 for col in ("gap_model_k_rover", "score_rover"):
     print(f"  rover table {col}: max abs diff {np.abs(nt[col] - bt[col]).max():.3g}")
 

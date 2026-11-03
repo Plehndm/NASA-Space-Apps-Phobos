@@ -9,7 +9,7 @@ import pandas as pd
 DD_DIR = Path(__file__).resolve().parents[1]
 REPO = DD_DIR.parent
 PROC = REPO / "processed_data"
-BASELINE_DIR = PROC / "baseline_sol800"
+BASELINE_DIR = DD_DIR / "outputs" / "_dev" / "baseline_sol800"
 
 import dd_oracle  # noqa: E402
 

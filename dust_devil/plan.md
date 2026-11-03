@@ -94,11 +94,11 @@ Commands (from the project root):
 
 ```bash
 gale-env/Scripts/python.exe -m pytest dust_devil/tests -q      # full suite, about 80 s
-gale-env/Scripts/python.exe -m nbconvert --to notebook --execute dust_devil/dust_devil_pipeline.ipynb \n  --output-dir executed --ExecutePreprocessor.timeout=3600 --ExecutePreprocessor.kernel_name=gale-env   # about 6 min
+gale-env/Scripts/python.exe -m nbconvert --to notebook --execute dust_devil/dust_devil_pipeline.ipynb \n  --output-dir dust_devil/executed --ExecutePreprocessor.timeout=3600 --ExecutePreprocessor.kernel_name=gale-env   # about 6 min
 ```
 
 The notebook in `dust_devil/` is the executed copy (outputs included); to refresh it, run the command above and copy
-`executed/dust_devil_pipeline.ipynb` over it. The notebook's stage 2-4 cells are copied verbatim from `dev/multisol.py`;
+`dust_devil/executed/dust_devil_pipeline.ipynb` over it. The notebook's stage 2-4 cells are copied verbatim from `dev/multisol.py`;
 change both together.
 
 ---
@@ -311,8 +311,8 @@ shares 9.1-12.5 % ordered by tau and max day-to-day change 0.012. User approved 
 | `tests/test_dd_1_regression.py` ... `test_dd_8_outputs.py` | the eight CLAUDE.md gates (Gate 1 rewritten for the fixed grid) |
 | `tests/test_dd_9_rover_check.py` | noisy / missing REMS temperatures (user request) |
 | `tests/test_dd_10_fixed_ltst.py` | fixed LTST grid |
-| `../processed_data/baseline_sol800/` | old single-sol sol-800 npz, tif, rover table (do not overwrite) |
-| `../processed_data/dust_devil_sanity/` | sanity-run outputs for sols 799-804 (fixed grid), incl. reference JSON and GIF |
+| `outputs/_dev/baseline_sol800/` | old single-sol sol-800 npz, tif, rover table (do not overwrite) |
+| `outputs/_dev/dust_devil_sanity/` | sanity-run outputs for sols 799-804 (fixed grid), incl. reference JSON and GIF |
 
 Commands (from the project root):
 

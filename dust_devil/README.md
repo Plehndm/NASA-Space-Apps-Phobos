@@ -49,7 +49,7 @@ The correlation checks the **heating**, not dust devils. Say so if asked.
 3. Run all cells top to bottom in one kernel (`gale-env`). From the project root, without opening Jupyter:
 
    ```
-   gale-env/Scripts/python.exe -m nbconvert --to notebook --execute dust_devil/dust_devil_pipeline.ipynb --output-dir executed --ExecutePreprocessor.timeout=3600 --ExecutePreprocessor.kernel_name=gale-env
+   gale-env/Scripts/python.exe -m nbconvert --to notebook --execute dust_devil/dust_devil_pipeline.ipynb --output-dir dust_devil/executed --ExecutePreprocessor.timeout=3600 --ExecutePreprocessor.kernel_name=gale-env
    ```
 
    Use `python.exe -m nbconvert`, not `jupyter.exe nbconvert`: the latter picked up Anaconda's nbconvert and zmq from PATH. The full run (18 sols in three runs) takes about 6 minutes.
@@ -75,7 +75,7 @@ The correlation checks the **heating**, not dust devils. Say so if asked.
 | 3 | Per sol | Scores the sol on a fixed grid of 96 quarter-hour LTST bins (daily mean over the 28 bins in 9 to 16 LTST, daily max over all 96), accumulating one bin at a time. Then the rover check on the sol's own REMS bins. Writes the maps, GeoTIFF, rover table and overlays (three levels: low yellow, moderate orange, high red; rover as a cyan ring). | `gale_dust_devil_heating_index_sol<N>.npz`, `gale_dust_devil_heating_index_sol<N>.tif`, `rover_sol<N>_table.csv`, `heating_index_overlay_sol<N>.png`, `..._imagery.png`, `..._hillshade.png` |
 | 4 | Per run | One summary row per sol and one GIF frame per sol on the hillshade, labelled with sol, Ls, tau, tau source and the share in each level. Then checks that the threshold and level cuts equal the reference sol's percentiles and compares the runs. | `dust_devil_heating_index_summary_<first>-<last>.csv`, `dust_devil_heating_index_<first>-<last>.gif` |
 
-### Outputs (in `../processed_data/`)
+### Outputs (in `outputs/`, inside this folder; moved from `../processed_data/` on Nov 2)
 
 | File | Content |
 |---|---|
@@ -87,7 +87,7 @@ The correlation checks the **heating**, not dust devils. Say so if asked.
 | `dust_devil_heating_index_summary_<first>-<last>.csv` | per sol: ls_deg, tau, tau_source, n_bins, frac_above_threshold, frac_at_cap, rover_corr, rover_scale_k, dem_minus_rems_m, frac_low, frac_moderate, frac_high (`frac_high` = `frac_above_threshold`) |
 | `dust_devil_heating_index_<first>-<last>.gif` | one frame per sol (800 ms, loops) |
 
-`baseline_sol800/` holds the pre-multi-sol single-sol output of sol 800 (used by the regression tests; do not overwrite). `dust_devil_sanity/` holds the Oct 30 development run of sols 799-804 (sol-800 reference). Both keep the old `likelihood` file names. `dust_devil_reference_sol800.json` is the superseded sol-800 reference; the pipeline no longer reads it.
+`outputs/_dev/baseline_sol800/` holds the pre-multi-sol single-sol output of sol 800 (used by the regression tests; do not overwrite). `outputs/_dev/dust_devil_sanity/` holds the Oct 30 development run of sols 799-804 (sol-800 reference). Both keep the old `likelihood` file names. `dust_devil_reference_sol800.json` is the superseded sol-800 reference; the pipeline no longer reads it.
 
 ## Settings (config cell)
 

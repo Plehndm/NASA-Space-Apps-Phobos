@@ -1,7 +1,8 @@
 gale-env/
 processed_data/
 executed/
-heatmap/
+heatmap/outputs/
+dust_devil/outputs/
 raw_data/
 gale_tiles/out_tiles/
 gale_tiles/dtm_src/

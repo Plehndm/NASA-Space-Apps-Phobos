@@ -1,6 +1,6 @@
 """Oracle for the regression gate: the CURRENT single-sol stage 2 of dust_devil_pipeline.ipynb (commit a8de56f),
 with the same arithmetic and dtypes, taking arrays instead of notebook globals. Do not "improve" this file:
-its job is to stay equal to the code that produced processed_data/baseline_sol800/."""
+its job is to stay equal to the code that produced dust_devil/outputs/_dev/baseline_sol800/."""
 import numpy as np
 
 SOL_DAYS = 1.0274912517
