@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import HistGradientBoostingRegressor
 
-# --- learner settings, fixed before the first LOBO run (Oct 28); not tuned on scores ---
+# --- learner settings, fixed before the first LOBO run; not tuned on scores ---
 HGB_MAX_ITER = 300            # boosting rounds
 HGB_LEARNING_RATE = 0.05
 HGB_MAX_LEAF_NODES = 15
@@ -67,7 +67,7 @@ def benchmark(train, test, target="ground_temp_k"):
     return pred, int(empty.sum())
 
 
-# --- second learner: FLANN-style ridge (basis fixed in docs/plan.md before the run, Oct 28) ---
+# --- second learner: FLANN-style ridge (basis fixed in docs/plan.md) ---
 from sklearn.linear_model import Ridge
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -76,10 +76,10 @@ FLANN_DAILY_HARMONICS = 3     # LTST harmonics 1..3
 FLANN_SEASON_HARMONICS = 2    # Ls harmonics 1..2
 FLANN_RIDGE_ALPHA = 1.0       # on standardized basis columns; fixed, not tuned
 FLANN_STATIC = ["ti_themis_tiu", "slope_deg", "aspect_sin", "aspect_cos", "albedo_mean", "baseline_k"]
-FLANN_STATIC_NO_ALBEDO = [c for c in FLANN_STATIC if c != "albedo_mean"]   # Oct 28: rover albedo spans 0.24-0.26 only
-FLANN_STATIC_NO_ALBEDO_NO_TI = [c for c in FLANN_STATIC_NO_ALBEDO if c != "ti_themis_tiu"]   # Oct 28: TI sensitivity only
+FLANN_STATIC_NO_ALBEDO = [c for c in FLANN_STATIC if c != "albedo_mean"]   # rover albedo spans 0.24-0.26 only
+FLANN_STATIC_NO_ALBEDO_NO_TI = [c for c in FLANN_STATIC_NO_ALBEDO if c != "ti_themis_tiu"]   # TI sensitivity only
 
-# Clamping (Oct 28, user request): covariates held to the training rows' percentile range
+# Clamping : covariates held to the training rows' percentile range
 # before the residual model, so the map never extrapolates the residual. Aspect is circular
 # and tau comes from the table, so neither is clamped.
 CLAMP_COLUMNS = ["ti_themis_tiu", "slope_deg", "albedo_mean", "baseline_k"]
@@ -151,7 +151,7 @@ def apply_clamp(df, ranges):
 class FlannModel:
     """A fitted FLANN ridge: clamp ranges (or None), static terms and the ridge pipeline.
 
-    Same as the class in residual_flann_lobo.ipynb, moved here for Step 5b (Oct 29).
+    Same as the class in residual_flann_lobo.ipynb, moved here for Step 5b.
     """
 
     def __init__(self, static, clamp, frame, target):
@@ -170,7 +170,7 @@ class FlannModel:
         return self.pipe.predict(B), frac
 
 
-# --- Step 5b: air temperature (design fixed with the user, Oct 28, before scoring) ---
+# --- Step 5b: air temperature (design fixed with the user, before scoring) ---
 # The FLANN basis with baseline_k set to the predicted ground temperature; no clamp, no elevation.
 GROUND_VARIANT = "flann_safe_no_ti"   # the ground model on the map; its prediction is the air model's input
 AIR_VARIANTS = {
