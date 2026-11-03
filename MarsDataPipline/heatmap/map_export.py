@@ -43,22 +43,22 @@ N_FRAMES = 24 * 60 // FRAME_MINUTES
 FRAME_HOURS = np.arange(N_FRAMES) * FRAME_MINUTES / 60.0
 
 # --- run ------------------------------------------------------------------
-CHUNK_COLS = 1000             # columns per solver call and per checkpoint file; dry run (Oct 28), 5 workers:
+CHUNK_COLS = 1000             # columns per solver call and per checkpoint file; dry run, 5 workers:
                               # 13.4 ms/col at 1000, 16.7 at 500, 18.3 at 2000, 38 at 10000 (cache-bound)
 THREAD_ENV = ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS")
-WORK_SUBDIR = "_working"      # per map folder: master/ arrays, static grid, run logs (Oct 29); deliverables sit beside it
+WORK_SUBDIR = "_working"      # per map folder: master/ arrays, static grid, run logs; deliverables sit beside it
 
 # --- residual -------------------------------------------------------------
 RESIDUAL_VARIANT = "flann_safe_no_ti"
 
 # --- air (Step 6b) ---------------------------------------------------------
-AIR_VARIANT = "air_hybrid"    # residual.AIR_VARIANTS; fails the adoption rule, published under the Oct 28 fallback
+AIR_VARIANT = "air_hybrid"    # residual.AIR_VARIANTS; fails the adoption rule, published under the fallback
 
 # --- encodings (T = offset + scale * code) --------------------------------
 COG_OFFSET_K, COG_SCALE_K, COG_NODATA = 200.0, 0.01, -32768    # A: int16
 U16_OFFSET_K, U16_SCALE_K, U16_NODATA = 100.0, 0.01, 0         # B and D: uint16
 COLOR_MAP = "inferno"         # C
-COLOR_RANGE_K = (150.0, 320.0)   # user decision Oct 28: 150-300 K clipped 2.2% at Ls 195 in the dry run (max 312 K)
+COLOR_RANGE_K = (150.0, 320.0)   # user decision: 150-300 K clipped 2.2% at Ls 195 in the dry run (max 312 K)
 COLOR_LEVELS = 256
 LOSSLESS_TOL_K = 0.005        # decoded A, B, D vs the float32 master
 
