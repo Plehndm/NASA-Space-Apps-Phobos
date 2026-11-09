@@ -23,9 +23,13 @@ export function SearchBar() {
   // The field keeps its own text so typing never waits for the map to re-render (a controlled input
   // that lags drops keystrokes on iOS); the store's query follows ~120 ms after typing pauses.
   const [text, setText] = useState(S.q);
+  // Enter can reach JavaScript before the last keystrokes' change events: submit uses the text the
+  // native field sends with it, and other reads use this ref rather than the last render.
+  const latest = useRef(S.q);
+  const show = (t: string) => { latest.current = t; setText(t); };
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const pending = useRef(false);
-  useEffect(() => { if (!pending.current) setText(S.q); }, [S.q]); // cleared from elsewhere
+  useEffect(() => { if (!pending.current) show(S.q); }, [S.q]); // cleared from elsewhere
   // Leaving Search (a result opened, or Home) drops any typing still waiting and shows the store's
   // query. Opening a result flushes the text and clears it in the same update, so the effect above
   // never sees the query change and the field would keep the old text.
@@ -33,22 +37,24 @@ export function SearchBar() {
     if (searching) return;
     clearTimeout(timer.current);
     pending.current = false;
-    setText(S.q);
+    show(S.q);
   }, [searching]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => clearTimeout(timer.current), []);
   const type = (q: string) => {
     const v = q.slice(0, MAX_QUERY);
-    setText(v);
+    show(v);
     pending.current = true;
     clearTimeout(timer.current);
     timer.current = setTimeout(() => { pending.current = false; patch({ q: v }); }, 120);
     if (!searching) enter();
   };
-  const flush = () => {
+  const flush = (native?: string) => {
     clearTimeout(timer.current);
     pending.current = false;
-    if (text !== S.q) patch({ q: text });
-    return text;
+    if (typeof native === "string") show(native.slice(0, MAX_QUERY));
+    const t = latest.current;
+    if (t !== S.q) patch({ q: t });
+    return t;
   };
 
   const enter = () => {
@@ -61,8 +67,8 @@ export function SearchBar() {
     input.current?.blur();
     goHome(); // also clears the query and category
   };
-  const submit = () => {
-    const q = flush();
+  const submit = (native?: string) => {
+    const q = flush(native);
     const p = parseCoords(q);
     if (p) {
       input.current?.blur();
@@ -100,12 +106,12 @@ export function SearchBar() {
           autoCapitalize="none"
           onChangeText={type}
           onFocus={enter}
-          onSubmitEditing={submit}
+          onSubmitEditing={e => submit(e.nativeEvent.text)}
           onKeyPress={e => { if (e.nativeEvent.key === "Escape") leave(); }}
           style={[font(500, 14), { flex: 1, minWidth: 0, color: C.fg, padding: 0, outlineStyle: "none" } as object]}
         />
         {!!text && (
-          <Pressable accessibilityRole="button" accessibilityLabel="Clear search" onPress={() => { clearTimeout(timer.current); pending.current = false; setText(""); patch({ q: "" }); }} style={{ width: 32, height: 32, alignItems: "center", justifyContent: "center" }}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Clear search" onPress={() => { clearTimeout(timer.current); pending.current = false; show(""); patch({ q: "" }); }} style={{ width: 32, height: 32, alignItems: "center", justifyContent: "center" }}>
             <CloseIcon size={12} color={C.fg3} />
           </Pressable>
         )}

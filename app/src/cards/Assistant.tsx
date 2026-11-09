@@ -100,9 +100,13 @@ function Bubble({ m }: { m: ChatMsg }) {
   );
 }
 
-export function AssistantCard() {
+/**
+ * Title, status line and close button, pinned above the scrolling chat (placed by the Sheet), so the
+ * assistant can be closed however long the conversation gets.
+ */
+export function AssistantHeader() {
   const { goHome } = useApp();
-  const { chat, busy, live, send } = useAssistant();
+  const { chat, live } = useAssistant();
   const last = [...chat].reverse().find(m => m.role === "assistant");
   // Offline (no key, no network, or a failed request) is a normal way to run, so it reads as a mode, not an error.
   const offline = "OFFLINE ASSISTANT · answers from sector data";
@@ -111,7 +115,7 @@ export function AssistantCard() {
     : live === true ? "LIVE MODEL · knows every landmark, hazard track and the current telemetry"
     : offline;
   return (
-    <>
+    <View style={{ paddingHorizontal: 16, paddingBottom: 8, gap: 4 }}>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 2 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           <T w={500} size={16} color={C.accent}>✦</T>
@@ -126,7 +130,16 @@ export function AssistantCard() {
           <CloseIcon />
         </Pressable>
       </View>
-      <T w={500} size={10.5} ls={0.2} color={C.fg3} style={{ marginBottom: 4 }}>{status}</T>
+      <T w={500} size={10.5} ls={0.2} color={C.fg3}>{status}</T>
+    </View>
+  );
+}
+
+/** The conversation: bubbles, proposed routes, the busy pill and the TRY suggestions. */
+export function AssistantCard() {
+  const { chat, busy, send } = useAssistant();
+  return (
+    <>
       {chat.map((m, i) => <Bubble key={i} m={m} />)}
       {busy && (
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999, backgroundColor: C.row, alignSelf: "flex-start" }}>
@@ -160,6 +173,10 @@ export function AssistantCard() {
 export function AssistantInput({ insetBottom }: { insetBottom: number }) {
   const { busy, send } = useAssistant();
   const [text, setText] = useState("");
+  // Return can reach JavaScript before the last keystrokes' change events, so a submit uses the text
+  // the native field reports with it; the send button falls back to the latest change (a ref).
+  const latest = useRef("");
+  const change = (t: string) => { latest.current = t; setText(t); };
   const [kb, setKb] = useState(0);
   const input = useRef<ComponentRef<typeof TextInput>>(null);
   useEffect(() => {
@@ -169,18 +186,19 @@ export function AssistantInput({ insetBottom }: { insetBottom: number }) {
     return () => { show.remove(); hide.remove(); };
   }, []);
   const can = !!text.trim() && !busy;
-  const submit = () => {
-    if (!can) return;
-    send(text);
-    setText("");
+  const submit = (native?: string) => {
+    const t = typeof native === "string" ? native : latest.current;
+    if (!t.trim() || busy) return;
+    send(t);
+    change("");
   };
   return (
     <View style={{ flexDirection: "row", gap: 8, paddingHorizontal: 16, paddingTop: 8, paddingBottom: kb ? kb + 8 : 12 + insetBottom }}>
       <TextInput
         ref={input}
         value={text}
-        onChangeText={setText}
-        onSubmitEditing={submit}
+        onChangeText={change}
+        onSubmitEditing={e => submit(e.nativeEvent.text)}
         accessibilityLabel="Message the route assistant"
         placeholder="Ask for a route, a hazard check, a science plan…"
         placeholderTextColor={C.fg3}
@@ -194,7 +212,7 @@ export function AssistantInput({ insetBottom }: { insetBottom: number }) {
         accessibilityRole="button"
         accessibilityLabel="Send"
         accessibilityState={{ disabled: !can }}
-        onPress={submit}
+        onPress={() => submit()}
         style={{
           width: 48, height: 48, borderRadius: 24, backgroundColor: C.accent, alignItems: "center", justifyContent: "center",
           boxShadow: "0px 8px 20px rgba(127,212,193,0.3)", opacity: can ? 1 : 0.55,

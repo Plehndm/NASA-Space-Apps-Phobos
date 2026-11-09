@@ -4,7 +4,7 @@ import { useApp, type SnapName } from "../state/store";
 import { C, R, SHADOW } from "../theme";
 import { SearchBar } from "./SearchBar";
 import { CardStack } from "../cards/CardStack";
-import { AssistantInput } from "../cards/Assistant";
+import { AssistantHeader, AssistantInput } from "../cards/Assistant";
 
 /** Drag handle for the phone sheet. A tap steps peek → half → full → peek; a drag snaps to the nearest point. */
 function Handle() {
@@ -67,6 +67,7 @@ export function Sheet({ pinned }: { pinned?: ReactNode }) {
     <>
       {pinned}
       <SearchBar />
+      {chat && <AssistantHeader />}
       <ScrollView
         ref={scroll}
         style={{ flex: 1 }}
