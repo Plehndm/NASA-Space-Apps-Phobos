@@ -148,8 +148,13 @@ export function AppProvider({ geo, children }: { geo: Geometry; children: ReactN
     [sheetTop],
   );
 
+  // Where the phone sheet is going, updated at once (state.sheetY only changes on the next render),
+  // so a centerOn() right after setMode(…, "half") centres for the sheet's new position.
+  const sheetTarget = useRef(state.sheetY);
+  sheetTarget.current = state.sheetY;
   const snapTo = useCallback(
     (name: SnapName) => {
+      sheetTarget.current = geo.snap[name];
       patch({ sheetY: geo.snap[name] });
       moveSheet(geo.snap[name]);
     },
@@ -158,7 +163,8 @@ export function AppProvider({ geo, children }: { geo: Geometry; children: ReactN
 
   const setMode = useCallback(
     (mode: Mode, snap?: SnapName) => {
-      patch({ mode });
+      // Back on Home nothing is selected any more (the selected marker's highlight goes too).
+      patch(mode === "home" ? { mode, sel: null } : { mode });
       if (snap && geo.device === "phone") snapTo(snap);
     },
     [geo, patch, snapTo],
@@ -217,8 +223,8 @@ export function AppProvider({ geo, children }: { geo: Geometry; children: ReactN
     () =>
       geo.device === "desktop"
         ? { x: geo.mapW / 2, y: geo.H / 2 }
-        : { x: geo.W / 2, y: Math.max(184, (geo.headerH + state.sheetY) / 2) },
-    [geo, state.sheetY],
+        : { x: geo.W / 2, y: Math.max(184, (geo.headerH + sheetTarget.current) / 2) },
+    [geo],
   );
 
   const zoomBy = useCallback<Store["zoomBy"]>(
