@@ -9,8 +9,6 @@ export interface Settings {
   demoSpeed: number; // simulation speed multiplier (10–240)
   chipStyle: "counts" | "icons";
   inlineNotes: boolean;
-  legendMinK: number; // heat legend endpoints, provisional until the data team confirms
-  legendMaxK: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -21,9 +19,9 @@ export const DEFAULT_SETTINGS: Settings = {
   demoSpeed: 60,
   chipStyle: "counts",
   inlineNotes: true,
-  legendMinK: 180,
-  legendMaxK: 280,
 };
+// The prototype's legendMinK / legendMaxK (a provisional 180–280 K) are gone: the heat legend now uses
+// the pipeline's fixed colour scale, 150–320 K, read from the map data manifest.
 
 const STORAGE_KEY = "mn.settings";
 

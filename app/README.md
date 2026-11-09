@@ -7,10 +7,11 @@ React Native + Expo (SDK 58) + TypeScript. One codebase runs on phones through *
 ```bash
 cd app
 npm install
-npx expo start
+npx expo start           # terminal 1: the app
+npm run data             # terminal 2: the map data server (port 8092), see "Map data" below
 ```
 
-`npx expo start` prints a QR code and waits. Every save reloads on all connected devices.
+`npx expo start` prints a QR code and waits. Every save reloads on all connected devices. Without the data server the app still runs, but the map is empty and shows "MAP DATA OFFLINE".
 
 ### Phone (Expo Go)
 
@@ -50,6 +51,36 @@ The prototype is a reference only. Don't build on it or import from it.
 - **Windows firewall:** if Windows asks whether Node.js may use the network, allow **Private networks**. Then set your Wi-Fi to Private: Settings → Network & internet → Wi-Fi → your network → Network profile type → Private.
 - **"Project is incompatible with this version of Expo Go":** update Expo Go from the app store.
 
+## Map data
+
+The map layers are real pipeline outputs, built into `app/data/` (about 30 MB, not in git) and served by `npm run data`. The app finds that server on the same host as the Expo dev server, so phones on the same Wi-Fi need no setup.
+
+**First time:** get the inputs, then build. Download these from the team Drive (link in `MarsDataPipline/processed_data/Google_Drive`) into the same paths under `MarsDataPipline/`:
+
+| File (under `MarsDataPipline/`) | Used for |
+| --- | --- |
+| `processed_data/gale_dust_devil_features_100m.csv` | elevation and slope (coordinate pill, strata) |
+| `heatmap/outputs/maps/{ground,air}/map_manifest.json` and `raw/*.u16` | temperature frames |
+| `dust_devil/outputs/gale_dust_devil_heating_index_sol{800,1850}.npz` and `dust_devil_heating_index_reference_sol1850.json` | dust-devil layer |
+
+```bash
+python scripts/fetch_imagery.py      # CTX tiles, zooms 7-11, from NASA Mars Trek (~56 MB, resumable)
+python scripts/build_map_data.py     # -> app/data/ (needs numpy and Pillow; about 30 s)
+npm run data
+```
+
+`build_map_data.py` takes stage names to rebuild only part: `imagery`, `terrain`, `strata`, `heat`, `dustDevil`. Or skip the build: unzip a teammate's `app/data/` into place.
+
+**Phone on another network, or a hosted demo:** copy `app/data/` to any static host and put its address in `app/.env.local` as `EXPO_PUBLIC_DATA_URL=https://…`, then restart Expo. Tunnel mode (`--tunnel`) needs this too, because the phone can't reach port 8092 directly.
+
+| Layer | Source | App file |
+| --- | --- | --- |
+| Base imagery | MRO CTX mosaic (Mars Trek `Gale_CTX_BlockAdj_dd`), the pipeline's tile grid, tint baked in | `imagery/{z}/{row}/{col}.jpg` |
+| Terrain | 100 m feature table: elevation (m) and slope | `terrain.bin` |
+| Elevation strata | same: L1 above −2 km, L2 −4 to −2 km, L3 below −4 km | `strata/l{1,2,3}.webp` |
+| Temperature | ground and air maps: 5 seasons (Ls 15/75/195/255/340) × 48 frames, inferno 150–320 K | `heat/{ground,air}/ls{LLL}/{HHMM}.webp` |
+| Dust devils | Dust Devil Heating Index, sols 1850 (clear) and 800 (dusty), levels low/moderate/high | `dustdevil/sol{N}.webp` |
+
 ### Checks before you push
 
 ```bash
@@ -75,27 +106,44 @@ Add libraries with `npx expo install <package>`, not `npm install`. It picks the
   - Android's back button closes Settings, then popovers, then returns to Home.
 - **Settings dialog:** `src/shell/SettingsDialog.tsx`. Every setting from the prototype. Values are saved on the device.
 
+## What's built (checklist section 2: Map and layers)
+
+- **Map engine:** `src/shell/MapArea.tsx`. One-finger pan, two-finger pinch (with pan), mouse-wheel and trackpad zoom around the cursor on web, tap for the coordinate pill ("4.59°S 137.44°E · −4,498 m · 2° slope"), scale bar, recenter on the rover. Zoom 0.25–4.2 screen px per 100 m.
+- **Coordinate system:** `src/map/geo.ts`. World space is the pipeline's 100 m grid (1477 × 1436 cells, 136.75–139.24° E, 4.15–6.57° S); one transform for every layer.
+- **Data hosting:** `src/map/data.ts` loads `manifest.json` and the terrain grid; `scripts/build_map_data.py`, `scripts/serve-data.mjs`.
+- **Layers** (`src/map/layers/`): CTX tiles, elevation strata, temperature (ground / air, season, LTST slider + play, kelvin legend), hazard zones with type filters, the dust-devil heating index, 19 landmarks with rank-based labels and a selected state, the rover.
+- **Layer controls:** `src/map/LayerControls.tsx`, used by the dock popovers (`src/layers/DockPopovers.tsx`) and the Layers card (`src/cards/Layers.tsx`).
+- **Landmarks and hazards:** `src/map/landmarks.ts`, `src/map/hazards.ts`. Real sites use approximate published positions; the invented ones (habitat, relays, pads, checkpoints) and the hazard zones are placed on suitable real ground, read from the terrain data. Each file says how.
+
 ## Where your feature goes
 
 ```text
 src/
 ├── App.tsx                fonts, safe areas, status bar
 ├── theme.ts               design tokens
-├── assets.ts              every image (map, elevation strata, 21 heat frames)
 ├── state/store.tsx        app state + actions: useApp()
 ├── state/settings.ts      Settings type and defaults
 ├── state/clock.ts         MTC clock (useMtcClock, mtcSeconds, fmtClock)
 ├── layout/geometry.ts     frame size, panel width, safe areas, sheet snap points
 ├── ui/                    shared pieces: T (text), Card, SectionLabel, Segmented, Switch, BlinkDot, icons
-├── shell/                 header, dock, sheet, search bar, toast, settings, map area
-├── layers/DockPopovers.tsx  STUB: elevation + heat popovers beside the dock
-└── cards/CardStack.tsx    one entry per sheet mode; each is a placeholder until built
+├── shell/                 header, dock, sheet, search bar, toast, settings, map area (gestures)
+├── map/geo.ts             the world grid: lon/lat ↔ world px, distances, tile maths
+├── map/data.ts            data server URL, manifest, terrain grid (terrainAt)
+├── map/view.tsx           live map view (one Reanimated shared value), <Pin> for markers, useLabelFade
+├── map/layers/            one component per map layer
+├── map/LayerControls.tsx  layer controls shared by the popovers and the Layers card
+├── map/MapOverlays.tsx    coordinate pill, scale bar, heat legend, recenter button
+├── layers/DockPopovers.tsx  elevation + heat popovers beside the dock
+└── cards/CardStack.tsx    one entry per sheet mode; placeholders until built
 ```
 
 - **A sheet screen** (Home, Search, Waypoint, Sequence, Expedition, Arrived, Layers, Assistant): create `src/cards/<Name>.tsx`, then replace its `<Placeholder>` entry in `src/cards/CardStack.tsx`.
-- **A map layer:** add it inside the world container (`Animated.View`) in `src/shell/MapArea.tsx`. World space is 512×683 px, and one world px is 100 m. Position everything absolutely in world px; the container applies the pan/zoom transform. Use `react-native-svg` for shapes and routes.
-- **Map engine:** `MapArea.tsx` currently draws only the base image, plus the `view` transform from the store (`{s, tx, ty}`, zoom 0.7–4.2). Pan, pinch, the coordinate pill, scale bar and recenter button are still to do. `PanResponder` handles one-finger pan and two-finger pinch in Expo Go. `useApp().zoomBy(k, x, y)` already zooms around a point.
-- **Dock popovers:** replace the stubs in `src/layers/DockPopovers.tsx`. The dock already opens and closes them.
+- **A map layer:**
+  - **Images** (rasters that should zoom with the map): add a component in `src/map/layers/` and list it inside the world container in `src/shell/MapArea.tsx`, positioned absolutely in world px (`toWorld({ lon, lat })` from `geo.ts`).
+  - **Markers, labels, lines and shapes:** put them in the overlay next to `LandmarkLayer` and wrap each in `<Pin x y>`. iOS stretches anything inside the zoomed container, so text and SVG there go blurry; `HazardLayer` shows how to draw a shape for the current zoom. Use `react-native-svg` for shapes and routes.
+  - **Reading the live view:** `useMapView().view` is one Reanimated shared value `{ s, tx, ty }`. Keep scale and position in that one value: as three separate animated values, iOS can draw a frame with the new zoom but the old position (a visible jump).
+- **Terrain under a point** (routing, grade profile): `terrainAt(useMapData().terrain, p)` gives elevation and slope at 100 m.
+- **Moving the map:** `centerOn(p, zoom?)` glides to a world point, `zoomBy(k, x, y)` zooms around a point, `showCoord(text)` shows the pill.
 - **Something pinned above the search bar** (the ETA card while navigating): pass it to `<Sheet pinned={…} />`.
 
 ## Using the store
@@ -103,7 +151,7 @@ src/
 ```tsx
 import { useApp } from "../state/store";
 
-const { state, geo, settings, patch, setMode, snapTo, toast, zoomBy } = useApp();
+const { state, geo, settings, patch, setMode, snapTo, toast, zoomBy, centerOn } = useApp();
 setMode("waypoint", "half");   // switch the sheet screen and snap the phone sheet
 patch({ hazOn: true });        // merge fields into state
 toast("Navigation started");   // 3.2 s message
@@ -116,7 +164,9 @@ Add the fields your feature needs to `AppState` in `store.tsx`, with a default i
 
 React Native can't do everything CSS does. These are the deliberate differences:
 
-- **Map tint:** the CSS `filter` tint is baked into `assets/map/world-tinted.png`. If the base map changes, re-run `python scripts/tint_map.py assets/map/world.png assets/map/world-tinted.png`.
+- **Map tint:** the CSS `filter` tint is baked into the imagery tiles by `build_map_data.py` (using `scripts/tint_map.py`).
 - **"Pebble" corners:** these are elliptical in CSS. Here each corner is circular, using the average of its two radii.
 - **Backdrop blur:** the frosted blur behind the header, sheet and dialog is not used. The surfaces rely on the design's semi-transparent colours.
-- **Assets** in `assets/map/` are copies of the prototype's images. Replace them with pipeline outputs as the data features land, and update `src/assets.ts`.
+- **Real map instead of the prototype's:** the prototype's 51 × 68 km base image, fake terrain and 21 one-season heat frames are replaced by the pipeline's 148 × 144 km grid (see "Map data"). So the zoom goes down to 0.25 to show the whole crater, the heat legend uses the pipeline's fixed 150–320 K inferno scale (the prototype's provisional 180–280 K would clip; ground reaches 151–313 K), and the time slider covers the whole sol in 48 steps.
+- **Dust Devil #84** (the prototype's moving fake dust devil) is replaced by the pipeline's heating index map.
+- **Landmark labels** also give way when they would overlap a higher-priority label, since real sites can be a few hundred metres apart.

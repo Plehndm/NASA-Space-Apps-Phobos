@@ -10,6 +10,7 @@ import {
   PlusJakartaSans_800ExtraBold,
 } from "@expo-google-fonts/plus-jakarta-sans";
 import { useGeometry } from "./layout/geometry";
+import { MapDataProvider } from "./map/data";
 import { AppProvider } from "./state/store";
 import { AppShell } from "./shell/AppShell";
 import { C } from "./theme";
@@ -17,9 +18,11 @@ import { C } from "./theme";
 function Root() {
   const geo = useGeometry();
   return (
-    <AppProvider geo={geo}>
-      <AppShell />
-    </AppProvider>
+    <MapDataProvider>
+      <AppProvider geo={geo}>
+        <AppShell />
+      </AppProvider>
+    </MapDataProvider>
   );
 }
 

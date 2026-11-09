@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { useApp, type Mode } from "../state/store";
+import { LayersCard } from "./Layers";
 import { Placeholder } from "./Placeholder";
 
 /**
@@ -13,7 +14,7 @@ const CARDS: Record<Mode, () => ReactNode> = {
   route: () => <Placeholder title="Sequence" item="Multi-stop sequence" note="Numbered stops with reorder / remove and NAVIGATE." />,
   nav: () => <Placeholder title="Expedition" item="Expedition simulation" note="Progress card, hazard radar, grade map, END." />,
   arrived: () => <Placeholder title="Arrived" item="Arrived screen" note="Arrival summary with DONE." />,
-  layers: () => <Placeholder title="Layers" item="Elevation strata layer / Temperature heat layer / Hazard zones layer" note="Shown when Settings → Layer controls = PANEL." />,
+  layers: () => <LayersCard />,
   assistant: () => <Placeholder title="✦ Route assistant" item="Assistant chat UI" note="Chat bubbles, proposed-route card, input row." />,
 };
 

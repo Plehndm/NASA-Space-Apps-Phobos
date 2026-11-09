@@ -1,7 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Animated, Easing, Platform } from "react-native";
 import type { Geometry } from "../layout/geometry";
+import { GRID, toWorld, type Pt } from "../map/geo";
 import { EASE } from "../theme";
+import { mtcSeconds } from "./clock";
 import { DEFAULT_SETTINGS, loadOverrides, saveOverrides, type Settings } from "./settings";
 
 /** Which card stack the sheet / side panel shows. */
@@ -16,6 +18,11 @@ export interface View {
   anim: boolean; // animate to this view instead of jumping
 }
 
+/** Rover pose in world px; h is the heading in degrees clockwise from north. */
+export interface Rover extends Pt { h: number }
+
+export type HazType = "weather" | "steep" | "rough" | "radiation" | "sand";
+
 export interface AppState {
   mode: Mode;
   sheetY: number; // phone only: the snap point the bottom sheet is at (or moving to)
@@ -28,16 +35,48 @@ export interface AppState {
   elevOpen: boolean; // elevation popover open (layer picker = dock)
   heat: "off" | "on";
   heatOpen: boolean; // heat popover open (layer picker = dock)
+  heatT: number; // frame index into the manifest's heat frames (30-minute LTST steps from 00:00)
+  heatPlay: boolean;
+  heatKind: "ground" | "air";
+  heatSeason: string; // manifest season tag, e.g. "ls075"
   hazOn: boolean;
+  hazTypes: Record<HazType, boolean>; // hazard filter chips
+  dustSol: number; // which pipeline sol the dust-devil heating index shows
+  lz: boolean; // landing points shown
+  sel: string | null; // selected landmark id
   navActive: boolean; // true while an expedition is running (header shows "DEMO ×N")
   q: string; // search text
+  rover: Rover;
+  coord: string | null; // coordinate pill text (tap on the map, recenter)
 }
 
-export const ZOOM_MIN = 0.7;
+// Zoom is screen px per world px (100 m). The prototype's range was 0.7–4.2 on a 51 km map; the real
+// grid is 148 km wide, so the minimum goes down far enough to show the whole crater on a phone.
+export const ZOOM_MIN = 0.25;
 export const ZOOM_MAX = 4.2;
 
-function initialView(g: Geometry): View {
-  return g.device === "desktop" ? { s: 2.1, tx: -28, ty: -298, anim: false } : { s: 1.3, tx: -116, ty: -284, anim: false };
+/** Curiosity's landing site, Bradbury Landing (the prototype's rover position). */
+export const ROVER_START: Rover = { ...toWorld({ lon: 137.4417, lat: -4.5895 }), h: 35 };
+
+/** Heat frame (30-minute steps) for the rover's local solar time now: LTST ≈ MTC + east longitude / 15 h. */
+function ltstFrameNow(): number {
+  const ltstH = (mtcSeconds() / 3600 + 137.44 / 15) % 24;
+  return Math.round(ltstH * 2) % 48;
+}
+
+/** Opening view: the rover at the same screen spot as in the prototype. */
+function initialView(g: Geometry, r: Pt = ROVER_START): View {
+  const [s, sx, sy] = g.device === "desktop" ? [2.1, 421, 450] : [1.3, 162, 179];
+  return { s, tx: sx - r.x * s, ty: sy - r.y * s, anim: false };
+}
+
+/** Keep the middle of the map area over the grid, so the map can't be dragged away. */
+export function clampView(v: View, g: Geometry): View {
+  const s = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, v.s));
+  const cx = g.mapW / 2, cy = g.H / 2;
+  const wx = Math.min(GRID.W, Math.max(0, (cx - v.tx) / s));
+  const wy = Math.min(GRID.H, Math.max(0, (cy - v.ty) / s));
+  return { s, tx: cx - wx * s, ty: cy - wy * s, anim: v.anim };
 }
 
 const webScene = () => (Platform.OS === "web" && typeof location !== "undefined" ? new URLSearchParams(location.search).get("scene") : null);
@@ -58,6 +97,12 @@ interface Store {
   zoomBy: (k: number, ox?: number, oy?: number) => void;
   /** Visible map centre in map-area px (phone: the part not covered by the sheet). */
   viewCenter: () => { x: number; y: number };
+  /** Set the view (clamped). Gestures pass anim=false; buttons and selections animate. */
+  setView: (v: View) => void;
+  /** Glide so world point p sits at the visible centre, optionally at zoom s. */
+  centerOn: (p: Pt, s?: number) => void;
+  /** Show the coordinate pill for ms milliseconds. */
+  showCoord: (text: string, ms?: number) => void;
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -74,9 +119,19 @@ export function AppProvider({ geo, children }: { geo: Geometry; children: ReactN
     elevOpen: false,
     heat: "off",
     heatOpen: false,
+    heatT: ltstFrameNow(),
+    heatPlay: false,
+    heatKind: "ground",
+    heatSeason: "ls075",
     hazOn: false,
+    hazTypes: { weather: true, steep: true, rough: true, radiation: true, sand: true },
+    dustSol: 1850,
+    lz: true,
+    sel: null,
     navActive: false,
     q: "",
+    rover: ROVER_START,
+    coord: null,
   }));
   const sheetTop = useRef(new Animated.Value(geo.snap.peek)).current;
 
@@ -118,9 +173,20 @@ export function AppProvider({ geo, children }: { geo: Geometry; children: ReactN
       const p = geo.snap;
       const name = (["full", "half", "peek"] as SnapName[]).sort((a, b) => Math.abs(p[a] - s.sheetY) - Math.abs(p[b] - s.sheetY))[0];
       sheetTop.setValue(p[name]);
-      return { ...s, sheetY: p[name], view: deviceChanged ? initialView(geo) : s.view };
+      return { ...s, sheetY: p[name], view: deviceChanged ? initialView(geo, s.rover) : clampView(s.view, geo) };
     });
   }, [geo, sheetTop]);
+
+  const coordTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const showCoord = useCallback(
+    (text: string, ms = 2600) => {
+      patch({ coord: text });
+      clearTimeout(coordTimer.current);
+      coordTimer.current = setTimeout(() => patch({ coord: null }), ms);
+    },
+    [patch],
+  );
+  useEffect(() => () => clearTimeout(coordTimer.current), []);
 
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const toast = useCallback(
@@ -162,17 +228,30 @@ export function AppProvider({ geo, children }: { geo: Geometry; children: ReactN
       setState(s => {
         const ns = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, s.view.s * k));
         const kk = ns / s.view.s;
-        return { ...s, view: { s: ns, tx: x - (x - s.view.tx) * kk, ty: y - (y - s.view.ty) * kk, anim: true } };
+        return { ...s, view: clampView({ s: ns, tx: x - (x - s.view.tx) * kk, ty: y - (y - s.view.ty) * kk, anim: true }, geo) };
       });
     },
-    [viewCenter],
+    [viewCenter, geo],
+  );
+
+  const setView = useCallback((v: View) => patch({ view: clampView(v, geo) }), [patch, geo]);
+
+  const centerOn = useCallback<Store["centerOn"]>(
+    (p, ns) => {
+      const c = viewCenter();
+      setState(s => {
+        const z = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, ns ?? s.view.s));
+        return { ...s, view: clampView({ s: z, tx: c.x - p.x * z, ty: c.y - p.y * z, anim: true }, geo) };
+      });
+    },
+    [viewCenter, geo],
   );
 
   const settings = useMemo(() => ({ ...DEFAULT_SETTINGS, ...state.overrides }), [state.overrides]);
 
   const value = useMemo<Store>(
-    () => ({ state, geo, settings, sheetTop, patch, setMode, snapTo, toast, setSetting, resetSettings, zoomBy, viewCenter }),
-    [state, geo, settings, sheetTop, patch, setMode, snapTo, toast, setSetting, resetSettings, zoomBy, viewCenter],
+    () => ({ state, geo, settings, sheetTop, patch, setMode, snapTo, toast, setSetting, resetSettings, zoomBy, viewCenter, setView, centerOn, showCoord }),
+    [state, geo, settings, sheetTop, patch, setMode, snapTo, toast, setSetting, resetSettings, zoomBy, viewCenter, setView, centerOn, showCoord],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

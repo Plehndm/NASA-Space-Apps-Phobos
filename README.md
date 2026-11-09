@@ -12,7 +12,7 @@ Team Phobos's entry for NASA Space Apps 2026, challenge **"Interplanetary Surviv
 - **Street Level:** walk-around rover panoramas at key waypoints.
 - **Route assistant:** a Claude-powered chat that suggests and loads routes.
 
-Status: the **data pipeline** and the **UI design** exist. The **app foundation** is in `app/`: layout, theme, header, dock, settings. Every screen and map layer is still a placeholder. The work left is to build the features and connect them to the real data.
+Status: the **data pipeline** and the **UI design** exist. In `app/`, the **app foundation** (layout, theme, header, dock, settings) and the **map** are built: pan / pinch / zoom over the real CTX imagery, with elevation strata, ground and air temperature, hazard zones, the dust-devil heating index and the landmarks, all from the pipeline's data. The sheet screens (Home, Search, Waypoint, routing, Assistant, Street Level) are still placeholders.
 
 > **`app/` is the actual application. `Mars Navigator App Design/` is only the reference.**
 > The design folder is an HTML mock-up with fake terrain. It shows what each screen should look like and how it should behave. Don't edit it or ship it, and don't import from it. Build features in `app/`, matching the design.
@@ -30,11 +30,14 @@ npm install
 To run the current app run the following in the `app/` directory:
 ```bash
 npx expo start           # terminal 1: the app
+npm run data             # terminal 2: the map data server
 ```
+
+The map data (tiles, terrain, heat frames) is built from the pipeline outputs once; see "Map data" in [`app/README.md`](app/README.md).
 
 To run the design reference execute the following in the `app/` directory:
 ```bash
-npm run design           # terminal 2: the design reference (legacy HTML prototype)
+npm run design           # terminal 3: the design reference (legacy HTML prototype)
 ```
 
 | What | Desktop | Phone (same Wi-Fi) |
@@ -55,9 +58,11 @@ NASA-Space-Apps-Phobos/
 ├── mars-navigator.pptx          presentation deck (exported from the design deck)
 │
 ├── app/                         THE APP (React Native + Expo: phone via Expo Go, desktop via web); start in app/README.md
-│   ├── src/shell/               header, dock, bottom sheet / side panel, settings, toasts
+│   ├── src/shell/               header, dock, bottom sheet / side panel, settings, toasts, map area
+│   ├── src/map/                 coordinate system, map data loader, map layers, layer controls
 │   ├── src/cards/               one screen per sheet mode (placeholders until built)
-│   └── assets/map/              map images (copied from the design for now)
+│   ├── scripts/                 fetch_imagery.py + build_map_data.py (pipeline outputs -> app data), data and design servers
+│   └── data/                    built map data, served by `npm run data` (not tracked by git)
 │
 ├── Mars Navigator App Design/   DESIGN REFERENCE ONLY, not the app: HTML mock-up to copy from
 │   ├── README.md                full design spec: tokens, layouts, screens, behaviour, state

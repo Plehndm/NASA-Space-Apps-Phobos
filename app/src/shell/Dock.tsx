@@ -64,9 +64,12 @@ export function Dock() {
   };
 
   return (
-    <View pointerEvents="box-none" style={{ position: "absolute", right: 12, top: geo.dockTop, zIndex: 3, gap: 10, alignItems: "flex-end" }}>
-      <View style={{ position: "relative" }}>
-        {S.elevOpen && <ElevationPopover />}
+    // The dock spans the map's width (touches pass through, box-none) so the popovers, which open to
+    // the left of the buttons, sit inside it: iOS and Android only deliver touches inside a parent's bounds.
+    <View pointerEvents="box-none" style={{ position: "absolute", left: 0, right: 12, top: geo.dockTop, zIndex: 3, gap: 10, alignItems: "flex-end" }}>
+      {S.elevOpen && <ElevationPopover />}
+      {S.heatOpen && !S.elevOpen && <HeatPopover />}
+      <View>
         <DockButton active={S.elevOpen || S.mode === "layers" || S.elev > 0} label="Layers" onPress={toggleLayers}>
           {fg => <LayersIcon color={fg} />}
         </DockButton>
@@ -85,12 +88,9 @@ export function Dock() {
               }}
             />
           </View>
-          <View style={{ position: "relative" }}>
-            {S.heatOpen && <HeatPopover />}
-            <DockButton active={S.heat !== "off" || S.heatOpen} label="Heatmap" onPress={toggleHeat}>
-              {fg => <T w={800} size={11} ls={0.6} color={fg}>HM</T>}
-            </DockButton>
-          </View>
+          <DockButton active={S.heat !== "off" || S.heatOpen} label="Heatmap" onPress={toggleHeat}>
+            {fg => <T w={800} size={11} ls={0.6} color={fg}>HM</T>}
+          </DockButton>
           <DockButton active={S.mode === "assistant"} label="Route assistant" onPress={openAssistant} idleFg={C.accent2}>
             {fg => <T w={500} size={17} color={fg} style={{ lineHeight: 20 }}>✦</T>}
           </DockButton>
