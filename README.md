@@ -73,19 +73,29 @@ NASA-Space-Apps-Phobos/
 │   │   └── assets/              base map, elevation strata, 21 heat frames used by the prototype
 │   └── data/                    heat-frame manifest + design brief from the data team
 │
-├── MarsDataPipline/             DATA + SCIENCE (Python / Jupyter)
-│   ├── README.md                start here: results, how to run, notebook order
-│   ├── CLAUDE.md                rules + physics spec; read before changing code
-│   ├── thermal1d.py             1D soil heat model (physics baseline)
-│   ├── residual.py              corrections fitted to Curiosity REMS readings
-│   ├── map_export.py            builds the full-crater temperature maps
-│   ├── notebooks/               temperature-model notebooks, in build order
-│   ├── data_prep/               raw data -> processed data
-│   ├── gale_tiles/              map tiles (imagery, topo) + 20 m DEM; has its own README
-│   ├── dust_devil/              dust-devil likelihood layer (parked); has its own README
-│   ├── processed_data/Google_Drive   link to the shared Drive with all big data files
-│   ├── raw_data/Citations       data and paper references
-│   └── docs/                    plan, progress log, findings, rejected ideas
+├── MarsDataPipline/ DATA + SCIENCE (Python / Jupyter)
+│ ├── README.md start here: results, how to run, notebook order
+│ ├── CLAUDE.md rules + physics spec; read before changing code
+│ ├── heatmap/ ground and air temperature maps
+│ │ ├── thermal1d.py 1D soil heat model (physics baseline)
+│ │ ├── residual.py corrections fitted to Curiosity REMS readings (ground and air)
+│ │ ├── map_export.py builds and encodes the full-crater temperature maps
+│ │ ├── paths.py every folder path the code uses
+│ │ ├── pytest.ini test settings
+│ │ ├── tests/ solver and forcing tests (Gates 1 and 2)
+│ │ ├── notebooks/ temperature-model notebooks, in build order
+│ │ ├── executed/ run copies of the notebooks with outputs (not in git)
+│ │ └── outputs/ maps/ (deliverables) + model_scores/ (model tests) (not in git)
+│ ├── dust_devil/ Dust Devil Heating Index layer (parked); has its own README
+│ │ ├── dust_devil_pipeline.ipynb pipeline notebook
+│ │ ├── dev/, tests/ iteration scripts and tests
+│ │ ├── executed/ run copy of the notebook (not in git)
+│ │ └── outputs/ per-sol maps, overlays, rover tables, CSVs, GIFs (not in git)
+│ ├── data_prep/ raw data -> processed data
+│ ├── gale_tiles/ map tiles (imagery, topo) + source DTMs; has its own README
+│ ├── processed_data/ Google Drive link: model inputs, map tiles, heat-map outputs
+│ ├── raw_data/ citation list: REMS, THEMIS, TES albedo, Mastcam tau (downloads not in git)
+│ └── docs/ plan, progress log, findings, rejected ideas
 │
 ├── mars_streetview/             STREET LEVEL PANORAMAS
 │   ├── README.md                how to download, fill in and build the panoramas
