@@ -61,7 +61,8 @@ The map layers are real pipeline outputs, built into `app/data/` (about 30 MB, n
 | --- | --- |
 | `processed_data/gale_dem_20m.tif` and `gale_slope_20m.tif` | elevation and slope (coordinate pill, strata, routing) |
 | `heatmap/outputs/maps/{ground,air}/map_manifest.json` and `raw/*.u16` | temperature frames |
-| `dust_devil/outputs/gale_dust_devil_heating_index_sol{800,1850}.npz` and `dust_devil_heating_index_reference_sol1850.json` | dust-devil layer |
+| `dust_devil/outputs/gale_dust_devil_heating_index_sol{800,1850}.npz` and `dust_devil_heating_index_reference_sol1850.json` | dust-devil layer and Home advisory |
+| `processed_data/mastcam_tau_per_sol.csv` | dust opacity τ on the Home card |
 
 ```bash
 python scripts/fetch_imagery.py      # CTX tiles, zooms 7-11, from NASA Mars Trek (~56 MB, resumable)
@@ -70,7 +71,7 @@ python3 -m venv .venv && .venv/bin/pip install numpy pillow rasterio   # once
 npm run data
 ```
 
-`build_map_data.py` takes stage names to rebuild only part: `imagery`, `terrain`, `strata`, `heat`, `dustDevil`. Or skip the build: unzip a teammate's `app/data/` into place.
+`build_map_data.py` takes stage names to rebuild only part: `imagery`, `terrain`, `strata`, `heat`, `dustDevil`, `telemetry`. Or skip the build: unzip a teammate's `app/data/` into place.
 
 **Phone on another network, or a hosted demo:** copy `app/data/` to any static host and put its address in `app/.env.local` as `EXPO_PUBLIC_DATA_URL=https://…`, then restart Expo. Tunnel mode (`--tunnel`) needs this too, because the phone can't reach port 8092 directly.
 
@@ -80,7 +81,8 @@ npm run data
 | Terrain | 20 m CTX DTM and slope rasters resampled to 100 m: elevation, mean slope, upper-quartile slope | `terrain.bin` |
 | Elevation strata | same: L1 above −2 km, L2 −4 to −2 km, L3 below −4 km | `strata/l{1,2,3}.webp` |
 | Temperature | ground and air maps: 5 seasons (Ls 15/75/195/255/340) × 48 frames, inferno 150–320 K | `heat/{ground,air}/ls{LLL}/{HHMM}.webp` |
-| Dust devils | Dust Devil Heating Index, sols 1850 (clear) and 800 (dusty), levels low/moderate/high | `dustdevil/sol{N}.webp` |
+| Dust devils | Dust Devil Heating Index, sols 1850 (clear) and 800 (dusty), levels low/moderate/high | `dustdevil/sol{N}.webp`, `sol{N}_level.bin` |
+| Telemetry | Mastcam τ per sol; ground temperature at 400 m per season and LTST frame (uint8 on the 150–320 K scale) | `telemetry/tau.json`, `telemetry/ground/{season}/{HHMM}.bin` |
 
 ### Checks before you push
 
@@ -154,6 +156,12 @@ src/
 - **On the map** (`src/route/RouteLayer.tsx`): active route with casing, grades over 12° in warm, the alternative as dots, tappable time pills, the driven part dimmed. Sequence stops get numbered badges.
 - **Cards** (`src/cards/`): `Waypoint.tsx` (route picker, elevation profile, Add stop / Street Level / NAVIGATE, "No safe route found"), `Sequence.tsx` (multi-stop, ↑ ↓ ×, Route #1 hazard warning), `Expedition.tsx` (stepped and compact progress cards, the pinned ETA card, hazard and steep-grade warnings, REROUTE / via-points, Arrived).
 - Street Level is a toast until that feature is built.
+
+## What's built (checklist section 4: Search and home)
+
+- **Search** (`src/cards/Search.tsx`, `src/home/search.ts`, `src/shell/SearchBar.tsx`): category chips with counts or codes (Settings → Category chips), results nearest first, recent searches (kept on the device, max 4, Clear History), Enter opens the nearest match and Escape (web) leaves. Coordinates like `4.6S 137.4E` jump the map there. While searching, non-matching markers dim and matches keep their labels. With a sequence planned (or during a drive), picking a result adds it as a stop. The field keeps its own text and updates the store 120 ms after typing pauses, so fast typing isn't dropped on iOS.
+- **Home** (`src/cards/Home.tsx`): sector card (tap to recenter), the three nearest landmarks, and the dust-devil advisory from the real heating-index grid (nearest strongly heated ground; WATCH under 5 km). Settings → Hazard alerts = TOP BANNER shows the nearest hazard as a blinking pill on the map instead (`src/map/MapOverlays.tsx`). The sector card and advisory also sit under the Waypoint and Arrived cards, as in the design.
+- **Live telemetry** (`src/home/telemetry.ts`): surface temperature from the ground model at the rover (season nearest the sol's Ls, frame for the rover's local solar time, refreshed each minute), τ for the demo sol from the Mastcam table (interpolated within 5 sols, as the pipeline does), slope from the DEM.
 
 ## Using the store
 

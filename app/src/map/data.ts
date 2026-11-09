@@ -40,6 +40,16 @@ export interface Manifest {
     legend_stops: string[];
     credit: string;
   };
+  telemetry?: {
+    tau: string; // telemetry/tau.json
+    ground: {
+      path: string; // telemetry/ground/{season}/{frame}.bin
+      rows: number; cols: number; cell_world_px: number;
+      range_k: [number, number]; levels: number; nodata: number;
+      seasons: { tag: string; ls: number }[];
+      frames: string[];
+    };
+  };
   dustDevil?: {
     sols: { sol: number; ls: number; tau: number; tau_source: string; path: string; levels_path?: string; share_low_mod_high: [number, number, number] }[];
     ref_sol: number;
@@ -142,6 +152,48 @@ export function loadDustLevels(m: Manifest | null, sol: number): Promise<Uint8Ar
       .then(b => (b.byteLength === GRID.W * GRID.H ? new Uint8Array(b) : null))
       .catch(() => null);
     levelCache.set(entry.levels_path, p);
+  }
+  return p;
+}
+
+// --- telemetry (Home tiles) ---
+
+export interface TauTable { sol: number[]; tau: number[]; ls: number[]; band: string; max_gap_sols: number; source: string }
+
+/** The τ table comes over the network: accept only same-length arrays of finite numbers, sols ascending. */
+function isTauTable(t: unknown): t is TauTable {
+  const o = t as TauTable;
+  const nums = (a: unknown): a is number[] => Array.isArray(a) && a.every(v => typeof v === "number" && Number.isFinite(v));
+  return !!o && nums(o.sol) && nums(o.tau) && nums(o.ls) && o.sol.length === o.tau.length && o.sol.length === o.ls.length
+    && o.sol.every((v, i) => i === 0 || v > o.sol[i - 1]) && typeof o.max_gap_sols === "number" && o.max_gap_sols >= 0 && o.max_gap_sols <= 50;
+}
+
+let tauPromise: Promise<TauTable | null> | null = null;
+export function loadTau(m: Manifest | null): Promise<TauTable | null> {
+  if (!m?.telemetry) return Promise.resolve(null);
+  if (!tauPromise) {
+    tauPromise = fetch(dataUri(m.telemetry.tau))
+      .then(r => (r.ok ? r.json() : null))
+      .then((t: unknown) => (isTauTable(t) ? t : null))
+      .catch(() => null);
+  }
+  return tauPromise;
+}
+
+const groundCache = new Map<string, Promise<Uint8Array | null>>();
+/** Ground temperature codes (uint8, rows × cols) for one season and LTST frame, or null. */
+export function loadGroundFrame(m: Manifest | null, season: string, frame: string): Promise<Uint8Array | null> {
+  const g = m?.telemetry?.ground;
+  if (!g || !g.seasons.some(s => s.tag === season) || !g.frames.includes(frame)) return Promise.resolve(null);
+  const path = g.path.replace("{season}", season).replace("{frame}", frame);
+  let p = groundCache.get(path);
+  if (!p) {
+    p = fetch(dataUri(path))
+      .then(r => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then(b => (b.byteLength === g.rows * g.cols ? new Uint8Array(b) : null))
+      .catch(() => null);
+    if (groundCache.size > 12) groundCache.delete(groundCache.keys().next().value as string);
+    groundCache.set(path, p);
   }
   return p;
 }

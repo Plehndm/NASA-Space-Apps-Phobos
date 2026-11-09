@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 
 // Mars Coordinated Time shown in the header. The prototype starts the demo at 14:32:08 MTC.
+
+/** The mission sol the demo is set on (the design's "Sol 742"); Home telemetry reads τ for it. */
+export const SOL = 742;
 const START_S = 52328;
 const t0 = Date.now();
 

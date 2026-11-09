@@ -42,7 +42,18 @@ ${PAGES.map(([label, file]) => `<a href="/${encodeURI(file)}">${label}</a>`).joi
 <small>Scenes: the phone and desktop files open on Home. In the deck, every slide is a live scene.</small></main>`;
 
 const server = createServer((req, res) => {
-  const path = decodeURIComponent(new URL(req.url ?? "/", "http://x").pathname);
+  // A malformed URL (bad % escape) must not throw: that would crash the whole server.
+  let path;
+  try {
+    path = decodeURIComponent(new URL(req.url ?? "/", "http://x").pathname);
+  } catch {
+    res.writeHead(400);
+    return res.end("Bad request");
+  }
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    res.writeHead(405, { allow: "GET, HEAD" });
+    return res.end("Method not allowed");
+  }
   if (path === "/") {
     res.writeHead(200, { "content-type": TYPES[".html"] });
     return res.end(index());
@@ -60,7 +71,7 @@ const server = createServer((req, res) => {
     return res.end("Not found");
   }
   res.writeHead(200, { "content-type": TYPES[extname(file).toLowerCase()] ?? "application/octet-stream", "cache-control": "no-store" });
-  createReadStream(file).pipe(res);
+  createReadStream(file).on("error", () => res.destroy()).pipe(res);
 });
 
 server.listen(PORT, "0.0.0.0", () => {

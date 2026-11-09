@@ -4,9 +4,9 @@ import type { Geometry } from "../layout/geometry";
 import { GRID, toWorld, type Pt } from "../map/geo";
 import { EASE } from "../theme";
 import { mtcSeconds } from "./clock";
-import type { Landmark } from "../map/landmarks";
+import { landmarkById, type Category, type Landmark } from "../map/landmarks";
 import type { Arrived, Nav } from "../route/types";
-import { DEFAULT_SETTINGS, loadOverrides, saveOverrides, type Settings } from "./settings";
+import { DEFAULT_SETTINGS, loadOverrides, loadRecent, RECENT_MAX, saveOverrides, saveRecent, type Settings } from "./settings";
 
 /** Which card stack the sheet / side panel shows. */
 export type Mode = "home" | "search" | "waypoint" | "route" | "nav" | "arrived" | "layers" | "assistant";
@@ -56,6 +56,8 @@ export interface AppState {
   arrived: Arrived | null; // summary for the Arrived screen
   extraLm: Landmark[]; // points added at run time ("Nearest safe approach")
   q: string; // search text
+  cat: Category | "All"; // search category chip
+  recent: string[]; // recent searches, landmark ids (most recent first, max 4)
   rover: Rover;
   coord: string | null; // coordinate pill text (tap on the map, recenter)
 }
@@ -99,6 +101,8 @@ interface Store {
   sheetTop: Animated.Value;
   patch: (p: Partial<AppState> | ((s: AppState) => Partial<AppState>)) => void;
   setMode: (mode: Mode, snap?: SnapName) => void;
+  /** Put a landmark at the top of the recent searches (saved on the device). */
+  pushRecent: (id: string) => void;
   /** Leave the current card: back to the expedition, the sequence or Home, whichever is active. */
   goHome: (snap?: SnapName) => void;
   snapTo: (name: SnapName) => void;
@@ -149,6 +153,8 @@ export function AppProvider({ geo, children }: { geo: Geometry; children: ReactN
     arrived: null,
     extraLm: [],
     q: "",
+    cat: "All",
+    recent: ["rocknest", "pahrump", "murray"], // the design's defaults until the device has its own
     rover: ROVER_START,
     coord: null,
   }));
@@ -156,6 +162,7 @@ export function AppProvider({ geo, children }: { geo: Geometry; children: ReactN
 
   useEffect(() => {
     loadOverrides().then(overrides => setState(s => ({ ...s, overrides: { ...overrides, ...s.overrides } })));
+    loadRecent(id => !!landmarkById(id)).then(recent => { if (recent) setState(s => ({ ...s, recent })); });
   }, []);
 
   const patch = useCallback<Store["patch"]>(p => setState(s => ({ ...s, ...(typeof p === "function" ? p(s) : p) })), []);
@@ -189,9 +196,18 @@ export function AppProvider({ geo, children }: { geo: Geometry; children: ReactN
     [geo, patch, snapTo],
   );
 
+  const pushRecent = useCallback((id: string) => {
+    if (!landmarkById(id)) return; // run-time points (approaches, via-points) aren't remembered
+    setState(s => {
+      const recent = [id, ...s.recent.filter(r => r !== id)].slice(0, RECENT_MAX);
+      saveRecent(recent);
+      return { ...s, recent };
+    });
+  }, []);
+
   const goHome = useCallback(
     (snap: SnapName = "peek") => {
-      setState(s => ({ ...s, mode: s.nav ? "nav" : s.stops.length ? "route" : "home", sel: null }));
+      setState(s => ({ ...s, mode: s.nav ? "nav" : s.stops.length ? "route" : "home", sel: null, q: "", cat: "All" }));
       if (geo.device === "phone") snapTo(snap);
     },
     [geo, snapTo],
@@ -283,8 +299,8 @@ export function AppProvider({ geo, children }: { geo: Geometry; children: ReactN
   const settings = useMemo(() => ({ ...DEFAULT_SETTINGS, ...state.overrides }), [state.overrides]);
 
   const value = useMemo<Store>(
-    () => ({ state, geo, settings, sheetTop, patch, setMode, goHome, snapTo, toast, setSetting, resetSettings, zoomBy, viewCenter, setView, centerOn, showCoord }),
-    [state, geo, settings, sheetTop, patch, setMode, goHome, snapTo, toast, setSetting, resetSettings, zoomBy, viewCenter, setView, centerOn, showCoord],
+    () => ({ state, geo, settings, sheetTop, patch, setMode, goHome, pushRecent, snapTo, toast, setSetting, resetSettings, zoomBy, viewCenter, setView, centerOn, showCoord }),
+    [state, geo, settings, sheetTop, patch, setMode, goHome, pushRecent, snapTo, toast, setSetting, resetSettings, zoomBy, viewCenter, setView, centerOn, showCoord],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

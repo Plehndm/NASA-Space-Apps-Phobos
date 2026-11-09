@@ -9,6 +9,8 @@ import { CrosshairIcon } from "../ui/icons";
 import { DATA_URL, useMapData } from "./data";
 import { fmtLatLon, M_PER_PX } from "./geo";
 import { fmtFrame } from "./layers/HeatLayer";
+import { BlinkDot } from "../ui/BlinkDot";
+import { useDustAdvisory, useNearestHazard } from "../home/advisory";
 
 const BAR_KM = [0.5, 1, 2, 5, 10, 20, 50];
 
@@ -117,12 +119,35 @@ function DataNotice() {
   );
 }
 
+/** Settings → Hazard alerts = TOP BANNER: the nearest hazard as a pill at the top left of the map. */
+function HazardBanner() {
+  const { geo, state: S, settings } = useApp();
+  const adv = useDustAdvisory();
+  const nh = useNearestHazard(adv);
+  if (settings.hazardStyle !== "banner" || !S.hazOn || !nh || S.coord) return null;
+  return (
+    <View
+      pointerEvents="none"
+      accessibilityLiveRegion="polite"
+      style={{
+        position: "absolute", left: 12, top: geo.overlayTop, maxWidth: Math.min(270, geo.mapW - 80), zIndex: 3,
+        flexDirection: "row", alignItems: "center", gap: 9, paddingVertical: 9, paddingLeft: 11, paddingRight: 14, borderRadius: 999,
+        backgroundColor: alpha("bg1", 0.92), borderWidth: 1, borderColor: nh.color, boxShadow: SHADOW.s2,
+      }}
+    >
+      <BlinkDot color={nh.color} period={1400} />
+      <T w={700} size={10} ls={0.4} lh={1.4} style={{ flexShrink: 1 }}>{`${nh.name.toUpperCase()} · ${nh.km.toFixed(1)} KM · ${nh.detail.toUpperCase()}`}</T>
+    </View>
+  );
+}
+
 export function MapOverlays({ scale }: { scale: number }) {
   return (
     <>
       <ScaleBar scale={scale} />
       <HeatLegend />
       <RecenterButton />
+      <HazardBanner />
       <CoordPill />
       <DataNotice />
     </>

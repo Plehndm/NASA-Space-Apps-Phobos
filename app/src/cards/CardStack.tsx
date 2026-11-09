@@ -5,18 +5,20 @@ import { WaypointCard } from "./Waypoint";
 import { SequenceCard } from "./Sequence";
 import { ArrivedCard, ExpeditionCard } from "./Expedition";
 import { Placeholder } from "./Placeholder";
+import { HomeCard, SectorHeader } from "./Home";
+import { SearchCard } from "./Search";
 
 /**
  * One entry per sheet mode. Each feature replaces its placeholder with a real component
  * (put it in src/cards/<Name>.tsx and swap it in here).
  */
 const CARDS: Record<Mode, () => ReactNode> = {
-  home: () => <Placeholder title="Home" item="Home card" note="Sector card, telemetry tiles, dust-devil advisory, nearby landmarks." />,
-  search: () => <Placeholder title="Search" item="Search" note="Category chips, results and recent searches." />,
-  waypoint: () => <WaypointCard />,
+  home: () => <HomeCard />,
+  search: () => <SearchCard />,
+  waypoint: () => <><WaypointCard /><SectorHeader /></>,
   route: () => <SequenceCard />,
   nav: () => <ExpeditionCard />,
-  arrived: () => <ArrivedCard />,
+  arrived: () => <><ArrivedCard /><SectorHeader /></>,
   layers: () => <LayersCard />,
   assistant: () => <Placeholder title="✦ Route assistant" item="Assistant chat UI" note="Chat bubbles, proposed-route card, input row." />,
 };

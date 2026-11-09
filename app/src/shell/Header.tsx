@@ -1,7 +1,7 @@
 import { Pressable, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useApp } from "../state/store";
-import { useMtcClock } from "../state/clock";
+import { SOL, useMtcClock } from "../state/clock";
 import { alpha, C } from "../theme";
 import { T } from "../ui/Text";
 import { GearIcon } from "../ui/icons";
@@ -16,7 +16,7 @@ export function Header() {
     <View style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingTop: geo.insetTop }}>
       <View style={{ gap: 3 }}>
         <T w={700} size={15} ls={-0.2}>Gale Crater</T>
-        <T w={500} size={11} ls={0.3} color={C.fg2}>Sol 742 · {clock} MTC</T>
+        <T w={500} size={11} ls={0.3} color={C.fg2}>Sol {SOL} · {clock} MTC</T>
       </View>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         <View style={{ paddingVertical: 6, paddingHorizontal: 11, borderRadius: 999, backgroundColor: alpha("raised", 0.75) }}>

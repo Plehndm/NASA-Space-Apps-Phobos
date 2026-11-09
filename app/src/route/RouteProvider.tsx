@@ -35,7 +35,11 @@ interface RouteApi {
   /** Profile (length, time, grades, steep parts) of any point list, on the routing grid. */
   profileOf: (pts: Pt[]) => Profile | null;
   // actions
-  select: (id: string) => void;
+  /**
+   * Open a landmark's Waypoint card. From search with a sequence already planned, the landmark is
+   * appended to the sequence instead (the design's rule).
+   */
+  select: (id: string, from?: "map" | "search") => void;
   pickRoute: (opt: 1 | 2) => void;
   addStopSel: () => void;
   startNav: () => void;
@@ -63,7 +67,7 @@ export function useRoutes(): RouteApi {
 
 export function RouteProvider({ children }: { children: ReactNode }) {
   const app = useApp();
-  const { state: S, settings, patch, setMode, goHome, toast, centerOn, snapTo } = app;
+  const { state: S, settings, patch, setMode, goHome, pushRecent, toast, centerOn, snapTo } = app;
   const { terrain, manifest } = useMapData();
 
   // Routing grid, once the terrain is in.
@@ -166,14 +170,22 @@ export function RouteProvider({ children }: { children: ReactNode }) {
   latest.current = { S, activeRoute, route, lm, zones, grid, capSafe };
 
   const select = useCallback(
-    (id: string) => {
-      const l = latest.current.lm(id);
+    (id: string, from: "map" | "search" = "map") => {
+      const { S: s, lm: find } = latest.current;
+      const l = find(id);
       if (!l) return;
-      patch({ sel: id, elevOpen: false, heatOpen: false, q: "" });
+      pushRecent(id);
+      if (from === "search" && s.stops.length) {
+        if (s.stops.includes(id)) toast(`${l.name} is already in the sequence`);
+        patch({ stops: s.stops.includes(id) ? s.stops : [...s.stops, id], sel: null, q: "", cat: "All", elevOpen: false, heatOpen: false });
+        setMode("route", "half");
+        return;
+      }
+      patch({ sel: id, elevOpen: false, heatOpen: false, q: "", cat: "All" });
       setMode("waypoint", "half");
       centerOn(l);
     },
-    [patch, setMode, centerOn],
+    [patch, setMode, centerOn, pushRecent, toast],
   );
 
   const pickRoute = useCallback((opt: 1 | 2) => patch({ routeOpt: opt }), [patch]);

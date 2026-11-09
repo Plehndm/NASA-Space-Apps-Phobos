@@ -12,6 +12,7 @@ import type { Pt } from "../geo";
 import Reanimated from "react-native-reanimated";
 import { Pin, useLabelFade, useMapView } from "../view";
 import { useRoutes } from "../../route/RouteProvider";
+import { isFiltering, matches } from "../../home/search";
 
 const STEM = 16, DOT = 14, PILL_H = 25;
 const labelWidth = (name: string) => name.length * 7.6 + 24; // 10.5 px bold caps, 0.7 tracking
@@ -24,8 +25,8 @@ export const shownLandmarks = (lz: boolean, sel: string | null, extra: Landmark[
   [...LANDMARKS, ...extra].filter(l => lz || l.cat !== "Landing" || l.id === sel);
 
 /** Screen boxes (relative to the map origin, at zoom s) of the landmark labels that show. */
-export function landmarkLabelBoxes(list: Landmark[], s: number, sel: string | null, rover: Pt, seq: string[] = []): Box[] {
-  const ids = visibleLabels(list, s, sel, rover, seq);
+export function landmarkLabelBoxes(list: Landmark[], s: number, sel: string | null, rover: Pt, seq: string[] = [], hits: string[] = []): Box[] {
+  const ids = visibleLabels(list, s, sel, rover, seq, hits);
   return list.filter(l => ids.has(l.id)).map(l => labelBox(l, s));
 }
 
@@ -38,11 +39,13 @@ function labelBox(l: Landmark, s: number, num = false): Box {
  * Ids whose labels show at zoom s: by priority, skipping any that would collide on screen. The selected
  * landmark and the sequence's stops always get theirs (the design's rule), placed first.
  */
-function visibleLabels(list: Landmark[], s: number, sel: string | null, rover: Pt, seq: string[] = []): Set<string> {
+function visibleLabels(list: Landmark[], s: number, sel: string | null, rover: Pt, seq: string[] = [], hits: string[] = []): Set<string> {
   const forced = (l: Landmark) => l.id === sel || seq.includes(l.id);
+  // Search matches skip the zoom rule and go first, but still give way to labels they would cover.
+  const isHit = (l: Landmark) => hits.includes(l.id);
   const want = list
-    .filter(l => forced(l) || s >= LABEL_ZOOM[l.rank])
-    .sort((a, b) => Number(forced(b)) - Number(forced(a)) || a.rank - b.rank);
+    .filter(l => forced(l) || isHit(l) || (!hits.length && s >= LABEL_ZOOM[l.rank]))
+    .sort((a, b) => Number(forced(b)) - Number(forced(a)) || Number(isHit(b)) - Number(isHit(a)) || a.rank - b.rank);
   const hit = boxesHit;
   // Dots (with their ring) are obstacles for the labels of lower-priority markers only; a label may
   // cover a dot of the same or lower priority (labelled markers draw on top). Ties go to list order.
@@ -61,7 +64,7 @@ function visibleLabels(list: Landmark[], s: number, sel: string | null, rover: P
   return out;
 }
 
-const Marker = memo(function Marker({ l, label, selected, num, s0, onPress }: { l: Landmark; label: boolean; selected: boolean; num: number; s0: number; onPress: (l: Landmark) => void }) {
+const Marker = memo(function Marker({ l, label, selected, num, dim, s0, onPress }: { l: Landmark; label: boolean; selected: boolean; num: number; dim: boolean; s0: number; onPress: (l: Landmark) => void }) {
   const fade = useLabelFade(s0);
   const landing = l.cat === "Landing";
   // Selected: route fill. In the sequence: faint route tint with a number badge.
@@ -72,6 +75,7 @@ const Marker = memo(function Marker({ l, label, selected, num, s0, onPress }: { 
   return (
     // Selected, then sequence stops, then labelled markers draw above the rest, so a neighbour's dot never covers a label.
     <Pin x={l.x} y={l.y} zIndex={selected ? 6 : num ? 5 : label ? 4 : 3}>
+      <View style={{ opacity: dim ? 0.28 : 1 }}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={l.name}
@@ -101,6 +105,7 @@ const Marker = memo(function Marker({ l, label, selected, num, s0, onPress }: { 
           <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: C.bg1 }} />
         </View>
       </Pressable>
+      </View>
     </Pin>
   );
 });
@@ -111,9 +116,15 @@ export function LandmarkLayer() {
   const routes = useRoutes();
   const list = shownLandmarks(S.lz, S.sel, S.extraLm);
   const seq = S.nav ? S.nav.stops : S.stops;
-  const labels = visibleLabels(list, vp.s, S.sel, S.rover, seq);
-  const select = (l: Landmark) => routes.select(l.id);
+  // Searching with a query or category: matches keep their labels, the rest dim (the design's rule).
+  const filtering = S.mode === "search" && isFiltering(S.q, S.cat);
+  const hit = (l: Landmark) => !filtering || matches(l, S.q, S.cat);
+  const hits = filtering ? list.filter(hit).map(l => l.id) : [];
+  const labels = visibleLabels(list, vp.s, S.sel, S.rover, seq, hits);
+  const dimOthers = S.mode === "waypoint" && !!S.sel;
+  const select = (l: Landmark) => routes.select(l.id, S.mode === "search" ? "search" : "map");
   // Selected marker last, so it draws on top.
   const ordered = [...list].sort((a, b) => Number(a.id === S.sel) - Number(b.id === S.sel));
-  return <>{ordered.map(l => <Marker key={l.id} l={l} label={labels.has(l.id)} selected={l.id === S.sel} num={seq.indexOf(l.id) + 1} s0={vp.s} onPress={select} />)}</>;
+  return <>{ordered.map(l => <Marker key={l.id} l={l} label={labels.has(l.id)} selected={l.id === S.sel} num={seq.indexOf(l.id) + 1}
+    dim={!hit(l) || (dimOthers && l.id !== S.sel && !seq.includes(l.id))} s0={vp.s} onPress={select} />)}</>;
 }

@@ -15,6 +15,7 @@ root README; the imagery tiles come from scripts/fetch_imagery.py):
   strata     (the terrain stage's grid)
   heat       heatmap/outputs/maps/{ground,air}/raw/*.u16 + map_manifest.json
   dustdevil  dust_devil/outputs/gale_dust_devil_heating_index_sol{N}.npz + reference json
+  telemetry  processed_data/mastcam_tau_per_sol.csv + the ground maps' raw *.u16
 
 Everything is on the app's world grid: the pipeline's 100 m grid, 1477 x 1436 cells (see src/map/geo.ts).
 """
@@ -22,6 +23,7 @@ import json
 import math
 import sys
 import time
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -251,7 +253,62 @@ def stage_dustdevil():
     }
 
 
-STAGES = {"imagery": stage_imagery, "terrain": stage_terrain, "strata": stage_strata, "heat": stage_heat, "dustDevil": stage_dustdevil}
+TELEMETRY_BLOCK = 4            # 100 m cells per telemetry temperature cell along each axis (400 m)
+TELEMETRY_NODATA = 255
+TAU_MAX_GAP_SOLS = 5           # as the dust-devil pipeline: interpolate Mastcam tau within this many sols
+
+
+def stage_telemetry():
+    """Home telemetry: Mastcam tau per sol, and ground temperature at 400 m for every season and frame.
+
+    Temperature grids are uint8 codes on the heat colour range (code 0 = range min, 254 = max,
+    255 = nodata), one file per season and LTST frame, so the app fetches only the frame it shows.
+    """
+    # tau: the pipeline's per-sol Mastcam table (median per sol, 880 nm)
+    csv = PIPE / "processed_data/mastcam_tau_per_sol.csv"
+    rows = [l.split(",") for l in csv.read_text().strip().splitlines()]
+    head, rows = rows[0], rows[1:]
+    i_sol, i_tau, i_ls = head.index("sol"), head.index("tau"), head.index("ls_deg")
+    tau = {"sol": [int(r[i_sol]) for r in rows], "tau": [round(float(r[i_tau]), 3) for r in rows],
+           "ls": [round(float(r[i_ls]), 1) for r in rows], "band": rows[0][head.index("band")] + " nm",
+           "max_gap_sols": TAU_MAX_GAP_SOLS, "source": "Mastcam aerosol optical depth (Lemmon), median per sol"}
+    assert tau["sol"] == sorted(tau["sol"]), "tau table not sorted by sol"
+    (OUT / "telemetry").mkdir(parents=True, exist_ok=True)
+    (OUT / "telemetry/tau.json").write_text(json.dumps(tau, separators=(",", ":")))
+
+    # ground temperature, 400 m
+    src = PIPE / "heatmap/outputs/maps/ground"
+    man = json.loads((src / "map_manifest.json").read_text())
+    check_grid_transform(man["grid"]["transform_gdal"], scale=2)
+    D, C = man["encodings"]["D"], man["encodings"]["C"]
+    lo, hi = C["range_k"]
+    k = TELEMETRY_BLOCK // 2  # 200 m map pixels per telemetry cell
+    rows_, cols_ = D["shape"][1] // k, D["shape"][2] // k
+    for sc in man["scenarios"]:
+        codes = np.fromfile(src / "raw" / f"gale_tsurf_{sc['tag']}.u16", dtype="<u2").reshape(D["shape"])
+        T = np.where(codes == D["nodata"], np.nan, D["offset_k"] + D["scale_k"] * codes.astype(np.float64))
+        T = T[:, : rows_ * k, : cols_ * k].reshape(T.shape[0], rows_, k, cols_, k)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)  # all-nodata cells: mean of empty slice -> NaN
+            T = np.nanmean(T, axis=(2, 4))
+        q = np.where(np.isfinite(T), np.clip(np.round((T - lo) / (hi - lo) * 254), 0, 254), TELEMETRY_NODATA).astype(np.uint8)
+        d = OUT / "telemetry/ground" / sc["tag"]
+        d.mkdir(parents=True, exist_ok=True)
+        for j, lab in enumerate(man["frames"]["labels"]):
+            (d / f"{lab}.bin").write_bytes(q[j].tobytes())
+    print(f"telemetry: tau for {len(tau['sol'])} sols; ground temperature {rows_} x {cols_} at 400 m, "
+          f"{len(man['scenarios'])} seasons x {len(man['frames']['labels'])} frames")
+    return {
+        "tau": "telemetry/tau.json",
+        "ground": {
+            "path": "telemetry/ground/{season}/{frame}.bin", "rows": rows_, "cols": cols_, "cell_world_px": TELEMETRY_BLOCK,
+            "range_k": [lo, hi], "levels": 254, "nodata": TELEMETRY_NODATA,
+            "seasons": [{"tag": s_["tag"], "ls": s_["ls_deg"]} for s_ in man["scenarios"]], "frames": man["frames"]["labels"],
+        },
+    }
+
+
+STAGES = {"imagery": stage_imagery, "terrain": stage_terrain, "strata": stage_strata, "heat": stage_heat, "dustDevil": stage_dustdevil, "telemetry": stage_telemetry}
 
 
 def main(names):
