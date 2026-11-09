@@ -4,6 +4,8 @@ import type { Geometry } from "../layout/geometry";
 import { GRID, toWorld, type Pt } from "../map/geo";
 import { EASE } from "../theme";
 import { mtcSeconds } from "./clock";
+import type { Landmark } from "../map/landmarks";
+import type { Arrived, Nav } from "../route/types";
 import { DEFAULT_SETTINGS, loadOverrides, saveOverrides, type Settings } from "./settings";
 
 /** Which card stack the sheet / side panel shows. */
@@ -44,7 +46,15 @@ export interface AppState {
   dustSol: number; // which pipeline sol the dust-devil heating index shows
   lz: boolean; // landing points shown
   sel: string | null; // selected landmark id
-  navActive: boolean; // true while an expedition is running (header shows "DEMO ×N")
+  navActive: boolean; // true while an expedition is running (header shows "DEMO ×N"); mirrors nav !== null
+  // Routing (src/route/)
+  stops: string[]; // the multi-stop sequence, landmark ids in order
+  routeOpt: 1 | 2; // 1 = direct, 2 = safe
+  override: string | null; // landmark id whose grade and hazard limits the crew lifted ("Override at risk")
+  nav: Nav | null; // running expedition
+  viaPending: boolean; // REROUTE armed: the next map tap places a via-point
+  arrived: Arrived | null; // summary for the Arrived screen
+  extraLm: Landmark[]; // points added at run time ("Nearest safe approach")
   q: string; // search text
   rover: Rover;
   coord: string | null; // coordinate pill text (tap on the map, recenter)
@@ -89,6 +99,8 @@ interface Store {
   sheetTop: Animated.Value;
   patch: (p: Partial<AppState> | ((s: AppState) => Partial<AppState>)) => void;
   setMode: (mode: Mode, snap?: SnapName) => void;
+  /** Leave the current card: back to the expedition, the sequence or Home, whichever is active. */
+  goHome: (snap?: SnapName) => void;
   snapTo: (name: SnapName) => void;
   toast: (msg: string, ms?: number) => void;
   setSetting: <K extends keyof Settings>(k: K, v: Settings[K]) => void;
@@ -129,6 +141,13 @@ export function AppProvider({ geo, children }: { geo: Geometry; children: ReactN
     lz: true,
     sel: null,
     navActive: false,
+    stops: [],
+    routeOpt: 2,
+    override: null,
+    nav: null,
+    viaPending: false,
+    arrived: null,
+    extraLm: [],
     q: "",
     rover: ROVER_START,
     coord: null,
@@ -168,6 +187,14 @@ export function AppProvider({ geo, children }: { geo: Geometry; children: ReactN
       if (snap && geo.device === "phone") snapTo(snap);
     },
     [geo, patch, snapTo],
+  );
+
+  const goHome = useCallback(
+    (snap: SnapName = "peek") => {
+      setState(s => ({ ...s, mode: s.nav ? "nav" : s.stops.length ? "route" : "home", sel: null }));
+      if (geo.device === "phone") snapTo(snap);
+    },
+    [geo, snapTo],
   );
 
   // When the layout changes (rotation, resize, phone ↔ desktop), keep the sheet on a snap point.
@@ -256,8 +283,8 @@ export function AppProvider({ geo, children }: { geo: Geometry; children: ReactN
   const settings = useMemo(() => ({ ...DEFAULT_SETTINGS, ...state.overrides }), [state.overrides]);
 
   const value = useMemo<Store>(
-    () => ({ state, geo, settings, sheetTop, patch, setMode, snapTo, toast, setSetting, resetSettings, zoomBy, viewCenter, setView, centerOn, showCoord }),
-    [state, geo, settings, sheetTop, patch, setMode, snapTo, toast, setSetting, resetSettings, zoomBy, viewCenter, setView, centerOn, showCoord],
+    () => ({ state, geo, settings, sheetTop, patch, setMode, goHome, snapTo, toast, setSetting, resetSettings, zoomBy, viewCenter, setView, centerOn, showCoord }),
+    [state, geo, settings, sheetTop, patch, setMode, goHome, snapTo, toast, setSetting, resetSettings, zoomBy, viewCenter, setView, centerOn, showCoord],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

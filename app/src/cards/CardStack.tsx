@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
 import { useApp, type Mode } from "../state/store";
 import { LayersCard } from "./Layers";
+import { WaypointCard } from "./Waypoint";
+import { SequenceCard } from "./Sequence";
+import { ArrivedCard, ExpeditionCard } from "./Expedition";
 import { Placeholder } from "./Placeholder";
 
 /**
@@ -10,10 +13,10 @@ import { Placeholder } from "./Placeholder";
 const CARDS: Record<Mode, () => ReactNode> = {
   home: () => <Placeholder title="Home" item="Home card" note="Sector card, telemetry tiles, dust-devil advisory, nearby landmarks." />,
   search: () => <Placeholder title="Search" item="Search" note="Category chips, results and recent searches." />,
-  waypoint: () => <Placeholder title="Waypoint" item="Waypoint card" note="Target hero card, route pickers, elevation profile, Navigate." />,
-  route: () => <Placeholder title="Sequence" item="Multi-stop sequence" note="Numbered stops with reorder / remove and NAVIGATE." />,
-  nav: () => <Placeholder title="Expedition" item="Expedition simulation" note="Progress card, hazard radar, grade map, END." />,
-  arrived: () => <Placeholder title="Arrived" item="Arrived screen" note="Arrival summary with DONE." />,
+  waypoint: () => <WaypointCard />,
+  route: () => <SequenceCard />,
+  nav: () => <ExpeditionCard />,
+  arrived: () => <ArrivedCard />,
   layers: () => <LayersCard />,
   assistant: () => <Placeholder title="✦ Route assistant" item="Assistant chat UI" note="Chat bubbles, proposed-route card, input row." />,
 };

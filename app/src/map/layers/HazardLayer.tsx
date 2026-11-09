@@ -68,7 +68,7 @@ export function HazardLabels() {
   const { vp } = useMapView();
   if (!S.hazOn) return null;
   // Landmark labels win: a hazard label that would cover one waits for a closer zoom.
-  const taken = landmarkLabelBoxes(shownLandmarks(S.lz, S.sel), vp.s, S.sel, S.rover);
+  const taken = landmarkLabelBoxes(shownLandmarks(S.lz, S.sel, S.extraLm), vp.s, S.sel, S.rover, S.nav ? S.nav.stops : S.stops);
   const zones = HAZARD_ZONES.filter(z => {
     if (!S.hazTypes[z.type] || 2 * Math.max(z.rx, z.ry) * vp.s < 36) return false;
     const w = z.label.length * 6.4 + 22, cx = z.x * vp.s, by = (z.y - z.ry) * vp.s - 6;

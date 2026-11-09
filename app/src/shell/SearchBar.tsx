@@ -10,13 +10,13 @@ import { CloseIcon, FilterIcon, SearchIcon } from "../ui/icons";
  * submit-to-select belong to checklist item "Search".
  */
 export function SearchBar() {
-  const { state: S, patch, setMode } = useApp();
+  const { state: S, patch, setMode, goHome } = useApp();
   const input = useRef<ComponentRef<typeof TextInput>>(null);
   const searching = S.mode === "search";
   const leave = () => {
     patch({ q: "" });
     input.current?.blur();
-    setMode(S.navActive ? "nav" : "home", "peek");
+    goHome();
   };
 
   return (

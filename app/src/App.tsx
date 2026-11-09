@@ -12,6 +12,7 @@ import {
 import { useGeometry } from "./layout/geometry";
 import { MapDataProvider } from "./map/data";
 import { AppProvider } from "./state/store";
+import { RouteProvider } from "./route/RouteProvider";
 import { AppShell } from "./shell/AppShell";
 import { C } from "./theme";
 
@@ -20,7 +21,9 @@ function Root() {
   return (
     <MapDataProvider>
       <AppProvider geo={geo}>
-        <AppShell />
+        <RouteProvider>
+          <AppShell />
+        </RouteProvider>
       </AppProvider>
     </MapDataProvider>
   );

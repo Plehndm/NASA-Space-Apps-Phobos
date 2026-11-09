@@ -14,6 +14,8 @@ import { DustDevilLayer } from "../map/layers/DustDevilLayer";
 import { LandmarkLayer } from "../map/layers/LandmarkLayer";
 import { RoverMarker } from "../map/layers/RoverMarker";
 import { MapOverlays } from "../map/MapOverlays";
+import { RouteLayer } from "../route/RouteLayer";
+import { useRoutes } from "../route/RouteProvider";
 import { C, EASE } from "../theme";
 import { Dock } from "./Dock";
 
@@ -95,8 +97,9 @@ export function MapArea() {
   useEffect(() => pushVp(true), [geo.mapW, geo.H]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // --- gesture plumbing; handlers read the latest props through this ref ---
-  const latest = useRef({ app, data });
-  latest.current = { app, data };
+  const routes = useRoutes();
+  const latest = useRef({ app, data, routes });
+  latest.current = { app, data, routes };
 
   /** Stop any glide where it is (live already holds the view on screen). */
   const halt = () => {
@@ -111,14 +114,16 @@ export function MapArea() {
   const commit = () => latest.current.app.setView({ ...live.current, anim: false });
 
   const onTap = (sx: number, sy: number) => {
-    const { app: a, data: d } = latest.current;
+    const { app: a, data: d, routes: r } = latest.current;
     const p = { x: (sx - live.current.tx) / live.current.s, y: (sy - live.current.ty) / live.current.s };
     a.patch({ heatOpen: false, elevOpen: false });
-    // Tapping empty map leaves a selected landmark (the design's rule; with stops it stays).
-    if (a.state.mode === "waypoint") {
-      a.patch({ sel: null });
-      a.setMode("home", "peek");
+    // REROUTE armed: this tap is the via-point.
+    if (a.state.viaPending && a.state.nav) {
+      if (inWorld(p)) r.addVia(p);
+      return;
     }
+    // Tapping empty map closes a target card (back to the sequence or Home).
+    if (a.state.mode === "waypoint") a.goHome();
     if (!inWorld(p)) return;
     const t = terrainAt(d.terrain, p);
     a.showCoord(t ? `${fmtLatLon(p)} · ${fmtInt(t.elev)} m · ${Math.round(t.slope)}° slope` : fmtLatLon(p));
@@ -233,7 +238,9 @@ export function MapArea() {
   });
 
   return (
-    <View style={{ position: "absolute", left: geo.mapLeft, top: 0, width: geo.mapW, height: geo.H, overflow: "hidden", backgroundColor: C.bg1 }}>
+    // Web: "clip", not "hidden". A hidden-overflow box can still be scrolled, and the browser scrolls it
+    // to bring a focused marker button into view, which shifts the whole map and dock.
+    <View style={{ position: "absolute", left: geo.mapLeft, top: 0, width: geo.mapW, height: geo.H, overflow: (Platform.OS === "web" ? "clip" : "hidden") as "hidden", backgroundColor: C.bg1 }}>
       <View
         ref={gestureRef}
         collapsable={false}
@@ -252,6 +259,7 @@ export function MapArea() {
           {/* collapsable={false}: keep this a real layer, so the pins' zIndex can't lift them over the dock. */}
           <View collapsable={false} pointerEvents="box-none" style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0, zIndex: 1 }}>
             <HazardLayer />
+            <RouteLayer />
             <HazardLabels />
             <LandmarkLayer />
             <RoverMarker />

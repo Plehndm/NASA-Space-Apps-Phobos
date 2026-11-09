@@ -11,7 +11,7 @@ root README; the imagery tiles come from scripts/fetch_imagery.py):
 
   stage      reads
   imagery    gale_tiles/out_tiles/imagery/{z}/{row}/{col}.png + manifest.json
-  terrain    processed_data/gale_dust_devil_features_100m.csv
+  terrain    processed_data/gale_dem_20m.tif + gale_slope_20m.tif (needs rasterio)
   strata     (the terrain stage's grid)
   heat       heatmap/outputs/maps/{ground,air}/raw/*.u16 + map_manifest.json
   dustdevil  dust_devil/outputs/gale_dust_devil_heating_index_sol{N}.npz + reference json
@@ -94,41 +94,56 @@ def stage_imagery():
 
 
 def load_terrain():
-    """(elev_m, slope_deg) float arrays of shape (H, W), NaN where the feature table has no row."""
+    """(elev_m, slope_deg, slope_q3_deg) on the world grid, from the 20 m CTX DTM rasters.
+
+    gale_dem_20m.tif and gale_slope_20m.tif (MarsDataPipline/processed_data, from the team Drive) are
+    resampled onto the 100 m world grid: elevation and slope by area average, plus the upper-quartile
+    slope of the ~5 x 5 raster pixels in each cell, so the router sees steep ground that a 100 m mean
+    hides. Needs rasterio (pip install rasterio, or the pipeline's gale-env).
+    """
+    import rasterio
+    from rasterio.transform import Affine
+    from rasterio.warp import Resampling, reproject
+
+    dem, slope_tif = PIPE / "processed_data/gale_dem_20m.tif", PIPE / "processed_data/gale_slope_20m.tif"
     cache = OUT / "_cache_terrain.npz"
-    csv = PIPE / "processed_data/gale_dust_devil_features_100m.csv"
-    if cache.exists() and cache.stat().st_mtime > csv.stat().st_mtime:
+    if cache.exists() and cache.stat().st_mtime > max(dem.stat().st_mtime, slope_tif.stat().st_mtime):
         d = np.load(cache)
-        return d["elev"], d["slope"]
-    header = csv.open().readline().strip().split(",")
-    cols = [header.index(c) for c in ("row", "col", "lon", "lat", "elev_m", "slope_deg")]
-    a = np.loadtxt(csv, delimiter=",", skiprows=1, usecols=cols)
-    r, c = a[:, 0].astype(int), a[:, 1].astype(int)
-    # The table's own lon/lat must sit at our cell centres.
-    assert np.allclose(a[:, 2], LON0 + (c + 0.5) * DLON, atol=2e-6), "feature table lon disagrees with the grid"
-    assert np.allclose(a[:, 3], LAT0 + (r + 0.5) * DLAT, atol=2e-6), "feature table lat disagrees with the grid"
-    elev = np.full((H, W), np.nan)
-    slope = np.full((H, W), np.nan)
-    elev[r, c], slope[r, c] = a[:, 4], a[:, 5]
+        if "slope_q3" in d.files:
+            return d["elev"], d["slope"], d["slope_q3"]
+    dst_transform = Affine(DLON, 0, LON0, 0, DLAT, LAT0)
+
+    def resample(path, how):
+        out = np.full((H, W), np.nan, np.float32)
+        with rasterio.open(path) as src:
+            assert src.crs and abs(src.crs.to_dict().get("R", src.crs.to_dict().get("a", 3396190)) - 3396190) < 1, "DTM is not on the Mars sphere"
+            reproject(rasterio.band(src, 1), out, src_transform=src.transform, src_crs=src.crs, dst_transform=dst_transform,
+                      dst_crs=src.crs, resampling=how, src_nodata=np.nan, dst_nodata=np.nan)
+        return out.astype(np.float64)
+
+    elev = resample(dem, Resampling.average)
+    slope = resample(slope_tif, Resampling.average)
+    slope_q3 = resample(slope_tif, Resampling.q3)
     OUT.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(cache, elev=elev, slope=slope)
-    return elev, slope
+    np.savez_compressed(cache, elev=elev, slope=slope, slope_q3=slope_q3)
+    return elev, slope, slope_q3
 
 
 def stage_terrain():
-    elev, slope = load_terrain()
+    elev, slope, slope_q3 = load_terrain()
+    as_u8 = lambda a: np.where(np.isfinite(a), np.clip(np.round(a / SLOPE_SCALE), 0, SLOPE_NODATA - 1), SLOPE_NODATA).astype(np.uint8)
     e = np.where(np.isfinite(elev), np.round(elev), ELEV_NODATA).astype("<i2")
-    s = np.where(np.isfinite(slope), np.clip(np.round(slope / SLOPE_SCALE), 0, SLOPE_NODATA - 1), SLOPE_NODATA).astype(np.uint8)
-    (OUT / "terrain.bin").write_bytes(e.tobytes() + s.tobytes())
+    (OUT / "terrain.bin").write_bytes(e.tobytes() + as_u8(slope).tobytes() + as_u8(slope_q3).tobytes())
     ok = np.isfinite(elev)
     print(f"terrain: {ok.sum()} cells, {(~ok).sum()} nodata, elev {np.nanmin(elev):.0f} to {np.nanmax(elev):.0f} m")
     return {
         "path": "terrain.bin",
-        "layout": "elev int16 LE (H*W, row-major) then slope uint8 (H*W)",
+        "layout": "elev int16 LE (H*W, row-major), then slope uint8 (H*W), then slope_q3 uint8 (H*W)",
         "elev": {"dtype": "int16", "units": "m", "nodata": ELEV_NODATA},
-        "slope": {"dtype": "uint8", "scale_deg": SLOPE_SCALE, "nodata": SLOPE_NODATA},
+        "slope": {"dtype": "uint8", "scale_deg": SLOPE_SCALE, "nodata": SLOPE_NODATA, "what": "mean of the 20 m slope raster"},
+        "slope_q3": {"dtype": "uint8", "scale_deg": SLOPE_SCALE, "nodata": SLOPE_NODATA, "what": "upper-quartile 20 m slope in the cell"},
         "elev_range_m": [float(np.nanmin(elev)), float(np.nanmax(elev))],
-        "source": "MarsDataPipline processed_data/gale_dust_devil_features_100m.csv (20 m CTX DTMs, area-averaged to 100 m)",
+        "source": "MarsDataPipline processed_data/gale_dem_20m.tif + gale_slope_20m.tif (CTX stereo DTMs, NHM), resampled to 100 m",
     }
 
 
@@ -142,7 +157,7 @@ def hillshade(elev, az=315.0, alt=45.0, z_factor=2.0):
 
 
 def stage_strata():
-    elev, _ = load_terrain()
+    elev, _, _ = load_terrain()
     lo, hi = float(np.nanmin(elev)), float(np.nanmax(elev))
     # Colour: the design's ramp over the full elevation range, shaded so the terrain reads.
     t = np.clip((hi - elev) / (hi - lo), 0, 1)           # 0 at the summit, 1 on the floor
@@ -222,10 +237,11 @@ def stage_dustdevil():
         for k in (1, 2, 3):
             rgba[cls == k] = [*hex_rgb(DUST_COLOURS[k - 1]).astype(np.uint8), round(255 * DUST_ALPHA[k - 1])]
         save_webp(rgba, OUT / "dustdevil" / f"sol{sol}.webp")
+        (OUT / "dustdevil" / f"sol{sol}_level.bin").write_bytes(cls.astype(np.uint8).tobytes())  # 0-3 per cell, for the router
         ok = np.isfinite(m)
         share = [round(float((cls[ok] == k).mean()), 3) for k in (1, 2, 3)]
         sols.append({"sol": int(d["sol"]), "ls": round(float(d["ls_deg"]), 1), "tau": round(float(d["tau"]), 2),
-                     "tau_source": str(d["tau_source"]), "path": f"dustdevil/sol{sol}.webp", "share_low_mod_high": share})
+                     "tau_source": str(d["tau_source"]), "path": f"dustdevil/sol{sol}.webp", "levels_path": f"dustdevil/sol{sol}_level.bin", "share_low_mod_high": share})
         print(f"dust devil sol {sol}: tau {float(d['tau']):.2f}, low/moderate/high {share}")
     return {
         "sols": sols, "ref_sol": ref["ref_sol"], "class_cuts": cuts, "colours": list(DUST_COLOURS), "alpha": list(DUST_ALPHA),

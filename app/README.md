@@ -59,13 +59,14 @@ The map layers are real pipeline outputs, built into `app/data/` (about 30 MB, n
 
 | File (under `MarsDataPipline/`) | Used for |
 | --- | --- |
-| `processed_data/gale_dust_devil_features_100m.csv` | elevation and slope (coordinate pill, strata) |
+| `processed_data/gale_dem_20m.tif` and `gale_slope_20m.tif` | elevation and slope (coordinate pill, strata, routing) |
 | `heatmap/outputs/maps/{ground,air}/map_manifest.json` and `raw/*.u16` | temperature frames |
 | `dust_devil/outputs/gale_dust_devil_heating_index_sol{800,1850}.npz` and `dust_devil_heating_index_reference_sol1850.json` | dust-devil layer |
 
 ```bash
 python scripts/fetch_imagery.py      # CTX tiles, zooms 7-11, from NASA Mars Trek (~56 MB, resumable)
-python scripts/build_map_data.py     # -> app/data/ (needs numpy and Pillow; about 30 s)
+python3 -m venv .venv && .venv/bin/pip install numpy pillow rasterio   # once
+.venv/bin/python scripts/build_map_data.py   # -> app/data/ (about 40 s)
 npm run data
 ```
 
@@ -76,7 +77,7 @@ npm run data
 | Layer | Source | App file |
 | --- | --- | --- |
 | Base imagery | MRO CTX mosaic (Mars Trek `Gale_CTX_BlockAdj_dd`), the pipeline's tile grid, tint baked in | `imagery/{z}/{row}/{col}.jpg` |
-| Terrain | 100 m feature table: elevation (m) and slope | `terrain.bin` |
+| Terrain | 20 m CTX DTM and slope rasters resampled to 100 m: elevation, mean slope, upper-quartile slope | `terrain.bin` |
 | Elevation strata | same: L1 above −2 km, L2 −4 to −2 km, L3 below −4 km | `strata/l{1,2,3}.webp` |
 | Temperature | ground and air maps: 5 seasons (Ls 15/75/195/255/340) × 48 frames, inferno 150–320 K | `heat/{ground,air}/ls{LLL}/{HHMM}.webp` |
 | Dust devils | Dust Devil Heating Index, sols 1850 (clear) and 800 (dusty), levels low/moderate/high | `dustdevil/sol{N}.webp` |
@@ -142,9 +143,17 @@ src/
   - **Images** (rasters that should zoom with the map): add a component in `src/map/layers/` and list it inside the world container in `src/shell/MapArea.tsx`, positioned absolutely in world px (`toWorld({ lon, lat })` from `geo.ts`).
   - **Markers, labels, lines and shapes:** put them in the overlay next to `LandmarkLayer` and wrap each in `<Pin x y>`. iOS stretches anything inside the zoomed container, so text and SVG there go blurry; `HazardLayer` shows how to draw a shape for the current zoom. Use `react-native-svg` for shapes and routes.
   - **Reading the live view:** `useMapView().view` is one Reanimated shared value `{ s, tx, ty }`. Keep scale and position in that one value: as three separate animated values, iOS can draw a frame with the new zoom but the old position (a visible jump).
-- **Terrain under a point** (routing, grade profile): `terrainAt(useMapData().terrain, p)` gives elevation and slope at 100 m.
+- **Terrain under a point:** `terrainAt(useMapData().terrain, p)` gives elevation and slope at 100 m. For routes and profiles use `useRoutes()` (`routeOpts`, `activeRoute`, `profileOf`).
 - **Moving the map:** `centerOn(p, zoom?)` glides to a world point, `zoomBy(k, x, y)` zooms around a point, `showCoord(text)` shows the pill.
 - **Something pinned above the search bar** (the ETA card while navigating): pass it to `<Sheet pinned={…} />`.
+
+## What's built (checklist section 3: Routing and navigation)
+
+- **Router** (`src/route/router.ts`, plain TypeScript, no React): the design's A* on a 200 m grid of the real DEM, with a tangent grade cap, cost `d·(1+3·(grade/cap)²)`, extra cost on rough cells (upper-quartile 20 m slope over the cap) and, on safe routes, on strong dust-devil heating; then line-of-sight smoothing. Route #1 (direct) caps at 25° and ignores hazards; Route #2 (safe) uses Settings → Rover grade limit and blocks every enabled hazard zone. "Override" lifts both to 45° for one target. A route across the crater takes about 25–100 ms.
+- **Route state and actions** (`src/route/RouteProvider.tsx`, `useRoutes()`): cached routes, select / add stop / navigate / reorder / remove, the 100 ms expedition simulation (speed by grade × demo speed), via-points, automatic safe reroute, "Nearest safe approach" / "Nearest reachable point".
+- **On the map** (`src/route/RouteLayer.tsx`): active route with casing, grades over 12° in warm, the alternative as dots, tappable time pills, the driven part dimmed. Sequence stops get numbered badges.
+- **Cards** (`src/cards/`): `Waypoint.tsx` (route picker, elevation profile, Add stop / Street Level / NAVIGATE, "No safe route found"), `Sequence.tsx` (multi-stop, ↑ ↓ ×, Route #1 hazard warning), `Expedition.tsx` (stepped and compact progress cards, the pinned ETA card, hazard and steep-grade warnings, REROUTE / via-points, Arrived).
+- Street Level is a toast until that feature is built.
 
 ## Using the store
 

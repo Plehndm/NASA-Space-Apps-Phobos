@@ -28,7 +28,7 @@ export interface Manifest {
   built: string;
   grid: typeof GRID;
   imagery?: { path: string; zooms: [number, number]; per_zoom: Record<string, { rows: [number, number]; cols: [number, number] }>; attribution: string };
-  terrain?: { path: string; elev: { nodata: number }; slope: { scale_deg: number; nodata: number }; elev_range_m: [number, number] };
+  terrain?: { path: string; elev: { nodata: number }; slope: { scale_deg: number; nodata: number }; slope_q3?: { scale_deg: number; nodata: number }; elev_range_m: [number, number] };
   strata?: { levels: { level: 1 | 2 | 3; path: string; min_m: number | null; max_m: number | null; share: number }[]; ramp: string[]; elev_range_m: [number, number]; rect: Rect };
   heat?: {
     kinds: Record<HeatKind, { title: string; range_by_season_k: Record<string, [number, number]>; caveats?: unknown }>;
@@ -41,7 +41,7 @@ export interface Manifest {
     credit: string;
   };
   dustDevil?: {
-    sols: { sol: number; ls: number; tau: number; tau_source: string; path: string; share_low_mod_high: [number, number, number] }[];
+    sols: { sol: number; ls: number; tau: number; tau_source: string; path: string; levels_path?: string; share_low_mod_high: [number, number, number] }[];
     ref_sol: number;
     class_cuts: [number, number, number];
     colours: [string, string, string];
@@ -59,8 +59,9 @@ export const heatUri = (m: NonNullable<Manifest["heat"]>, kind: HeatKind, season
 // --- terrain grid ---
 
 export interface Terrain {
-  elev: Int16Array; // metres, H*W row-major
-  slope: Uint8Array; // quarter degrees
+  elev: Int16Array; // metres, H*W row-major (mean of the 20 m DEM)
+  slope: Uint8Array; // quarter degrees (mean of the 20 m slope raster)
+  slopeQ3: Uint8Array | null; // quarter degrees: upper-quartile 20 m slope in the cell
   elevNodata: number;
   slopeScale: number;
   slopeNodata: number;
@@ -97,10 +98,12 @@ async function load(): Promise<{ manifest: Manifest; terrain: Terrain | null }> 
   if (manifest.terrain) {
     const buf = await (await fetch(dataUri(manifest.terrain.path))).arrayBuffer();
     const n = GRID.W * GRID.H;
-    if (buf.byteLength !== n * 3) throw new Error(`terrain.bin is ${buf.byteLength} bytes, expected ${n * 3}`);
+    const hasQ3 = !!manifest.terrain.slope_q3;
+    if (buf.byteLength !== n * (hasQ3 ? 4 : 3)) throw new Error(`terrain.bin is ${buf.byteLength} bytes, expected ${n * (hasQ3 ? 4 : 3)}`);
     terrain = {
       elev: new Int16Array(buf, 0, n), // little-endian, like every platform the app runs on
       slope: new Uint8Array(buf, n * 2, n),
+      slopeQ3: hasQ3 ? new Uint8Array(buf, n * 3, n) : null,
       elevNodata: manifest.terrain.elev.nodata,
       slopeScale: manifest.terrain.slope.scale_deg,
       slopeNodata: manifest.terrain.slope.nodata,
@@ -126,3 +129,19 @@ export function MapDataProvider({ children }: { children: ReactNode }) {
 }
 
 export const useMapData = () => useContext(Ctx);
+
+/** Per-cell dust-devil heating level (0 none, 1 low, 2 moderate, 3 high) for one sol, or null. */
+const levelCache = new Map<string, Promise<Uint8Array | null>>();
+export function loadDustLevels(m: Manifest | null, sol: number): Promise<Uint8Array | null> {
+  const entry = m?.dustDevil?.sols.find(s => s.sol === sol);
+  if (!entry?.levels_path) return Promise.resolve(null);
+  let p = levelCache.get(entry.levels_path);
+  if (!p) {
+    p = fetch(dataUri(entry.levels_path))
+      .then(r => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then(b => (b.byteLength === GRID.W * GRID.H ? new Uint8Array(b) : null))
+      .catch(() => null);
+    levelCache.set(entry.levels_path, p);
+  }
+  return p;
+}

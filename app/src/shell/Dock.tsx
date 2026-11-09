@@ -37,13 +37,13 @@ function ZoomButton({ label, glyph, onPress }: { label: string; glyph: string; o
 
 /** Right-hand column of map controls: Layers, Hazards, Heatmap, Assistant, zoom. */
 export function Dock() {
-  const { state: S, geo, settings, patch, setMode, toast, zoomBy } = useApp();
+  const { state: S, geo, settings, patch, setMode, goHome, toast, zoomBy } = useApp();
   const panel = settings.layerPicker === "panel";
-  const homeMode = S.navActive ? "nav" : "home";
 
   const toggleLayersPanel = () => {
     const open = S.mode === "layers";
-    setMode(open ? homeMode : "layers", open ? "peek" : "half");
+    if (open) goHome();
+    else setMode("layers", "half");
     patch({ heatOpen: false, elevOpen: false });
   };
   const toggleLayers = () => {

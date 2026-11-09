@@ -7,7 +7,7 @@ import { CloseIcon } from "../ui/icons";
 
 /** Stand-in for a card stack that has not been built yet. Names the checklist item that owns it. */
 export function Placeholder({ title, item, note }: { title: string; item: string; note: string }) {
-  const { state, setMode } = useApp();
+  const { state, goHome } = useApp();
   return (
     <>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 2 }}>
@@ -16,7 +16,7 @@ export function Placeholder({ title, item, note }: { title: string; item: string
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Back"
-            onPress={() => setMode(state.navActive ? "nav" : "home", "peek")}
+            onPress={() => goHome()}
             style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: C.raised, alignItems: "center", justifyContent: "center" }}
           >
             <CloseIcon />

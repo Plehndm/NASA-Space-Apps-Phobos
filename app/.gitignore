@@ -42,3 +42,6 @@ yarn-error.*
 
 # map data built from the pipeline outputs (scripts/build_map_data.py); served by `npm run data`
 /data/
+
+# local Python env for scripts/build_map_data.py
+/.venv/

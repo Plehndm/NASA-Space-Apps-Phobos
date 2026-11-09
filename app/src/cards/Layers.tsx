@@ -16,10 +16,10 @@ function Title({ children }: { children: string }) {
 }
 
 export function LayersCard() {
-  const { state: S, patch, setMode, toast } = useApp();
+  const { state: S, patch, goHome, toast } = useApp();
   const { manifest } = useMapData();
   const heat = manifest?.heat;
-  const done = () => setMode(S.navActive ? "nav" : "home", "peek");
+  const done = () => goHome();
   return (
     <>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 2 }}>
