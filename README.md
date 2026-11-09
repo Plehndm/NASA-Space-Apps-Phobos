@@ -12,40 +12,35 @@ Team Phobos's entry for NASA Space Apps 2026, challenge **"Interplanetary Surviv
 - **Street Level:** walk-around rover panoramas at key waypoints.
 - **Route assistant:** a Claude-powered chat that suggests and loads routes.
 
-Status: the **data pipeline** and the **UI design** exist. In `app/`, the **app foundation** (layout, theme, header, dock, settings) and the **map** are built: pan / pinch / zoom over the real CTX imagery, with elevation strata, ground and air temperature, hazard zones, the dust-devil heating index and the landmarks, all from the pipeline's data. The sheet screens (Home, Search, Waypoint, routing, Assistant, Street Level) are still placeholders.
+Status: the **data pipeline**, the **UI design** and the **app** are built. In `app/`: the map (real CTX imagery, terrain, elevation strata, ground and air temperature, hazard zones, the dust-devil heating index, landmarks), Home and Search, hazard-aware routing with multi-stop trips and a simulated drive, the route assistant (offline by default, optional live Claude model), and Street Level with five NASA rover panoramas. Still to do: Android testing and the submission materials (demo video, deck, project page).
 
 > **`app/` is the actual application. `Mars Navigator App Design/` is only the reference.**
 > The design folder is an HTML mock-up with fake terrain. It shows what each screen should look like and how it should behave. Don't edit it or ship it, and don't import from it. Build features in `app/`, matching the design.
 
-## Run the app and the design reference
+## Run the app
 
-You need [Node.js](https://nodejs.org) 22.13 or newer (24 LTS recommended), which Expo SDK 58 requires. Run everything from `app/`, in two terminals:
+You need [Node.js](https://nodejs.org) 22.13 or newer (24 LTS recommended) and, to build the map data, Python 3.10 or newer. Full steps, with the Drive files to download and phone, simulator and Windows notes, are in [`app/README.md`](app/README.md#run-it-locally). In short:
 
-First time installation:
 ```bash
 cd app
-npm install              
+npm install                    # once
+# once: put the map data in app/data/ (a teammate's copy, or build it: app/README.md, step 2)
+npx expo start                 # then press w for the browser, or scan the QR code with Expo Go
 ```
 
-To run the current app run the following in the `app/` directory:
-```bash
-npx expo start           # terminal 1: the app
-npm run data             # terminal 2: the map data server
-```
+One terminal is enough: the Expo dev server also serves the map data, the Street Level panoramas and the route assistant. Without `app/data/` the app opens, but the map is empty ("MAP DATA OFFLINE").
 
-The map data (tiles, terrain, heat frames) is built from the pipeline outputs once; see "Map data" in [`app/README.md`](app/README.md).
-
-To run the design reference execute the following in the `app/` directory:
+To run the design reference next to it, in a second terminal from `app/`:
 ```bash
-npm run design           # terminal 3: the design reference (legacy HTML prototype)
+npm run design                 # then open http://localhost:8090
 ```
 
 | What | Desktop | Phone (same Wi-Fi) |
 | --- | --- | --- |
-| **The app** | Press **w** in terminal 1, or open <http://localhost:8081>. Add `?device=phone` for the phone layout. | Scan terminal 1's QR code with **Expo Go**: on Android in the app, on iPhone with the Camera. |
-| **Design reference** | Open <http://localhost:8090> and pick Phone, Desktop or Slide deck. | Open the `Phone:` address that terminal 2 prints. |
+| **The app** | Press **w** in the `expo start` terminal, or open <http://localhost:8081>. Add `?device=phone` for the phone layout. | Scan the QR code with **Expo Go**: on Android in the app, on iPhone with the Camera. |
+| **Design reference** | Open <http://localhost:8090> and pick Phone, Desktop or Slide deck. | Open the `Phone:` address that `npm run design` prints. |
 
-**Checking your work:** put the app and the reference side by side at the same size. For example, the app at `?device=phone` next to the reference's Phone version. Compare layout, colours, spacing and copy, then click through the same steps in both and compare behaviour. The reference uses fake terrain and sample data, so match how it looks and behaves, not its numbers.
+**Checking your work:** put the app and the reference side by side at the same size. For example, the app at `?device=phone` next to the reference's Phone version. Compare layout, colours, spacing and copy, then click through the same steps in both and compare behaviour. The reference uses fake terrain and sample data, so match how it looks and behaves, not its numbers. Before pushing, run `npm run test:all` from `app/`.
 
 More detail, including campus Wi-Fi workarounds and where each feature goes: [`app/README.md`](app/README.md).
 
@@ -62,7 +57,7 @@ NASA-Space-Apps-Phobos/
 │   ├── src/map/                 coordinate system, map data loader, map layers, layer controls
 │   ├── src/cards/               one screen per sheet mode (placeholders until built)
 │   ├── scripts/                 fetch_imagery.py + build_map_data.py (pipeline outputs -> app data), data and design servers
-│   └── data/                    built map data, served by `npm run data` (not tracked by git)
+│   └── data/                    built map data and panoramas, served by `npx expo start` (not tracked by git)
 │
 ├── Mars Navigator App Design/   DESIGN REFERENCE ONLY, not the app: HTML mock-up to copy from
 │   ├── README.md                full design spec: tokens, layouts, screens, behaviour, state

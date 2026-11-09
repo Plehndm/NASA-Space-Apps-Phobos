@@ -2,36 +2,83 @@
 
 React Native + Expo (SDK 58) + TypeScript. One codebase runs on phones through **Expo Go** and on desktop in a **web browser**. It is built from the HTML prototype in `../Mars Navigator App Design/`; read that folder's README for the exact look and behaviour of every screen.
 
-## Run it
+## Run it locally
+
+Everything runs from `app/` with **one command**, `npx expo start`. That one dev server serves the app, the map data, the Street Level panoramas and the route assistant. The steps below are for a fresh clone; after that, only step 3 is needed.
+
+### 1. Install (once)
+
+You need:
+- **[Node.js](https://nodejs.org) 22.13 or newer** (24 LTS recommended; Expo SDK 58 refuses older). Check with `node -v`.
+- **Python 3.10 or newer**, for building the map data and panoramas (step 2). Check with `python3 --version`.
+- **Git**, and about 1 GB of disk space.
 
 ```bash
 cd app
 npm install
-npx expo start           # terminal 1: the app
-npm run data             # terminal 2: the map data server (port 8092), see "Map data" below
 ```
 
-`npx expo start` prints a QR code and waits. Every save reloads on all connected devices. Without the data server the app still runs, but the map is empty and shows "MAP DATA OFFLINE".
+npm may warn that it skipped install scripts for `fsevents`; that's an optional macOS file watcher, and nothing breaks without it.
 
-### Phone (Expo Go)
+### 2. Get the map data (once, and again when the pipeline data changes)
 
-1. Install **Expo Go** from the App Store or Google Play. It must support **SDK 58**; update Expo Go if it says the project is incompatible.
-2. Put the phone on the **same Wi-Fi** as the computer.
-3. Scan the QR code:
-   - **Android:** use the scanner inside Expo Go.
-   - **iPhone:** use the Camera app, then tap the banner to open in Expo Go.
+The map (imagery, terrain, temperature, dust devils, telemetry) and Street Level are built into `app/data/`, which is not in git. Without it the app still opens, but the map is empty, with a "MAP DATA OFFLINE" notice, and the Street Level button stays dimmed.
 
-### Desktop (web)
+**Quickest:** ask a teammate for a zip of their `app/data/` and unzip it so you have `app/data/manifest.json`. Then skip to step 3.
 
-With `npx expo start` running, press **w** in the terminal, or open <http://localhost:8081>. Add these to the URL:
+**Or build it yourself:**
 
-| Option | Effect |
+a. Download these from the team Drive (the link is in `MarsDataPipline/processed_data/Google_Drive`) to the **same paths** under `MarsDataPipline/`:
+
+| File (under `MarsDataPipline/`) | Used for |
 | --- | --- |
-| `?device=phone` | Phone layout in the prototype's 393×852 frame, for side-by-side comparison |
-| `?device=desktop` | Desktop layout |
-| `?scene=settings` | Opens Settings on load |
+| `processed_data/gale_dem_20m.tif` and `gale_slope_20m.tif` | elevation and slope (coordinate pill, strata, routing) |
+| `heatmap/outputs/maps/{ground,air}/map_manifest.json` and their `raw/*.u16` | temperature frames |
+| `dust_devil/outputs/gale_dust_devil_heating_index_sol{800,1850}.npz` and `dust_devil_heating_index_reference_sol1850.json` | dust-devil layer and Home advisory |
+| `processed_data/mastcam_tau_per_sol.csv` | dust opacity τ on the Home card |
 
-Without `?device`, windows 900 px wide or wider get the desktop layout and narrower ones get the phone layout. Phones always get the phone layout.
+b. Build (from `app/`):
+
+```bash
+python3 -m venv .venv                              # once: a Python environment for the build
+.venv/bin/pip install numpy pillow rasterio        # once
+python3 scripts/fetch_imagery.py                   # satellite tiles from NASA Mars Trek (~56 MB; safe to re-run)
+.venv/bin/python scripts/build_map_data.py         # -> app/data/ (about 20 s)
+npm run panos                                      # Street Level: 113 MB from NASA, then about 1.5 min
+```
+
+On Windows, use `.venv\Scripts\pip` and `.venv\Scripts\python` in place of `.venv/bin/pip` and `.venv/bin/python`. `npm run panos` assumes the macOS/Linux layout, so on Windows run its two steps by hand, as in `mars_streetview/README.md`.
+
+- If an input is missing, `build_map_data.py` lists every missing file and where to get it, and builds nothing. To build only part, name the stages: `imagery`, `terrain`, `strata`, `heat`, `dustDevil`, `telemetry` (for example `build_map_data.py imagery heat`). `--help` shows the full list of inputs.
+- `npm run panos` downloads only from NASA's server, checks every file's checksum, and skips files you already have. The build briefly needs about 14 GB of memory. On a smaller laptop, copy `app/data/panos/` from a teammate instead; the rest of the app doesn't need it.
+
+### 3. Start the app
+
+```bash
+npx expo start
+```
+
+It prints a QR code and a menu, then waits. Saving a file reloads every connected device. Then open the app on any of these:
+
+| Where | How |
+| --- | --- |
+| **Browser** | Press **w**, or open <http://localhost:8081>. Add `?device=phone` or `?device=desktop` to pick a layout (by default, windows 900 px or wider get the desktop layout). `?scene=settings` opens Settings on load. |
+| **Your phone** | Install **Expo Go** (App Store or Google Play; it must support SDK 58). Put the phone on the **same Wi-Fi** as the computer and scan the QR code: on iPhone with the Camera app, on Android from inside Expo Go. |
+| **iOS Simulator** (Mac) | Press **i**. Needs Xcode with an iOS simulator installed. |
+| **Android emulator** | Press **a**. Needs Android Studio with an emulator running. |
+
+To check it's working: the map shows satellite imagery around Bradbury Landing, the header shows "Sol 742", and the Home card shows surface temperature and dust opacity.
+
+### 4. Optional: the live route assistant
+
+The assistant works offline out of the box, answering from the app's own data. To try the live Claude model instead, create `app/.env.local` (git-ignored) containing `ANTHROPIC_API_KEY=sk-ant-...` and restart `npx expo start`. The Claude API is billed per use, so use your own spend-limited key, and never name it `EXPO_PUBLIC_…` (those are built into the app). Details in "Route assistant" below.
+
+### If the phone can't connect
+
+- **Campus or public Wi-Fi** (eduroam, cafés) often blocks devices from reaching each other. Run `npx expo start --tunnel` instead. It works over the internet; the first time, it asks to install `@expo/ngrok`, so answer yes. The map data comes through the same tunnel. Or connect the computer to the phone's hotspot.
+- **Windows firewall:** if Windows asks whether Node.js may use the network, allow **Private networks**. Then set your Wi-Fi to Private: Settings → Network & internet → Wi-Fi → your network → Network profile type → Private.
+- **"Project is incompatible with this version of Expo Go":** update Expo Go from the app store.
+- **Map empty, "MAP DATA OFFLINE":** `app/data/manifest.json` is missing; see step 2.
 
 ### Compare with the design reference
 
@@ -45,35 +92,9 @@ Open <http://localhost:8090> on the desktop. The page links the phone, desktop a
 
 The prototype is a reference only. Don't build on it or import from it.
 
-### If the phone can't connect
-
-- **Campus or public Wi-Fi** (eduroam, cafés) often blocks devices from reaching each other. Run `npx expo start --tunnel` instead. It works over the internet; the first time, it asks to install `@expo/ngrok`, so answer yes. Or connect the computer to the phone's hotspot.
-- **Windows firewall:** if Windows asks whether Node.js may use the network, allow **Private networks**. Then set your Wi-Fi to Private: Settings → Network & internet → Wi-Fi → your network → Network profile type → Private.
-- **"Project is incompatible with this version of Expo Go":** update Expo Go from the app store.
-
 ## Map data
 
-The map layers are real pipeline outputs, built into `app/data/` (about 30 MB, not in git) and served by `npm run data`. The app finds that server on the same host as the Expo dev server, so phones on the same Wi-Fi need no setup.
-
-**First time:** get the inputs, then build. Download these from the team Drive (link in `MarsDataPipline/processed_data/Google_Drive`) into the same paths under `MarsDataPipline/`:
-
-| File (under `MarsDataPipline/`) | Used for |
-| --- | --- |
-| `processed_data/gale_dem_20m.tif` and `gale_slope_20m.tif` | elevation and slope (coordinate pill, strata, routing) |
-| `heatmap/outputs/maps/{ground,air}/map_manifest.json` and `raw/*.u16` | temperature frames |
-| `dust_devil/outputs/gale_dust_devil_heating_index_sol{800,1850}.npz` and `dust_devil_heating_index_reference_sol1850.json` | dust-devil layer and Home advisory |
-| `processed_data/mastcam_tau_per_sol.csv` | dust opacity τ on the Home card |
-
-```bash
-python scripts/fetch_imagery.py      # CTX tiles, zooms 7-11, from NASA Mars Trek (~56 MB, resumable)
-python3 -m venv .venv && .venv/bin/pip install numpy pillow rasterio   # once
-.venv/bin/python scripts/build_map_data.py   # -> app/data/ (about 40 s)
-npm run data
-```
-
-`build_map_data.py` takes stage names to rebuild only part: `imagery`, `terrain`, `strata`, `heat`, `dustDevil`, `telemetry`. Or skip the build: unzip a teammate's `app/data/` into place.
-
-**Phone on another network, or a hosted demo:** copy `app/data/` to any static host and put its address in `app/.env.local` as `EXPO_PUBLIC_DATA_URL=https://…`, then restart Expo. Tunnel mode (`--tunnel`) needs this too, because the phone can't reach port 8092 directly.
+The app reads `app/data/` from the dev server at `/mapdata/` (`metro.config.js`, `scripts/data-middleware.js`), so phones on the same Wi-Fi need no setup. `npm run data` serves the same folder on its own at port 8092, which is only useful for checking the files. **For a hosted demo,** copy `app/data/` to any static host, put its address in `app/.env.local` as `EXPO_PUBLIC_DATA_URL=https://…`, and restart Expo.
 
 | Layer | Source | App file |
 | --- | --- | --- |
@@ -85,6 +106,8 @@ npm run data
 | Telemetry | Mastcam τ per sol; ground temperature at 400 m per season and LTST frame (uint8 on the 150–320 K scale) | `telemetry/tau.json`, `telemetry/ground/{season}/{HHMM}.bin` |
 
 ### Checks before you push
+
+`npm test` needs only `npm install`. `test:py` and `test:all` also need the Python environment from step 2 (`app/.venv`).
 
 ```bash
 npm run typecheck        # TypeScript

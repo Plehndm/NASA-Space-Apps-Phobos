@@ -4,7 +4,9 @@ Turn the pipeline's outputs into the files the app loads, in app/data/ (git-igno
   python scripts/build_map_data.py                   # every stage
   python scripts/build_map_data.py terrain heat      # only some stages
 
-Then serve them with `npm run data` (scripts/serve-data.mjs). Needs numpy and Pillow (with WebP).
+The Expo dev server (`npx expo start`) then serves app/data/ at /mapdata/; nothing else to run.
+Needs numpy, Pillow (with WebP) and rasterio: use the venv in app/.venv (see app/README.md).
+Missing inputs are listed, with where to get them, before anything is built.
 
 Inputs, at their usual places in ../MarsDataPipline (download them from the team Drive, see the
 root README; the imagery tiles come from scripts/fetch_imagery.py):
@@ -311,10 +313,45 @@ def stage_telemetry():
 STAGES = {"imagery": stage_imagery, "terrain": stage_terrain, "strata": stage_strata, "heat": stage_heat, "dustDevil": stage_dustdevil, "telemetry": stage_telemetry}
 
 
+DRIVE = "the team Drive (link in MarsDataPipline/processed_data/Google_Drive)"
+
+
+def required_inputs(names):
+    """(path, where to get it) for every input file the given stages read."""
+    need = []
+    if "imagery" in names:
+        need.append((PIPE / "gale_tiles/out_tiles/imagery/manifest.json", "python3 scripts/fetch_imagery.py (downloads it)"))
+    if "terrain" in names or ("strata" in names and not (OUT / "_cache_terrain.npz").exists()):
+        need += [(PIPE / "processed_data/gale_dem_20m.tif", DRIVE), (PIPE / "processed_data/gale_slope_20m.tif", DRIVE)]
+    if "heat" in names:
+        need += [(PIPE / f"heatmap/outputs/maps/{k}/map_manifest.json", DRIVE + ", with its raw/ folder") for k in ("ground", "air")]
+    if "dustDevil" in names:
+        src = PIPE / "dust_devil/outputs"
+        need += [(src / f"gale_dust_devil_heating_index_sol{sol}.npz", DRIVE) for sol in DUST_SOLS]
+        need.append((src / f"dust_devil_heating_index_reference_sol{DUST_SOLS[0]}.json", DRIVE))
+    if "telemetry" in names:
+        need += [(PIPE / "processed_data/mastcam_tau_per_sol.csv", DRIVE),
+                 (PIPE / "heatmap/outputs/maps/ground/map_manifest.json", DRIVE + ", with its raw/ folder")]
+    return need
+
+
 def main(names):
+    if any(n in ("-h", "--help") for n in names):
+        print(__doc__)
+        print("stages:", " ".join(STAGES))
+        return 0
     names = names or list(STAGES)
-    unknown = set(names) - set(STAGES)
-    assert not unknown, f"unknown stages {unknown}; choose from {list(STAGES)}"
+    unknown = [n for n in names if n not in STAGES]
+    if unknown:
+        print(f"unknown stage(s): {' '.join(unknown)}; choose from: {' '.join(STAGES)}", file=sys.stderr)
+        return 2
+    missing = list({p: how for p, how in required_inputs(names) if not p.exists()}.items())  # each file once
+    if missing:
+        print("Missing inputs (nothing was built):", file=sys.stderr)
+        for p, how in missing:
+            print(f"  {p.relative_to(APP.parent)}\n      from {how}", file=sys.stderr)
+        print("Or build only the stages you have inputs for, e.g.: build_map_data.py imagery heat", file=sys.stderr)
+        return 1
     OUT.mkdir(parents=True, exist_ok=True)
     path = OUT / "manifest.json"
     man = json.loads(path.read_text()) if path.exists() else {}
@@ -326,7 +363,8 @@ def main(names):
     man["built"] = time.strftime("%Y-%m-%d %H:%M")
     path.write_text(json.dumps(man, indent=1))
     print(f"wrote {path}")
+    return 0
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    sys.exit(main(sys.argv[1:]))

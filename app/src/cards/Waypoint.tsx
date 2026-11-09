@@ -171,7 +171,9 @@ function StreetButton({ l }: { l: Landmark }) {
   const near = panoNear(panos, l);
   const open = () => {
     if (!near) {
-      toast(panos === undefined ? "Loading rover panoramas…" : `No rover panorama within ${STREET_RADIUS_KM} km of ${l.name}`);
+      toast(panos === undefined ? "Loading rover panoramas…"
+        : panos === null ? "Street Level panoramas aren't built yet (npm run panos, see app/README.md)"
+        : `No rover panorama within ${STREET_RADIUS_KM} km of ${l.name}`);
       return;
     }
     // Face the waypoint when it's off in the distance and inside the imagery; otherwise (standing on
