@@ -8,13 +8,15 @@ import { Sheet } from "./Sheet";
 import { EtaCard } from "../cards/Expedition";
 import { Toast } from "./Toast";
 import { SettingsDialog } from "./SettingsDialog";
+import { StreetLevel } from "../street/StreetLevel";
 
-/** Android back button: close settings, then popovers, then return to the home sheet. */
+/** Android back button: close settings, Street Level, then popovers, then return to the home sheet. */
 function useBackButton() {
   const { state, patch, goHome } = useApp();
   useEffect(() => {
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
       if (state.settingsOpen) { patch({ settingsOpen: false }); return true; }
+      if (state.street) { patch({ street: null }); return true; }
       if (state.elevOpen || state.heatOpen) { patch({ elevOpen: false, heatOpen: false }); return true; }
       if (state.viaPending) { patch({ viaPending: false }); return true; }
       const home = state.nav ? "nav" : state.stops.length ? "route" : "home";
@@ -22,7 +24,7 @@ function useBackButton() {
       return false; // let the app close
     });
     return () => sub.remove();
-  }, [state.settingsOpen, state.elevOpen, state.heatOpen, state.viaPending, state.mode, state.nav, state.stops.length, patch, goHome]);
+  }, [state.settingsOpen, state.street, state.elevOpen, state.heatOpen, state.viaPending, state.mode, state.nav, state.stops.length, patch, goHome]);
 }
 
 /** The whole app frame. Phone and desktop share every component; only geometry differs. */
@@ -35,6 +37,7 @@ export function AppShell() {
         <MapArea />
         <Header />
         <Sheet pinned={state.nav ? <EtaCard /> : undefined} />
+        <StreetLevel />
         <Toast />
         <SettingsDialog />
       </View>

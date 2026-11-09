@@ -8,7 +8,8 @@ import { distanceM, fmtLatLon, type Pt } from "../map/geo";
 import { edgeDist, pxToKm } from "../route/router";
 import type { RouteApi } from "../route/RouteProvider";
 import { deg, fmtKm, fmtMin } from "../route/format";
-import { tauLevel, type Telemetry } from "../home/telemetry";
+import { tauLevel } from "../home/tau";
+import type { Telemetry } from "../home/telemetry";
 import type { DustAdvisory } from "../home/advisory";
 import { SOL } from "../state/clock";
 

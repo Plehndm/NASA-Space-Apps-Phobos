@@ -10,7 +10,7 @@ This repo builds the physics baseline `T_base(x, t)` for the Gale Crater tempera
 `T_base` is a custom 1D soil heat-conduction model, run per pixel. The residual model `f` comes later.
 The only in-situ truth is Curiosity's REMS ground temperature at the rover's position.
 
-Background, decisions and past mistakes: `docs/Handover Brief Gale Crater Temperature Heatmap (Oct 26).md` and `docs/Gale Crater Diurnal Temperature Model Plan Summary.pdf`.
+Background, decisions and past mistakes: `docs/discoveries.md`, `docs/closed_ideas.md` and `docs/1D Thermal Baseline Build Steps.md`. The Oct 26 handover brief and the plan summary PDF were removed from the repo (commits 3776685 and d5969c6); `git show 3776685^:"MarsDataPipline/docs/Handover Brief Gale Crater Temperature Heatmap (Oct 26).md"` still prints the brief.
 Read the relevant section there before changing a rule in this file.
 
 ## Current status
@@ -104,7 +104,7 @@ MarsDataPipeline/
   raw_data/              # downloads the data_prep notebooks read (git-ignored)
   data_prep/             # notebooks that built processed_data/ (REMS table, tau, THEMIS, albedo, feature table); paths are relative to data_prep/
   gale_tiles/            # map-tile notebook, README, out_tiles/ and dtm_src/ (both git-ignored)
-  docs/                  # plan, progress, discoveries, closed ideas, handover brief, build steps, plan summary PDF; figures/
+  docs/                  # plan, progress, discoveries, closed ideas, build steps
   _Trash_Review/         # files set aside for deletion, pending the user's review (git-ignored)
   gale-env/              # virtual environment (git-ignored, never edit)
 ```

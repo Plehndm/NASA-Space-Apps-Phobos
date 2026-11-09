@@ -5,7 +5,7 @@
 import type { Landmark } from "../map/landmarks";
 import { distanceM } from "../map/geo";
 import { deg, fmtKm, fmtMin } from "../route/format";
-import { tauLevel } from "../home/telemetry";
+import { tauLevel } from "../home/tau";
 import type { Answer } from "./api";
 import { assistantLandmarks, dustLine, DUST_ID, hazardFacts, STOP_MIN, type Sources } from "./context";
 

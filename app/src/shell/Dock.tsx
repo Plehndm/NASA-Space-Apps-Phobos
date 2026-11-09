@@ -47,7 +47,7 @@ export function Dock() {
     patch({ heatOpen: false, elevOpen: false });
   };
   const toggleLayers = () => {
-    if (panel) return toggleLayersPanel();
+    if (panel || S.mode === "layers") return toggleLayersPanel(); // with the Layers card open, the button closes it
     const opening = !S.elevOpen;
     patch({ elevOpen: opening, heatOpen: false });
     if (opening && geo.device === "phone") setMode(S.mode, "peek");

@@ -234,6 +234,24 @@ export function HazardChips() {
   );
 }
 
+/**
+ * The design's filter row at the top of the sheet while warning zones are on (Home, Waypoint, Sequence,
+ * Expedition), so hazards can be filtered without opening the Layers card.
+ */
+export function HazardFilterRow() {
+  const { state: S } = useApp();
+  const on = HAZ_TYPES.filter(h => S.hazTypes[h.type]).length;
+  return (
+    <View style={{ gap: 8 }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+        <T w={700} size={10.5} ls={1} color={C.fg3} numberOfLines={1} style={{ flexShrink: 1 }}>WARNING ZONES · FILTER BY HAZARD</T>
+        <T w={600} size={10} color={C.fg2}>{`${on}/${HAZ_TYPES.length} ON`}</T>
+      </View>
+      <HazardChips />
+    </View>
+  );
+}
+
 /** Which sol's heating index to show, its three levels and what they mean. */
 export function DustDevilControls() {
   const { state: S, patch } = useApp();

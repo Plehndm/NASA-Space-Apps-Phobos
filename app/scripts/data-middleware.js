@@ -8,7 +8,8 @@ const { createReadStream, existsSync, realpathSync, statSync } = require("node:f
 const { extname, join, normalize, resolve, sep } = require("node:path");
 const { createGzip } = require("node:zlib");
 
-const ROOT = resolve(__dirname, "../data");
+// MAP_DATA_DIR points the tests at a temporary folder; otherwise app/data/.
+const ROOT = resolve(process.env.MAP_DATA_DIR || resolve(__dirname, "../data"));
 const realRoot = () => { try { return realpathSync(ROOT); } catch { return ROOT; } };
 const PREFIX = "/mapdata/";
 

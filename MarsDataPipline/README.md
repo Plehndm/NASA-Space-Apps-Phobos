@@ -12,7 +12,7 @@ Modelled ground and near-surface air temperature for Gale Crater, Mars, for the 
 | Understand the model and its limits | `docs/progress.md` (newest first), `docs/discoveries.md` |
 | See what was tried and rejected | `docs/closed_ideas.md` |
 | See what comes next | `docs/plan.md` |
-| Get the background | `docs/1D Thermal Baseline Build Steps.md`, `docs/Gale Crater Diurnal Temperature Model Plan Summary.pdf` |
+| Get the background | `docs/1D Thermal Baseline Build Steps.md`, `docs/discoveries.md` |
 | Work on the code | `CLAUDE.md`: rules, physics spec, environment, commands |
 
 ## Folders

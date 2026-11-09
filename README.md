@@ -95,10 +95,14 @@ NASA-Space-Apps-Phobos/
 │
 ├── mars_streetview/             STREET LEVEL PANORAMAS
 │   ├── README.md                how to download, fill in and build the panoramas
-│   ├── manifest.json            list of panoramas (some lat/lon/hfov/heading still empty)
+│   ├── manifest.json            the 5 panoramas: position, view, source URL and checksum
+│   ├── fetch_raw.py             downloads the source images into raw/, checked by SHA-256
 │   ├── build_panos.py           NASA panorama -> tile pyramid + panos.json
-│   ├── streetview.js            viewer glue (written for the Google Maps JS API)
-│   └── raw/                     put downloaded source images here (not tracked by git)
+│   ├── streetview.js            original Google Maps viewer (the app has its own)
+│   ├── tests/                   build and fetch tests
+│   └── raw/                     downloaded source images (not tracked by git)
+│
+├── tests/                       repo-wide checks: Markdown links resolve (check_doc_links.py)
 │
 └── phobos/                      local Python virtualenv (not tracked by git)
 ```

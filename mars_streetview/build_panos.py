@@ -18,13 +18,14 @@ For each pano in the manifest:
 
 Credit for all imagery: NASA/JPL-Caltech/MSSS (and USGS for orbital data).
 """
-import argparse, json, math, sys
+import argparse, json, math, re, sys
 from pathlib import Path
 
 import numpy as np
 from PIL import Image
 
-Image.MAX_IMAGE_PIXELS = None  # NASA TIFFs are huge
+# NASA TIFFs are huge (the largest here is ~60 Mpx), but keep a ceiling against decompression bombs.
+Image.MAX_IMAGE_PIXELS = 1_000_000_000
 
 SKY = np.array([196, 160, 128], np.float32)     # Martian daytime sky
 HORIZON = np.array([176, 128, 92], np.float32)
@@ -140,6 +141,11 @@ def main():
     built = []
 
     for p in man["panos"]:
+        # ids name output folders and files: keep them plain. Source files must sit directly in --src.
+        if not re.fullmatch(r"[a-z0-9_]{1,40}", str(p.get("id", ""))):
+            print(f"skip {p.get('id')!r}: id must be 1-40 of a-z, 0-9, _", file=sys.stderr); continue
+        if Path(str(p.get("file", ""))).name != p.get("file") or p["file"] in ("", ".", ".."):
+            print(f"skip {p['id']}: file must be a plain file name inside --src", file=sys.stderr); continue
         f = src_dir / p["file"]
         if not f.exists():
             print(f"skip {p['id']}: {f} not found", file=sys.stderr); continue
@@ -156,7 +162,14 @@ def main():
         vfov = float(p.get("vfov") or hfov * img.height / img.width)
         # Don't upsample past the source's native angular resolution
         native_w = img.width * 360.0 / hfov
-        w = 2 ** int(math.floor(math.log2(min(args.width, max(1024, native_w)))))
+        # A pano may raise the cap ("max_width"): narrow strips otherwise keep only a sliver of their detail.
+        cap = int(p.get("max_width") or args.width)
+        w = 2 ** int(math.floor(math.log2(min(cap, max(1024, native_w)))))
+        # Don't reproject more source pixels than the output can hold: shrinking first is faster,
+        # uses far less memory, and avoids the aliasing of bilinear sampling from a much larger image.
+        need_w = int(math.ceil(w * hfov / 360.0))
+        if img.width > need_w * 1.25:
+            img = img.resize((need_w, max(1, round(img.height * need_w / img.width))), Image.LANCZOS)
         eq = to_equirect(img, hfov=hfov, vfov=vfov, heading=float(p.get("heading", 0)),
                          pitch=float(p.get("pitch", 0)), projection=p.get("projection", "equirect"),
                          out_w=w)
@@ -171,7 +184,8 @@ def main():
                       for b in built if b is not a and dist_m(a, b) <= args.link_radius_m]
     meta = {"tile": args.tile, "credit": man.get("credit", ""), "panos": {
         b["id"]: {k: b[k] for k in ("id", "title", "lat", "lon", "world_w", "max_zoom",
-                                    "links", "source", "heading") if k in b} for b in built}}
+                                    "links", "source", "heading", "pitch", "sol", "camera", "hfov", "vfov", "waypoint")
+                  if k in b} for b in built}}
     (out_dir / "panos.json").write_text(json.dumps(meta, indent=2))
     print(f"wrote {out_dir/'panos.json'} ({len(built)} panos)")
 

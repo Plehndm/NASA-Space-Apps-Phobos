@@ -1,4 +1,5 @@
-// Layers card (Settings → Layer controls = PANEL): elevation strata, ground / air temperature,
+// Layers card (the Layers button with Settings → Layer controls = PANEL, or ALL LAYERS in the dock's
+// elevation popover): elevation strata, ground / air temperature,
 // warning zones with the dust-devil heating index, landing points, and the always-on imagery.
 import { Pressable, View } from "react-native";
 import { useApp } from "../state/store";

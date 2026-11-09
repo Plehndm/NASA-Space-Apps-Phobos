@@ -88,8 +88,13 @@ npm run data
 
 ```bash
 npm run typecheck        # TypeScript
+npm test                 # 91 unit and HTTP tests (Vitest), well under a second
+npm run test:py          # Street Level build/fetch tests and the repo-wide doc link check (Python)
+npm run test:all         # all three
 npm run doctor           # Expo dependency and config checks
 ```
+
+The tests in `app/tests/` cover what can run without a phone: the route planner on synthetic terrain (and on the real terrain to every landmark, when `app/data/` is built), search and coordinate parsing, τ, landmark positions, the panorama list and looping strip, the offline assistant's answers and sector snapshot, and both dev-server middlewares over real HTTP (map data: path traversal, symlinks, methods, gzip; assistant: key handling, origin and host checks, size and rate limits, upstream errors, against a fake Claude API, so no key is used). React Native and Expo are stubbed (`tests/stubs/`), so screens and gestures are still checked by hand in the iOS Simulator and the browser. `mars_streetview/tests/` and `tests/` (repo root) hold the Python tests; `test:py` needs the map-data venv in `app/.venv`.
 
 Add libraries with `npx expo install <package>`, not `npm install`. It picks the version that matches SDK 58. Only libraries included in Expo Go will work in Expo Go; check the library's page on docs.expo.dev for "Included in Expo Go".
 
@@ -116,6 +121,7 @@ Add libraries with `npx expo install <package>`, not `npm install`. It picks the
 - **Data hosting:** `src/map/data.ts` loads `manifest.json` and the terrain grid; `scripts/build_map_data.py`, `scripts/serve-data.mjs`.
 - **Layers** (`src/map/layers/`): CTX tiles, elevation strata, temperature (ground / air, season, LTST slider + play, kelvin legend), hazard zones with type filters, the dust-devil heating index, 19 landmarks with rank-based labels and a selected state, the rover.
 - **Layer controls:** `src/map/LayerControls.tsx`, used by the dock popovers (`src/layers/DockPopovers.tsx`) and the Layers card (`src/cards/Layers.tsx`).
+- **Everything is reachable with default settings.** Settings → Layer picker = DOCK (the default) opens popovers from the Layers and HM buttons; the elevation popover's **ALL LAYERS** opens the Layers card (landing points, dust-devil sol, every layer at once). While warning zones are on (⚠ button), a **WARNING ZONES · FILTER BY HAZARD** row with the five hazard chips and an "x/5 ON" count sits at the top of the Home, Waypoint, Sequence and Expedition sheets, as in the design. With Layer picker = PANEL, the Layers button opens the Layers card directly. The other settings only switch between two presentations of the same feature (hazard banner or advisory card, stepped or compact progress, chip counts or codes).
 - **Landmarks and hazards:** `src/map/landmarks.ts`, `src/map/hazards.ts`. Real sites use approximate published positions; the invented ones (habitat, relays, pads, checkpoints) and the hazard zones are placed on suitable real ground, read from the terrain data. Each file says how.
 
 ## Where your feature goes
@@ -138,6 +144,7 @@ src/
 ├── map/MapOverlays.tsx    coordinate pill, scale bar, heat legend, recenter button
 ├── layers/DockPopovers.tsx  elevation + heat popovers beside the dock
 ├── assistant/             route assistant: backend client, sector snapshot, scripted fallback, chat state
+├── street/                Street Level: panorama list (panos.ts), 360° viewer (PanoView.tsx), screen (StreetLevel.tsx)
 └── cards/CardStack.tsx    one entry per sheet mode
 ```
 
@@ -156,7 +163,7 @@ src/
 - **Route state and actions** (`src/route/RouteProvider.tsx`, `useRoutes()`): cached routes, select / add stop / navigate / reorder / remove, the 100 ms expedition simulation (speed by grade × demo speed), via-points, automatic safe reroute, "Nearest safe approach" / "Nearest reachable point".
 - **On the map** (`src/route/RouteLayer.tsx`): active route with casing, grades over 12° in warm, the alternative as dots, tappable time pills, the driven part dimmed. Sequence stops get numbered badges.
 - **Cards** (`src/cards/`): `Waypoint.tsx` (route picker, elevation profile, Add stop / Street Level / NAVIGATE, "No safe route found"), `Sequence.tsx` (multi-stop, ↑ ↓ ×, Route #1 hazard warning), `Expedition.tsx` (stepped and compact progress cards, the pinned ETA card, hazard and steep-grade warnings, REROUTE / via-points, Arrived).
-- Street Level is a toast until that feature is built.
+- Street Level opens from the Waypoint eye button (section 6).
 
 ## What's built (checklist section 4: Search and home)
 
@@ -174,6 +181,21 @@ The assistant runs **offline**: no API key is configured, and every answer comes
   - To try it: create `app/.env.local` (git-ignored) with `ANTHROPIC_API_KEY=sk-ant-...` and restart Expo. Never use an `EXPO_PUBLIC_…` name, which is built into the app. The Claude API is billed per use and the cost per message hasn't been measured, so use a spend-limited key and check the live path before relying on it.
   - Limits: 12 requests a minute per address, 3 at once, 64 KB bodies, 16 messages of history, JSON only. Requests must come from the app's own origin or a native app, and the Host must be an IP address, `localhost` or an Expo tunnel (blocks DNS-rebinding pages). The dev server listens on your network, so anyone on the same Wi-Fi could reach a configured key.
   - Hosted: `ANTHROPIC_API_KEY=… npm run assistant` (port 8093), with `ASSISTANT_ALLOW_HOSTS=<domain>`, `ASSISTANT_ALLOW_ORIGINS=https://<web app origin>` for a web build elsewhere, and the app built with `EXPO_PUBLIC_ASSISTANT_URL=https://<domain>/api/assistant`.
+
+## What's built (checklist section 6: Street Level)
+
+- **Panoramas** (`mars_streetview/`): five NASA Curiosity panoramas in `raw/` (git-ignored, about 113 MB, from science.nasa.gov/photojournal): Bradbury Landing (Navcam, sol 2, 360°), Rocknest (Mastcam, sol ~70, 171°), Point Lake by Yellowknife Bay (Mastcam, sol 106, 360°), Naukluft Plateau (Mastcam, sol 1284, 130°), and Gale's north rim toward Peace Vallis (Mastcam, sol 4640, 102°). The two GigaPan sources in the original manifest had no full-resolution download, so Rocknest and Point Lake use their official Photojournal versions. `manifest.json` records where every value came from (`_how`): positions from the PDS localization table, field of view from captions or the camera's pixel scale, centre heading from captions or from Mount Sharp's bearing on the terrain grid, pitch from each image's horizon row.
+- **Download and build** (from `app/`, with the map-data venv):
+
+  ```bash
+  npm run panos
+  ```
+
+  `fetch_raw.py` downloads the five images (113 MB) from NASA's asset server into `mars_streetview/raw/`, checking each against the size and SHA-256 in the manifest, and skips files already there; then `build_panos.py` builds them. The build takes about 1.5 minutes and 14 GB of memory; writes 32 MB of tiles and `panos.json` to `app/data/panos/`, which the Expo dev server already serves at `/mapdata/panos/`. Bradbury, Rocknest and Point Lake are within 5 km of each other, so they link; the two rim views stand alone.
+- **Viewer** (`src/street/`): replaces `mars_streetview/streetview.js` (Google Maps only, not used by the app). It fills the screen with real imagery and turns without end. Zoom-out and tilt stop at the edge of the imagery (trimmed 8% top and bottom for the ragged mosaic edges), so the empty sphere never shows. A full circle simply goes round. A partial panorama (Rocknest 171°, Naukluft 130°, the rim view 102°) repeats end to end with a faint seam where its edges meet. The compass, HDG and walking arrows always give the true bearing of what is on screen, and the compass ticks tighten as you zoom in. Drag to turn, flick to keep turning (it eases to a stop; touch to catch it), pinch or the mouse wheel to zoom, arrow keys and +/- on web, Escape or Back to leave. Only the tiles in view are drawn, at the zoom that matches the screen, over the whole sphere at zoom 0 so there is never a hole. The view is a flat window onto the sphere (no perspective correction), so lines bend slightly near the top and bottom of a wide view. On a phone a short strip opens zoomed in, because its full height has to fill a tall screen.
+- **Opening it:** the Waypoint eye button opens the panorama assigned to that waypoint in the manifest (`"waypoint"`), else the nearest within 3 km; it is dimmed, with a toast, when there is none. It faces the waypoint when that direction has imagery, otherwise the centre of the image. Navigate here starts an expedition to the waypoint the panorama shows.
+- **Walking:** arrows on the ground point at linked panoramas (from `links` in `panos.json`, with name, distance and direction); tap one to walk there, facing the way you walked. Links out of view show as chips at the edge: tap one to turn toward it, or, when its bearing has no imagery (Bradbury seen from Rocknest), to walk straight there.
+- `panos.json` is checked on load (ids, numbers in range, links only between known panoramas). The build rejects ids and file names that could leave its folders, and keeps a 1-gigapixel ceiling on source images.
 
 ## Using the store
 

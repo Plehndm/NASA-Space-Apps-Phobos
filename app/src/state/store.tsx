@@ -60,6 +60,7 @@ export interface AppState {
   recent: string[]; // recent searches, landmark ids (most recent first, max 4)
   rover: Rover;
   coord: string | null; // coordinate pill text (tap on the map, recenter)
+  street: { pano: string; heading: number; from: string | null } | null; // Street Level open: panorama, view heading, the waypoint it was opened from
 }
 
 // Zoom is screen px per world px (100 m). The prototype's range was 0.7–4.2 on a 51 km map; the real
@@ -157,6 +158,7 @@ export function AppProvider({ geo, children }: { geo: Geometry; children: ReactN
     recent: ["rocknest", "pahrump", "murray"], // the design's defaults until the device has its own
     rover: ROVER_START,
     coord: null,
+    street: null,
   }));
   const sheetTop = useRef(new Animated.Value(geo.snap.peek)).current;
 

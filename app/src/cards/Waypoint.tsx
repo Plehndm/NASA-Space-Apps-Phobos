@@ -11,6 +11,8 @@ import { fmtLatLon } from "../map/geo";
 import { ElevationProfile } from "../route/ElevationProfile";
 import { useRoutes } from "../route/RouteProvider";
 import { deg, fmtElev, fmtKm, fmtMin } from "../route/format";
+import { bearing, diff180, panoNear, STREET_RADIUS_KM, usePanos } from "../street/panos";
+import type { Landmark } from "../map/landmarks";
 
 export function NoteBubble({ children }: { children: ReactNode }) {
   return (
@@ -144,17 +146,7 @@ export function WaypointCard() {
         <Pressable onPress={r.addStopSel} accessibilityRole="button" style={{ height: 50, paddingHorizontal: 16, borderRadius: 999, backgroundColor: C.raised, justifyContent: "center" }}>
           <T w={600} size={14}>Add stop</T>
         </Pressable>
-        <Pressable
-          onPress={() => toast("Street Level isn't built yet (checklist: Street Level)")}
-          accessibilityRole="button"
-          accessibilityLabel="Street level"
-          style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: C.raised, alignItems: "center", justifyContent: "center" }}
-        >
-          <Svg pointerEvents="none" viewBox="0 0 20 20" width={20} height={20} fill="none" stroke={C.accent2} strokeWidth={1.6}>
-            <Path d="M2 10s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5Z" />
-            <Circle cx="10" cy="10" r="2.5" />
-          </Svg>
-        </Pressable>
+        <StreetButton l={sel} />
         <Pressable
           onPress={r.startNav}
           accessibilityRole="button"
@@ -169,5 +161,37 @@ export function WaypointCard() {
     </>,
     fmtMin(act.min),
     `${fmtKm(act.px)} · max ${deg(act.maxGrade)}${via ? ` · via ${via} stop${via > 1 ? "s" : ""}` : ""}`,
+  );
+}
+
+/** Eye button: opens Street Level at the nearest rover panorama, facing the waypoint. Dimmed when none is close. */
+function StreetButton({ l }: { l: Landmark }) {
+  const { patch, toast } = useApp();
+  const panos = usePanos();
+  const near = panoNear(panos, l);
+  const open = () => {
+    if (!near) {
+      toast(panos === undefined ? "Loading rover panoramas…" : `No rover panorama within ${STREET_RADIUS_KM} km of ${l.name}`);
+      return;
+    }
+    // Face the waypoint when it's off in the distance and inside the imagery; otherwise (standing on
+    // it, its own panorama, or no imagery that way) face the centre of the image.
+    const b = bearing(near.pano, l), p = near.pano;
+    const visible = Math.abs(diff180(b, p.heading)) <= p.hfov / 2 - 15;
+    const heading = near.km >= 0.15 && p.waypoint !== l.id && visible ? b : p.heading;
+    patch({ street: { pano: near.pano.id, heading, from: l.id } });
+  };
+  return (
+    <Pressable
+      onPress={open}
+      accessibilityRole="button"
+      accessibilityLabel={near ? `Street level: ${near.pano.title}` : "Street level (no panorama nearby)"}
+      style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: C.raised, alignItems: "center", justifyContent: "center", opacity: near ? 1 : 0.45 }}
+    >
+      <Svg pointerEvents="none" viewBox="0 0 20 20" width={20} height={20} fill="none" stroke={C.accent2} strokeWidth={1.6}>
+        <Path d="M2 10s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5Z" />
+        <Circle cx="10" cy="10" r="2.5" />
+      </Svg>
+    </Pressable>
   );
 }

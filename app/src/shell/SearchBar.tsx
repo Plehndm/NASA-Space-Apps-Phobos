@@ -26,6 +26,15 @@ export function SearchBar() {
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const pending = useRef(false);
   useEffect(() => { if (!pending.current) setText(S.q); }, [S.q]); // cleared from elsewhere
+  // Leaving Search (a result opened, or Home) drops any typing still waiting and shows the store's
+  // query. Opening a result flushes the text and clears it in the same update, so the effect above
+  // never sees the query change and the field would keep the old text.
+  useEffect(() => {
+    if (searching) return;
+    clearTimeout(timer.current);
+    pending.current = false;
+    setText(S.q);
+  }, [searching]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => clearTimeout(timer.current), []);
   const type = (q: string) => {
     const v = q.slice(0, MAX_QUERY);

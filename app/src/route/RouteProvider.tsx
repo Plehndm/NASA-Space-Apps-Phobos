@@ -42,7 +42,7 @@ export interface RouteApi {
   select: (id: string, from?: "map" | "search") => void;
   pickRoute: (opt: 1 | 2) => void;
   addStopSel: () => void;
-  startNav: () => void;
+  startNav: (id?: unknown) => void; // to `id`, or the selected landmark
   navAll: () => void;
   moveStop: (i: number, d: -1 | 1) => void;
   removeStop: (i: number) => void;
@@ -219,8 +219,9 @@ export function RouteProvider({ children }: { children: ReactNode }) {
     [patch, snapTo, toast, centerOn],
   );
 
-  const startNav = useCallback(() => {
-    const s = latest.current.S, id = s.sel;
+  // Pressables pass their press event, so only a string counts as a landmark id.
+  const startNav = useCallback((target?: unknown) => {
+    const s = latest.current.S, id = typeof target === "string" ? target : s.sel;
     if (!id) return;
     beginNav(s.stops.includes(id) ? s.stops : [...s.stops, id]);
   }, [beginNav]);

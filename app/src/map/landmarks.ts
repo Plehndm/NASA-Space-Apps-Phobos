@@ -1,7 +1,10 @@
 // The 19 landmarks from the design, on the real map.
 //
 // `real: true` sites are places Curiosity visited (or Mount Sharp's highest point, read off the DEM);
-// their positions are approximate published locations, good to a few hundred metres. `real: false`
+// their positions are approximate published locations, good to a few hundred metres. Two are exact rover
+// positions from PDS msl_places/data_localizations/localized_pos.csv: The Rocknest (site 5, sols 59-100)
+// and Yellowknife Bay at the John Klein drill site (site 6, parked sols 166-270, drilled sol 182).
+// Bradbury Landing is the landing point itself. `real: false`
 // sites (habitats, relays, landing pads, checkpoints, two craters) are invented for the scenario and
 // placed on suitable real ground near the traverse: flat floor for pads and checkpoints, real craters
 // for the craters. Elevation and slope come from the terrain grid at run time, not from this table.
@@ -26,10 +29,10 @@ const L: Omit<Landmark, "x" | "y">[] = [
   { id: "bradbury", name: "Bradbury Landing", cat: "Landing", lon: 137.4417, lat: -4.5895, rank: 1, real: true,
     desc: "Curiosity touchdown site, Sol 0. Flat alluvial plain with cached supplies.",
     note: "Home base. Every route starts from the rover unless you move it." },
-  { id: "yellowknife", name: "Yellowknife Bay", cat: "Water-Ice", lon: 137.4466, lat: -4.5885, rank: 2, real: true,
+  { id: "yellowknife", name: "Yellowknife Bay", cat: "Water-Ice", lon: 137.44913, lat: -4.58948, rank: 2, real: true,
     desc: "Ancient lakebed mudstone; first drill site (John Klein).",
     note: "Low-slope approach from the west. Good first science stop." },
-  { id: "rocknest", name: "The Rocknest", cat: "Geological", lon: 137.4443, lat: -4.5872, rank: 1, real: true,
+  { id: "rocknest", name: "The Rocknest", cat: "Geological", lon: 137.44834, lat: -4.59000, rank: 1, real: true,
     desc: "Wind-drift sand shadow; first scoop samples of the mission.",
     note: "Route #2 adds 6 min but stays out of the afternoon dust-devil heating zone." },
   { id: "pahrump", name: "Pahrump Hills", cat: "Geological", lon: 137.37, lat: -4.665, rank: 1, real: true,
