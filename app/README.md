@@ -137,10 +137,11 @@ src/
 ├── map/LayerControls.tsx  layer controls shared by the popovers and the Layers card
 ├── map/MapOverlays.tsx    coordinate pill, scale bar, heat legend, recenter button
 ├── layers/DockPopovers.tsx  elevation + heat popovers beside the dock
-└── cards/CardStack.tsx    one entry per sheet mode; placeholders until built
+├── assistant/             route assistant: backend client, sector snapshot, scripted fallback, chat state
+└── cards/CardStack.tsx    one entry per sheet mode
 ```
 
-- **A sheet screen** (Home, Search, Waypoint, Sequence, Expedition, Arrived, Layers, Assistant): create `src/cards/<Name>.tsx`, then replace its `<Placeholder>` entry in `src/cards/CardStack.tsx`.
+- **A sheet screen**: create `src/cards/<Name>.tsx` and add it to the mode's entry in `src/cards/CardStack.tsx`.
 - **A map layer:**
   - **Images** (rasters that should zoom with the map): add a component in `src/map/layers/` and list it inside the world container in `src/shell/MapArea.tsx`, positioned absolutely in world px (`toWorld({ lon, lat })` from `geo.ts`).
   - **Markers, labels, lines and shapes:** put them in the overlay next to `LandmarkLayer` and wrap each in `<Pin x y>`. iOS stretches anything inside the zoomed container, so text and SVG there go blurry; `HazardLayer` shows how to draw a shape for the current zoom. Use `react-native-svg` for shapes and routes.
@@ -162,6 +163,17 @@ src/
 - **Search** (`src/cards/Search.tsx`, `src/home/search.ts`, `src/shell/SearchBar.tsx`): category chips with counts or codes (Settings → Category chips), results nearest first, recent searches (kept on the device, max 4, Clear History), Enter opens the nearest match and Escape (web) leaves. Coordinates like `4.6S 137.4E` jump the map there. While searching, non-matching markers dim and matches keep their labels. With a sequence planned (or during a drive), picking a result adds it as a stop. The field keeps its own text and updates the store 120 ms after typing pauses, so fast typing isn't dropped on iOS.
 - **Home** (`src/cards/Home.tsx`): sector card (tap to recenter), the three nearest landmarks, and the dust-devil advisory from the real heating-index grid (nearest strongly heated ground; WATCH under 5 km). Settings → Hazard alerts = TOP BANNER shows the nearest hazard as a blinking pill on the map instead (`src/map/MapOverlays.tsx`). The sector card and advisory also sit under the Waypoint and Arrived cards, as in the design.
 - **Live telemetry** (`src/home/telemetry.ts`): surface temperature from the ground model at the rover (season nearest the sol's Ls, frame for the rover's local solar time, refreshed each minute), τ for the demo sol from the Mastcam table (interpolated within 5 sols, as the pipeline does), slope from the DEM.
+
+## What's built (checklist section 5: Route assistant)
+
+The assistant runs **offline**: no API key is configured, and every answer comes from the scripted fallback below, built on the app's own sector data. The status line reads "OFFLINE ASSISTANT · answers from sector data". A backend for a live Claude model is in place but switched off; it has only been tested against a local mock of the API, never the real one.
+
+- **Chat** (`src/cards/Assistant.tsx`, `src/assistant/AssistantProvider.tsx`): bubbles, TRY suggestions, a busy pill, the status line, and a PROPOSED ROUTE card under any answer that plans one (stops with leg lengths, total distance and time including 25 min per stop, AVOIDS). LOAD ROUTE puts the stops in the multi-stop sequence on Route #2 (not during an expedition). The input row is pinned under the chat and rides above the iOS keyboard. The conversation survives closing the assistant.
+- **Scripted answers** (`src/assistant/scripted.ts`): by keyword, from the planned routes, hazard zones, dust-devil heating and telemetry: a named landmark (safe route, or why it's blocked), hazards toward a named place, a general hazard check, a 3-stop science day (the nearest reachable science sites), weather and dust, or a short help text.
+- **Live-model backend, off** (`scripts/assistant-middleware.js`, `src/assistant/api.ts`, `src/assistant/context.ts`): `POST /api/assistant` on the Expo dev server would call the Claude API (Claude Opus 5.5) with the key held on the server, never in the app. The app sends the conversation and a snapshot of the sector; the server caps every field, writes the system prompt itself, and keeps only landmark and hazard ids the app sent. `GET /api/assistant` reports whether a key is set; with none, the app never sends chat to the server. Any failure falls back to the scripted answers.
+  - To try it: create `app/.env.local` (git-ignored) with `ANTHROPIC_API_KEY=sk-ant-...` and restart Expo. Never use an `EXPO_PUBLIC_…` name, which is built into the app. The Claude API is billed per use and the cost per message hasn't been measured, so use a spend-limited key and check the live path before relying on it.
+  - Limits: 12 requests a minute per address, 3 at once, 64 KB bodies, 16 messages of history, JSON only. Requests must come from the app's own origin or a native app, and the Host must be an IP address, `localhost` or an Expo tunnel (blocks DNS-rebinding pages). The dev server listens on your network, so anyone on the same Wi-Fi could reach a configured key.
+  - Hosted: `ANTHROPIC_API_KEY=… npm run assistant` (port 8093), with `ASSISTANT_ALLOW_HOSTS=<domain>`, `ASSISTANT_ALLOW_ORIGINS=https://<web app origin>` for a web build elsewhere, and the app built with `EXPO_PUBLIC_ASSISTANT_URL=https://<domain>/api/assistant`.
 
 ## Using the store
 

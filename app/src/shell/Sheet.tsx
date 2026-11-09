@@ -1,9 +1,10 @@
-import { useMemo, useRef, type ReactNode } from "react";
+import { useMemo, useRef, type ComponentRef, type ReactNode } from "react";
 import { Animated, PanResponder, ScrollView, View } from "react-native";
 import { useApp, type SnapName } from "../state/store";
 import { C, R, SHADOW } from "../theme";
 import { SearchBar } from "./SearchBar";
 import { CardStack } from "../cards/CardStack";
+import { AssistantInput } from "../cards/Assistant";
 
 /** Drag handle for the phone sheet. A tap steps peek → half → full → peek; a drag snaps to the nearest point. */
 function Handle() {
@@ -57,21 +58,27 @@ function Handle() {
  * Both hold the same content: pinned slot (ETA card while navigating), search bar, scrolling card stack.
  */
 export function Sheet({ pinned }: { pinned?: ReactNode }) {
-  const { geo, sheetTop } = useApp();
+  const { geo, sheetTop, state } = useApp();
   const desk = geo.device === "desktop";
+  const chat = state.mode === "assistant";
+  const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
 
   const body = (
     <>
       {pinned}
       <SearchBar />
       <ScrollView
+        ref={scroll}
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 28 + geo.insetBottom, gap: 10 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: chat ? 12 : 28 + geo.insetBottom, gap: 10 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        // The assistant's chat keeps its newest message in view.
+        onContentSizeChange={() => chat && scroll.current?.scrollToEnd({ animated: true })}
       >
         <CardStack />
       </ScrollView>
+      {chat && <AssistantInput insetBottom={geo.insetBottom} />}
     </>
   );
 

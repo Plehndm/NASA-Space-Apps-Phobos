@@ -4,14 +4,11 @@ import { LayersCard } from "./Layers";
 import { WaypointCard } from "./Waypoint";
 import { SequenceCard } from "./Sequence";
 import { ArrivedCard, ExpeditionCard } from "./Expedition";
-import { Placeholder } from "./Placeholder";
 import { HomeCard, SectorHeader } from "./Home";
 import { SearchCard } from "./Search";
+import { AssistantCard } from "./Assistant";
 
-/**
- * One entry per sheet mode. Each feature replaces its placeholder with a real component
- * (put it in src/cards/<Name>.tsx and swap it in here).
- */
+/** One entry per sheet mode; each card lives in src/cards/<Name>.tsx. */
 const CARDS: Record<Mode, () => ReactNode> = {
   home: () => <HomeCard />,
   search: () => <SearchCard />,
@@ -20,7 +17,7 @@ const CARDS: Record<Mode, () => ReactNode> = {
   nav: () => <ExpeditionCard />,
   arrived: () => <><ArrivedCard /><SectorHeader /></>,
   layers: () => <LayersCard />,
-  assistant: () => <Placeholder title="✦ Route assistant" item="Assistant chat UI" note="Chat bubbles, proposed-route card, input row." />,
+  assistant: () => <AssistantCard />,
 };
 
 export function CardStack() {

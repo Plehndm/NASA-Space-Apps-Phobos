@@ -3,6 +3,7 @@
   "version": "0.2.0",
   "main": "index.ts",
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.6.0",
     "@expo-google-fonts/plus-jakarta-sans": "^0.4.2",
     "@expo/metro-runtime": "~58.0.16",
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -33,7 +34,8 @@
     "typecheck": "tsc --noEmit",
     "doctor": "expo-doctor",
     "design": "node scripts/serve-design.mjs",
-    "data": "node scripts/serve-data.mjs"
+    "data": "node scripts/serve-data.mjs",
+    "assistant": "node scripts/serve-assistant.mjs"
   },
   "private": true
 }

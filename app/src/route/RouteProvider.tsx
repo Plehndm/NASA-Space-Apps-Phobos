@@ -17,7 +17,7 @@ const TICK_MS = 100; // the design's simulation step
 
 export interface RouteOptions { direct: Route; safe: Route }
 
-interface RouteApi {
+export interface RouteApi {
   ready: boolean; // terrain loaded and the routing grid built
   lm: (id: string | null | undefined) => Landmark | null;
   zones: HazardZone[]; // hazard zones whose filter chip is on
