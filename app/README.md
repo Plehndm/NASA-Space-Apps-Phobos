@@ -62,10 +62,25 @@ It prints a QR code and a menu, then waits. Saving a file reloads every connecte
 
 | Where | How |
 | --- | --- |
-| **Browser** | Press **w**, or open <http://localhost:8081>. Add `?device=phone` or `?device=desktop` to pick a layout (by default, windows 900 px or wider get the desktop layout). `?scene=settings` opens Settings on load. |
+| **Browser** | Press **w**, or open <http://localhost:8081>. Add `?device=phone` or `?device=desktop` to pick a layout (by default, windows 900 px or wider get the desktop layout). Add `&scene=<name>` to open a demo scene (below). |
 | **Your phone** | Install **Expo Go** (App Store or Google Play; it must support SDK 58). Put the phone on the **same Wi-Fi** as the computer and scan the QR code: on iPhone with the Camera app, on Android from inside Expo Go. |
 | **iOS Simulator** (Mac) | Press **i**. Needs Xcode with an iOS simulator installed. |
 | **Android emulator** | Press **a**. Needs Android Studio with an emulator running. |
+
+#### Demo scenes
+
+For screenshots, the slide deck and the demo video, `?scene=<name>` jumps the app into one state on load, for example <http://localhost:8081/?device=phone&scene=nav>. It works next to `?device=`. Scenes marked * plan routes, so they wait for the map data and then apply once (with no map data they show a toast and do nothing). On a phone in Expo Go, start the dev server with `EXPO_PUBLIC_SCENE=<name> npx expo start` (PowerShell: `$env:EXPO_PUBLIC_SCENE='<name>'; npx expo start`); the variable only counts in development builds, and the URL wins on web. The scenes live in `src/state/scenes.ts` and are applied by `src/shell/DemoScene.tsx`.
+
+| Scene | Shows |
+| --- | --- |
+| `home` | the normal start (same as no scene) |
+| `layers` | temperature layer on with its popover open, hazard zones on, sheet at peek |
+| `search` | Search with the Geological chip, sheet at half |
+| `waypoint` * | The Rocknest selected: Waypoint card with its routes, sheet at half |
+| `route` * | the sequence Yellowknife Bay → The Rocknest → Pahrump Hills on Route #2, sheet at half |
+| `nav` * | an expedition to The Rocknest then Pahrump Hills, jumped to 30% and still driving, sheet at half, map on the rover (zoom ≥ 1.9) |
+| `assistant` * | the assistant full height, asked "Plan a 3-stop science day that stays clear of dust devils", with the offline scripted answer and its proposed route (no network) |
+| `settings` | the Settings dialog |
 
 To check it's working: the map shows satellite imagery around Bradbury Landing, the header shows "Sol 742", and the Home card shows surface temperature and dust opacity.
 
@@ -111,7 +126,7 @@ The app reads `app/data/` from the dev server at `/mapdata/` (`metro.config.js`,
 
 ```bash
 npm run typecheck        # TypeScript
-npm test                 # 91 unit and HTTP tests (Vitest), well under a second
+npm test                 # 98 unit and HTTP tests (Vitest), well under a second
 npm run test:py          # Street Level build/fetch tests and the repo-wide doc link check (Python)
 npm run test:all         # all three
 npm run doctor           # Expo dependency and config checks

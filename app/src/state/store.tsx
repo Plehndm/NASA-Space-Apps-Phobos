@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Animated, Easing, Platform } from "react-native";
+import { Animated, Easing } from "react-native";
 import type { Geometry } from "../layout/geometry";
 import { GRID, toWorld, type Pt } from "../map/geo";
 import { EASE } from "../theme";
@@ -92,8 +92,6 @@ export function clampView(v: View, g: Geometry): View {
   return { s, tx: cx - wx * s, ty: cy - wy * s, anim: v.anim };
 }
 
-const webScene = () => (Platform.OS === "web" && typeof location !== "undefined" ? new URLSearchParams(location.search).get("scene") : null);
-
 interface Store {
   state: AppState;
   geo: Geometry;
@@ -128,7 +126,7 @@ export function AppProvider({ geo, children }: { geo: Geometry; children: ReactN
   const [state, setState] = useState<AppState>(() => ({
     mode: "home",
     sheetY: geo.snap.peek,
-    settingsOpen: webScene() === "settings",
+    settingsOpen: false,
     overrides: {},
     toast: null,
     view: initialView(geo),

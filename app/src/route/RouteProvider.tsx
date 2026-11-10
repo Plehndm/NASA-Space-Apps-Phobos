@@ -43,6 +43,9 @@ export interface RouteApi {
   pickRoute: (opt: 1 | 2) => void;
   addStopSel: () => void;
   startNav: (id?: unknown) => void; // to `id`, or the selected landmark
+  beginNav: (stops: string[]) => void; // through these stops, in order
+  /** Demo scenes: move the running expedition to `frac` of its length (it keeps driving from there). Returns the rover. */
+  skipAhead: (frac: number) => Pt | null;
   navAll: () => void;
   moveStop: (i: number, d: -1 | 1) => void;
   removeStop: (i: number) => void;
@@ -228,6 +231,16 @@ export function RouteProvider({ children }: { children: ReactNode }) {
   }, [beginNav]);
   const navAll = useCallback(() => beginNav(latest.current.S.stops), [beginNav]);
 
+  const skipAhead = useCallback((frac: number) => {
+    const s = latest.current.S, n = s.nav;
+    if (!n) return null;
+    const prog = n.cum[n.cum.length - 1] * Math.min(1, Math.max(0, frac));
+    const p = posAt(n.pts, n.cum, prog);
+    const rover = { x: p.x, y: p.y, h: p.h ?? s.rover.h };
+    patch({ rover, nav: { ...n, prog, legIdx: Math.min(legAt(n, prog), n.stops.length - 1) } });
+    return rover;
+  }, [patch]);
+
   const moveStop = useCallback((i: number, d: -1 | 1) => patch(s => {
     const st = [...s.stops], j = i + d;
     if (j < 0 || j >= st.length) return {};
@@ -360,8 +373,7 @@ export function RouteProvider({ children }: { children: ReactNode }) {
       const prog = Math.min(total, n.prog + (spd * settings.demoSpeed * TICK_MS) / 3_600_000 / pxToKm(1));
       const p = posAt(n.pts, n.cum, prog);
       const rover = { x: p.x, y: p.y, h: p.h ?? s.rover.h };
-      let legIdx = 0;
-      for (let i = 1; i < n.legEnds.length; i++) if (prog >= n.cum[n.legEnds[i]] - 0.01) legIdx = i;
+      const legIdx = legAt(n, prog);
       if (legIdx > n.legIdx && legIdx < n.stops.length) {
         const done = find(n.stops[legIdx - 1]);
         toast(`Reached ${done?.name ?? "stop"} · leg ${legIdx + 1} of ${n.stops.length}`);
@@ -386,14 +398,21 @@ export function RouteProvider({ children }: { children: ReactNode }) {
   const api = useMemo<RouteApi>(
     () => ({
       ready: !!grid, lm, zones, capSafe, capDirect, routeOpts, activeRoute, neededGrade, blockedBy, nearestHazard, elevOf, slopeOf, profileOf,
-      select, pickRoute, addStopSel, startNav, navAll, moveStop, removeStop, clearRoute, addStopSearch, toggleReroute,
+      select, pickRoute, addStopSel, startNav, beginNav, skipAhead, navAll, moveStop, removeStop, clearRoute, addStopSearch, toggleReroute,
       addVia, autoReroute, endNav, dismissArrived, goSafeApproach, overrideRisk,
     }),
     [grid, lm, zones, capSafe, capDirect, routeOpts, activeRoute, neededGrade, blockedBy, nearestHazard, elevOf, slopeOf, profileOf, select, pickRoute,
-      addStopSel, startNav, navAll, moveStop, removeStop, clearRoute, addStopSearch, toggleReroute, addVia, autoReroute, endNav,
+      addStopSel, startNav, beginNav, skipAhead, navAll, moveStop, removeStop, clearRoute, addStopSearch, toggleReroute, addVia, autoReroute, endNav,
       dismissArrived, goSafeApproach, overrideRisk],
   );
   return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
+}
+
+/** Leg the rover is on at distance `prog` along the expedition (a leg counts as done at its end point). */
+function legAt(n: Nav, prog: number): number {
+  let k = 0;
+  for (let i = 1; i < n.legEnds.length; i++) if (prog >= n.cum[n.legEnds[i]] - 0.01) k = i;
+  return k;
 }
 
 /** Hazard zone the rest of the route passes through (not the destination's own zone), for the expedition warning. */

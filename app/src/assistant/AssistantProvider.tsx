@@ -26,7 +26,8 @@ interface AssistantApi {
   chat: ChatMsg[];
   busy: boolean;
   live: boolean | null; // backend has a key (true), has none (false), unknown or unreachable (null)
-  send: (text: string) => void;
+  /** Ask a question. `offline` answers from the scripted fallback without trying the backend (demo scenes). */
+  send: (text: string, opts?: { offline?: boolean }) => void;
   loadRoute: (ids: string[]) => void;
 }
 
@@ -64,7 +65,7 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
     return () => { on = false; };
   }, [open]);
 
-  const send = useCallback(async (input: string) => {
+  const send = useCallback(async (input: string, opts?: { offline?: boolean }) => {
     const text = input.trim().slice(0, MAX_INPUT);
     if (!text || state.current.busy) return;
     const user: ChatMsg = { role: "user", text, raw: text, route: [], avoid: [] };
@@ -74,7 +75,7 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
     await tick(); // let the busy pill draw before the route planning below
     let out: Answer, wasLive = false;
     try {
-      if (live === false) throw new Error("no model");
+      if (live === false || opts?.offline) throw new Error("no model");
       // The backend keeps the last 16 messages; send no more than that.
       const turns: ChatTurn[] = history.slice(-16).map(m => ({ role: m.role, content: m.raw }));
       const a = await askModel(turns, buildContext(sources()));

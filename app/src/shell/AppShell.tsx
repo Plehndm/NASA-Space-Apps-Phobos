@@ -9,6 +9,7 @@ import { EtaCard } from "../cards/Expedition";
 import { Toast } from "./Toast";
 import { SettingsDialog } from "./SettingsDialog";
 import { StreetLevel } from "../street/StreetLevel";
+import { DemoScene } from "./DemoScene";
 
 /** Android back button: close settings, Street Level, then popovers, then return to the home sheet. */
 function useBackButton() {
@@ -40,6 +41,7 @@ export function AppShell() {
         <StreetLevel />
         <Toast />
         <SettingsDialog />
+        <DemoScene />
       </View>
     </View>
   );

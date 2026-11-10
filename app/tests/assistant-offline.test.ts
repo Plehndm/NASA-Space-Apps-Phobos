@@ -9,6 +9,7 @@ import type { RouteApi } from "../src/route/RouteProvider";
 import type { AppState } from "../src/state/store";
 import { mentioned, scripted } from "../src/assistant/scripted";
 import { buildContext, type Sources } from "../src/assistant/context";
+import { ASSISTANT_Q } from "../src/state/scenes";
 
 const rover = { ...toWorld({ lon: 137.4417, lat: -4.5895 }), h: 35 };
 const lm = (id: string | null | undefined) => LANDMARKS.find(l => l.id === id) ?? null;
@@ -106,6 +107,12 @@ describe("scripted answers", () => {
     for (const id of a.route) expect(["Geological", "Water-Ice"]).toContain(lm(id)!.cat);
     expect(a.reply).toMatch(/^A 3-stop science loop on the safe track/);
     expect(a.reply).toContain("75 min of stops");
+  });
+
+  it("plans the science day the assistant demo scene asks for", () => {
+    const a = scripted(ASSISTANT_Q, sources());
+    expect(a.route).toHaveLength(3);
+    expect(a.reply).toMatch(/^A 3-stop science loop on the safe track/);
   });
 
   it("reports the weather from telemetry", () => {
