@@ -22,6 +22,9 @@
       "favicon": "./assets/favicon.png"
     },
     "backgroundColor": "#140b09",
+    "experiments": {
+      "baseUrl": "/NASA-Space-Apps-Phobos"
+    },
     "plugins": [
       "expo-font"
     ]

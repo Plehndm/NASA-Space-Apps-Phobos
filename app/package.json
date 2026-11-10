@@ -40,6 +40,9 @@
     "doctor": "expo-doctor",
     "design": "node scripts/serve-design.mjs",
     "data": "node scripts/serve-data.mjs",
+    "data:pack": "node scripts/package-data.mjs",
+    "data:fetch": "node scripts/fetch-data.mjs",
+    "export:web": "expo export --platform web",
     "assistant": "node scripts/serve-assistant.mjs",
     "panos": "cd ../mars_streetview && node ../app/scripts/py.mjs --system fetch_raw.py && node ../app/scripts/py.mjs build_panos.py manifest.json --src raw --out ../app/data/panos"
   },
