@@ -63,6 +63,9 @@ function Apply({ scene }: { scene: Scene }) {
       case "settings":
         patch({ settingsOpen: true });
         break;
+      case "about":
+        patch({ about: { from: "settings" } });
+        break;
     }
   }, [scene, waiting, status, r, send, patch, setMode, snapTo, toast]);
 

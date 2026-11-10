@@ -81,6 +81,7 @@ For screenshots, the slide deck and the demo video, `?scene=<name>` jumps the ap
 | `nav` * | an expedition to The Rocknest then Pahrump Hills, jumped to 30% and still driving, sheet at half, map on the rover (zoom ≥ 1.9) |
 | `assistant` * | the assistant full height, asked "Plan a 3-stop science day that stays clear of dust devils", with the offline scripted answer and its proposed route (no network) |
 | `settings` | the Settings dialog |
+| `about` | About & credits (opened from Settings): the app, the team, the temperature model's limits and the data credits |
 
 To check it's working: the map shows satellite imagery around Bradbury Landing, the header shows "Sol 742", and the Home card shows surface temperature and dust opacity.
 

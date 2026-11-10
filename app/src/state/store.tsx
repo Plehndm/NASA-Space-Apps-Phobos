@@ -29,6 +29,7 @@ export interface AppState {
   mode: Mode;
   sheetY: number; // phone only: the snap point the bottom sheet is at (or moving to)
   settingsOpen: boolean;
+  about: { from: "settings" | "map"; at?: "limits" } | null; // About & credits open: where it was opened from (closing returns there), and a section to scroll to
   overrides: Partial<Settings>; // in-app settings changes on top of DEFAULT_SETTINGS
   toast: string | null;
   view: View;
@@ -127,6 +128,7 @@ export function AppProvider({ geo, children }: { geo: Geometry; children: ReactN
     mode: "home",
     sheetY: geo.snap.peek,
     settingsOpen: false,
+    about: null,
     overrides: {},
     toast: null,
     view: initialView(geo),

@@ -8,14 +8,16 @@ import { Sheet } from "./Sheet";
 import { EtaCard } from "../cards/Expedition";
 import { Toast } from "./Toast";
 import { SettingsDialog } from "./SettingsDialog";
+import { AboutDialog } from "./AboutDialog";
 import { StreetLevel } from "../street/StreetLevel";
 import { DemoScene } from "./DemoScene";
 
-/** Android back button: close settings, Street Level, then popovers, then return to the home sheet. */
+/** Android back button: close About (back to Settings when it came from there), settings, Street Level, then popovers, then return to the home sheet. */
 function useBackButton() {
   const { state, patch, goHome } = useApp();
   useEffect(() => {
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (state.about) { patch({ about: null, settingsOpen: state.about.from === "settings" }); return true; }
       if (state.settingsOpen) { patch({ settingsOpen: false }); return true; }
       if (state.street) { patch({ street: null }); return true; }
       if (state.elevOpen || state.heatOpen) { patch({ elevOpen: false, heatOpen: false }); return true; }
@@ -25,7 +27,7 @@ function useBackButton() {
       return false; // let the app close
     });
     return () => sub.remove();
-  }, [state.settingsOpen, state.street, state.elevOpen, state.heatOpen, state.viaPending, state.mode, state.nav, state.stops.length, patch, goHome]);
+  }, [state.about, state.settingsOpen, state.street, state.elevOpen, state.heatOpen, state.viaPending, state.mode, state.nav, state.stops.length, patch, goHome]);
 }
 
 /** The whole app frame. Phone and desktop share every component; only geometry differs. */
@@ -41,6 +43,7 @@ export function AppShell() {
         <StreetLevel />
         <Toast />
         <SettingsDialog />
+        <AboutDialog />
         <DemoScene />
       </View>
     </View>

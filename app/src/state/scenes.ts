@@ -5,7 +5,7 @@
 import { Platform } from "react-native";
 import type { Category } from "../map/landmarks";
 
-export const SCENES = ["home", "layers", "search", "waypoint", "route", "nav", "assistant", "settings"] as const;
+export const SCENES = ["home", "layers", "search", "waypoint", "route", "nav", "assistant", "settings", "about"] as const;
 export type Scene = (typeof SCENES)[number];
 
 // What each scene shows. The design's landmark ids all exist in the app.
