@@ -196,7 +196,7 @@ src/
 
 ## What's built (checklist section 5: Route assistant)
 
-The assistant runs **offline**: no API key is configured, and every answer comes from the scripted fallback below, built on the app's own sector data. The status line reads "OFFLINE ASSISTANT · answers from sector data". A backend for a live Claude model is in place but switched off; it has only been tested against a local mock of the API, never the real one.
+The assistant runs **offline**: no API key is configured, and every answer comes from the scripted fallback below, built on the app's own sector data. The status line reads "OFFLINE ASSISTANT · answers from sector data". A backend for a live Claude model is in place but switched off. Its request fields are checked against the Claude API docs and the installed SDK, and tested against a fake API; run the smoke script below to confirm it against the live API.
 
 - **Chat** (`src/cards/Assistant.tsx`, `src/assistant/AssistantProvider.tsx`): bubbles, TRY suggestions, a busy pill, the status line, and a PROPOSED ROUTE card under any answer that plans one (stops with leg lengths, total distance and time including 25 min per stop, AVOIDS). LOAD ROUTE puts the stops in the multi-stop sequence on Route #2 (not during an expedition). The input row is pinned under the chat and rides above the iOS keyboard. The conversation survives closing the assistant.
 - **Scripted answers** (`src/assistant/scripted.ts`): by keyword, from the planned routes, hazard zones, dust-devil heating and telemetry: a named landmark (safe route, or why it's blocked), hazards toward a named place, a general hazard check, a 3-stop science day (the nearest reachable science sites), weather and dust, or a short help text.
@@ -204,6 +204,20 @@ The assistant runs **offline**: no API key is configured, and every answer comes
   - To try it: create `app/.env.local` (git-ignored) with `ANTHROPIC_API_KEY=sk-ant-...` and restart Expo. Never use an `EXPO_PUBLIC_…` name, which is built into the app. The Claude API is billed per use and the cost per message hasn't been measured, so use a spend-limited key and check the live path before relying on it.
   - Limits: 12 requests a minute per address, 3 at once, 64 KB bodies, 16 messages of history, JSON only. Requests must come from the app's own origin or a native app, and the Host must be an IP address, `localhost` or an Expo tunnel (blocks DNS-rebinding pages). The dev server listens on your network, so anyone on the same Wi-Fi could reach a configured key.
   - Hosted: `ANTHROPIC_API_KEY=… npm run assistant` (port 8093), with `ASSISTANT_ALLOW_HOSTS=<domain>`, `ASSISTANT_ALLOW_ORIGINS=https://<web app origin>` for a web build elsewhere, and the app built with `EXPO_PUBLIC_ASSISTANT_URL=https://<domain>/api/assistant`.
+
+### Check the live assistant
+
+The automated tests run the assistant backend against a fake Claude API, so they need no key. To check the real thing with your own key, send one request through the same code the server uses:
+
+```bash
+cd app
+ANTHROPIC_API_KEY=sk-ant-... node scripts/assistant-smoke.mjs
+# PowerShell: $env:ANTHROPIC_API_KEY='sk-ant-...'; node scripts/assistant-smoke.mjs
+```
+
+It prints the HTTP status, the model that answered (and whether Anthropic's server-side fallback answered instead), `stop_reason`, whether the reply parsed into the app's `{reply, route[], avoid[]}` shape, and token usage, then `PASS` or `FAIL` (exit code 0 or 1). It costs one small request and never prints the key. Without a key it says so and exits.
+
+The model defaults to `claude-opus-5-5`. Set `ASSISTANT_MODEL` (in `app/.env.local`, or in the environment of `npm run assistant` or the smoke script) to use another one, for example `claude-sonnet-5-5`. Requests to Claude Fable 5.1, Opus 5.5, Opus 5 and Sonnet 5.5 opt into server-side refusal fallback (`fallbacks: "default"`); other models are sent without it. Use a current model: the request sets `output_config.effort`, which older models reject.
 
 ## What's built (checklist section 6: Street Level)
 

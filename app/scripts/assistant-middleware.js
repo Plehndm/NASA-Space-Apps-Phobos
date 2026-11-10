@@ -11,8 +11,14 @@
 //     from one address. Expo loads app/.env.local into this process, so put ANTHROPIC_API_KEY there
 //     (never as EXPO_PUBLIC_*, which would be bundled into the app).
 //   - by scripts/serve-assistant.mjs, a standalone server for a hosted demo.
+// scripts/assistant-smoke.mjs sends one request built by buildRequest() to the real API, to check it.
 const PATH = "/api/assistant";
-const MODEL = "claude-opus-5-5";
+const DEFAULT_MODEL = "claude-opus-5-5";
+/** ASSISTANT_MODEL overrides the model; read per request so the server env is the only source. */
+const model = () => (process.env.ASSISTANT_MODEL || "").trim() || DEFAULT_MODEL;
+// Models documented to take server-side `fallbacks: "default"` (beta server-side-fallback-2026-07-01).
+// Others get neither the parameter nor the beta header.
+const FALLBACK_MODELS = new Set(["claude-fable-5-1", "claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5"]);
 const MAX_BODY = 64 * 1024;
 const MAX_TURNS = 16; // messages kept from the end of the conversation
 const RATE = { perMin: 12, inFlight: 3 };
@@ -103,29 +109,46 @@ const SCHEMA = {
   additionalProperties: false,
 };
 
-async function ask(body) {
-  const ctx = cleanContext(body.context);
-  const messages = cleanMessages(body.messages);
-  if (!messages) return { status: 400, json: { error: "bad_request" } };
-  const res = await getClient().beta.messages.create({
-    model: MODEL,
-    max_tokens: 4096,
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default", // a declined request is re-run on Anthropic's recommended fallback model
-    output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } },
-    system: systemPrompt(ctx),
-    messages,
-  });
+/** The Messages API request for one app request, or null if the conversation is malformed. */
+function buildRequest(body) {
+  const ctx = cleanContext(body && body.context);
+  const messages = cleanMessages(body && body.messages);
+  if (!messages) return null;
+  const m = model();
+  const fallback = FALLBACK_MODELS.has(m)
+    ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" } // a declined request is re-run on Anthropic's recommended fallback model
+    : {};
+  return {
+    ctx,
+    params: {
+      model: m,
+      max_tokens: 4096,
+      ...fallback,
+      output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } },
+      system: systemPrompt(ctx),
+      messages,
+    },
+  };
+}
+
+/** Turns a Messages API response into the app's {reply, route, avoid} (ids checked against ctx). */
+function readReply(res, ctx) {
   if (res.stop_reason === "refusal") return { status: 502, json: { error: "refused" } };
   if (res.stop_reason === "max_tokens") return { status: 502, json: { error: "truncated" } };
-  const text = res.content.filter(b => b.type === "text").map(b => b.text).join("");
+  const text = (res.content || []).filter(b => b.type === "text").map(b => b.text).join("");
   let j;
   try { j = JSON.parse(text); } catch { return { status: 502, json: { error: "bad_output" } }; }
   const lmIds = new Set(ctx.landmarks.map(l => l.id)), hzIds = new Set(ctx.hazards.map(h => h.id));
-  const reply = typeof j.reply === "string" ? j.reply.trim().slice(0, 900) : "";
+  const reply = j && typeof j.reply === "string" ? j.reply.trim().slice(0, 900) : "";
   if (!reply) return { status: 502, json: { error: "bad_output" } };
   const ids = (a, ok, max) => [...new Set((Array.isArray(a) ? a : []).filter(x => typeof x === "string" && ok.has(x)))].slice(0, max);
   return { status: 200, json: { reply, route: ids(j.route, lmIds, 8), avoid: ids(j.avoid, hzIds, 8), model: res.model } };
+}
+
+async function ask(body) {
+  const req = buildRequest(body);
+  if (!req) return { status: 400, json: { error: "bad_request" } };
+  return readReply(await getClient().beta.messages.create(req.params), req.ctx);
 }
 
 // --- HTTP ---
@@ -187,7 +210,7 @@ function serveAssistant(req, res) {
     res.end();
     return true;
   }
-  if (req.method === "GET") { send(res, 200, { live: configured(), model: configured() ? MODEL : null }); return true; }
+  if (req.method === "GET") { send(res, 200, { live: configured(), model: configured() ? model() : null }); return true; }
   if (req.method !== "POST") { send(res, 405, { error: "method_not_allowed" }, { allow: "GET, POST" }); return true; }
   if (!/^application\/json\b/i.test(req.headers["content-type"] || "")) { send(res, 415, { error: "json_only" }); return true; }
   if (!configured()) { send(res, 503, { error: "not_configured" }); return true; }
@@ -234,4 +257,4 @@ function serveAssistant(req, res) {
   return true;
 }
 
-module.exports = { serveAssistant, PATH, _test: { cleanContext, cleanMessages, systemPrompt } };
+module.exports = { serveAssistant, PATH, DEFAULT_MODEL, model, getClient, buildRequest, readReply, _test: { cleanContext, cleanMessages, systemPrompt } };

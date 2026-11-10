@@ -8,10 +8,11 @@
 //
 //   ANTHROPIC_API_KEY=... npm run assistant          # from app/
 //   ANTHROPIC_API_KEY=... npm run assistant -- 8094  # different port
+//   ASSISTANT_MODEL=claude-sonnet-5-5 npm run assistant  # different model (default claude-opus-5-5)
 import { createServer } from "node:http";
 import { createRequire } from "node:module";
 
-const { serveAssistant, PATH } = createRequire(import.meta.url)("./assistant-middleware.js");
+const { serveAssistant, PATH, model } =createRequire(import.meta.url)("./assistant-middleware.js");
 const PORT = Number(process.argv[2]) || 8093;
 
 if (!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN) {
@@ -27,5 +28,5 @@ server.requestTimeout = 60_000;
 server.headersTimeout = 10_000;
 
 server.listen(PORT, "::", () => {
-  console.log(`\n  Route assistant: http://localhost:${PORT}${PATH}\n  Ctrl+C to stop.\n`);
+  console.log(`\n  Route assistant: http://localhost:${PORT}${PATH} (model ${model()}; ASSISTANT_MODEL changes it)\n  Ctrl+C to stop.\n`);
 });
