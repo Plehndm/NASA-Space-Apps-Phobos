@@ -11,14 +11,17 @@ import type { HeatKind, Manifest } from "./data";
 /** The one-line version, for the map legend. */
 export const HEAT_CHECKED = "Checked at the rover only";
 
-/** The short list beside the heat controls, the same for ground and air. */
-export const KEY_LIMITS: readonly string[] = [
-  "At the rover: about 5 K error (RMSE) for ground, 4 K for air. Not clearly better than a seasonal average of Curiosity's REMS readings.",
-  "Away from the rover, accuracy is not measured: all REMS data comes from an area of about 10 × 5 km.",
-  "Most of the map (82% of pixels) is outside the thermal-inertia range the rover data tests.",
-  "Night air is nearly uniform across the crater: a model limit, not physics.",
-  "Published REMS studies back the THEMIS thermal-inertia scaling near the rover only, not one scale for the whole crater.",
-];
+const ACCURACY = "At the rover: about 5 K error (RMSE) for ground, 4 K for air. Not clearly better than a seasonal average of Curiosity's REMS readings.";
+const SPATIAL = "Away from the rover, accuracy is not measured: all REMS data comes from an area of about 10 × 5 km.";
+const TI_RANGE = "Most of the map (82% of pixels) is outside the thermal-inertia range the rover data tests.";
+const NIGHT_AIR = "Night air is nearly uniform across the crater: a model limit, not physics.";
+const TI_SCALE = "Published REMS studies back the THEMIS thermal-inertia scaling near the rover only, not one scale for the whole crater.";
+
+/** The short list, for the About screen. */
+export const KEY_LIMITS: readonly string[] = [ACCURACY, SPATIAL, TI_RANGE, NIGHT_AIR, TI_SCALE];
+
+/** The short list beside the heat controls. Air is built on the ground map, so it gets every line. */
+export const keyLimits = (kind: HeatKind): string[] => KEY_LIMITS.filter(l => kind === "air" || l !== NIGHT_AIR);
 
 /** Where the full story is, in the project repository. */
 export const LIMITS_DOCS = "MarsDataPipline/README.md and MarsDataPipline/docs/ (plan.md, literature_check.md)";

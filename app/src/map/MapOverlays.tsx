@@ -9,6 +9,7 @@ import { CrosshairIcon } from "../ui/icons";
 import { DATA_URL, useMapData } from "./data";
 import { fmtLatLon, M_PER_PX } from "./geo";
 import { fmtFrame } from "./layers/HeatLayer";
+import { HEAT_CHECKED } from "./heatLimits";
 import { BlinkDot } from "../ui/BlinkDot";
 import { useDustAdvisory, useNearestHazard } from "../home/advisory";
 
@@ -78,19 +79,22 @@ function CoordPill() {
   );
 }
 
-/** Kelvin legend for the temperature layer; hidden while the heat popover (which has its own) is open. */
+/**
+ * Kelvin legend for the temperature layer; hidden while the heat popover (which has its own) is open.
+ * Its last line says where the model is checked and opens the limits on the About screen.
+ */
 function HeatLegend() {
-  const { geo, state: S } = useApp();
+  const { geo, state: S, patch } = useApp();
   const heat = useMapData().manifest?.heat;
-  const top = useAnchoredTop(34 + 66, 116);
+  const top = useAnchoredTop(34 + 66 + 22, 116 + 22);
   if (S.heat !== "on" || !heat || S.heatOpen || S.mode === "layers") return null;
   const [lo, hi] = heat.range_k;
   const season = heat.seasons.find(s => s.tag === S.heatSeason);
   const frame = heat.frames[S.heatT % heat.frames.length];
   return (
     <Animated.View
-      pointerEvents="none"
-      style={{ position: "absolute", left: geo.device === "desktop" ? 72 : 68, top, gap: 4, paddingVertical: 8, paddingHorizontal: 10, borderRadius: 14, backgroundColor: alpha("bg1", 0.9), boxShadow: SHADOW.s1 }}
+      pointerEvents="box-none"
+      style={{ position: "absolute", left: geo.device === "desktop" ? 72 : 68, top, gap: 4, zIndex: 3, paddingVertical: 8, paddingHorizontal: 10, borderRadius: 14, backgroundColor: alpha("bg1", 0.9), boxShadow: SHADOW.s1 }}
     >
       <T w={700} size={9} ls={0.8} color={C.fg2}>
         {S.heatKind === "air" ? "AIR" : "GROUND"} · {fmtFrame(frame)} LTST · LS {season?.ls ?? "?"}°
@@ -101,6 +105,15 @@ function HeatLegend() {
         <T w={500} size={9} color={C.fg2}>{(lo + hi) / 2}</T>
         <T w={500} size={9} color={C.fg2}>{hi} K</T>
       </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${HEAT_CHECKED}. Show the temperature model's limits`}
+        onPress={() => patch({ about: { from: "map", at: "limits" } })}
+        hitSlop={8}
+        style={{ marginTop: 2, paddingTop: 5, borderTopWidth: 1, borderTopColor: C.hair }}
+      >
+        <T w={600} size={9} color={C.warm2} numberOfLines={1}>{HEAT_CHECKED} · <T w={700} size={9} color={C.accent2}>limits ›</T></T>
+      </Pressable>
     </Animated.View>
   );
 }

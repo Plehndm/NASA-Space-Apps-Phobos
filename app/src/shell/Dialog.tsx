@@ -1,7 +1,7 @@
 // The frame Settings and About share: phone = bottom sheet, desktop = centred 480 px dialog, over a
 // dimmed backdrop that closes it. Title row with an optional back button and DONE, then a scrolling body.
 // Escape closes it on web; Android's back button is handled in AppShell.
-import { useEffect, useRef, type ReactNode, type Ref } from "react";
+import { useEffect, useRef, type ComponentRef, type ReactNode, type Ref } from "react";
 import { Platform, Pressable, ScrollView, View } from "react-native";
 import { useApp } from "../state/store";
 import { C, R, SHADOW } from "../theme";
@@ -13,7 +13,7 @@ export function Dialog({ label, title, onClose, onBack, backLabel, scrollRef, ch
   onClose: () => void; // backdrop, DONE, Escape
   onBack?: () => void; // shows a ‹ button before the title
   backLabel?: string;
-  scrollRef?: Ref<ScrollView>;
+  scrollRef?: Ref<ComponentRef<typeof ScrollView>>;
   children: ReactNode;
 }) {
   const { geo } = useApp();

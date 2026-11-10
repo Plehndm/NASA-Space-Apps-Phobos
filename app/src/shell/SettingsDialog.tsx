@@ -96,6 +96,7 @@ export function SettingsDialog() {
 
       <Pressable
         accessibilityRole="button"
+        accessibilityLabel="About & credits"
         onPress={() => patch({ settingsOpen: false, about: { from: "settings" } })}
         style={({ pressed }) => [{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 14, paddingHorizontal: 16, marginTop: 6, backgroundColor: pressed ? C.raised : C.card }, R.pebble2]}
       >

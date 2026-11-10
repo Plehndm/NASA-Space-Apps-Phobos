@@ -9,7 +9,7 @@ import { Switch } from "../ui/Switch";
 import { T } from "../ui/Text";
 import { useMapData } from "../map/data";
 import {
-  DustDevilControls, HazardChips, HeatHint, HeatKindAndSeason, HeatLegendBar, HeatSwitchRow, HeatTime, StrataBar, StrataChips, StrataHint,
+  DustDevilControls, HazardChips, HeatHint, HeatKindAndSeason, HeatLegendBar, HeatLimits, HeatSwitchRow, HeatTime, StrataBar, StrataChips, StrataHint,
 } from "../map/LayerControls";
 
 function Title({ children }: { children: string }) {
@@ -48,6 +48,7 @@ export function LayersCard() {
             <HeatTime heat={heat} />
             <HeatLegendBar heat={heat} />
             <HeatHint heat={heat} />
+            <HeatLimits />
           </>
         ) : (
           <T w={500} size={10} color={C.fg3}>Waiting for the map data server.</T>

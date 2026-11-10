@@ -2,7 +2,7 @@
 // sources. Opened from the bottom of Settings (back and DONE return there) or from a heat layer's
 // "limits" link (opens at the limits; closing returns to the map). Text lives in ./credits.ts and
 // ../map/heatLimits.ts.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ComponentRef } from "react";
 import { Linking, Pressable, View, type ScrollView } from "react-native";
 import { useApp, type AppState } from "../state/store";
 import { useMapData } from "../map/data";
@@ -47,7 +47,7 @@ export function AboutDialog() {
 function About({ about }: { about: NonNullable<AppState["about"]> }) {
   const { patch } = useApp();
   const { manifest } = useMapData();
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
   const [limitsY, setLimitsY] = useState<number | null>(null);
 
   // Opened from a heat layer: jump to the limits once the section has been laid out.

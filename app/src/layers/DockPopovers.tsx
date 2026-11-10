@@ -1,11 +1,12 @@
 // Popovers that open beside the dock buttons when Settings → Layer controls = DOCK (the default).
 // The controls themselves are shared with the Layers card (src/map/LayerControls.tsx).
+import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { useApp } from "../state/store";
 import { alpha, C, SHADOW } from "../theme";
 import { T } from "../ui/Text";
 import { useMapData } from "../map/data";
-import { HeatHint, HeatKindAndSeason, HeatLegendBar, HeatSwitchRow, HeatTime, StrataBar, StrataChips } from "../map/LayerControls";
+import { HeatHint, HeatKindAndSeason, HeatLegendBar, HeatLimits, HeatSwitchRow, HeatTime, StrataBar, StrataChips } from "../map/LayerControls";
 
 /**
  * Elevation: vertical summit → floor legend beside a column of L1 / L2 / L3 pills (tap again for off),
@@ -36,9 +37,13 @@ export function ElevationPopover() {
   );
 }
 
-/** Temperature: switch, ground / air, season, time slider with play, legend. */
+/**
+ * Temperature: switch, ground / air, season, time slider with play, legend, and a MODEL LIMITS line that
+ * swaps the controls for the model's limits (the popover has to clear the phone sheet, so not both).
+ */
 export function HeatPopover() {
   const heat = useMapData().manifest?.heat;
+  const [limits, setLimits] = useState(false);
   return (
     <View
       style={{
@@ -51,10 +56,15 @@ export function HeatPopover() {
       <HeatSwitchRow />
       {heat ? (
         <>
-          <HeatKindAndSeason heat={heat} />
-          <HeatTime heat={heat} />
-          <HeatLegendBar heat={heat} />
-          <HeatHint heat={heat} />
+          {!limits && (
+            <>
+              <HeatKindAndSeason heat={heat} />
+              <HeatTime heat={heat} />
+              <HeatLegendBar heat={heat} />
+              <HeatHint heat={heat} />
+            </>
+          )}
+          <HeatLimits open={limits} onToggle={() => setLimits(!limits)} />
         </>
       ) : (
         <T w={500} size={10} lh={1.45} color={C.fg3}>Temperature maps load with the map data (app/data/, see app/README.md).</T>

@@ -139,7 +139,7 @@ To preview a Pages build locally on Windows, run the export from PowerShell: Git
 
 ```bash
 npm run typecheck        # TypeScript
-npm test                 # 98 unit and HTTP tests (Vitest), well under a second
+npm test                 # 107 unit and HTTP tests (Vitest), well under a second
 npm run test:py          # Street Level build/fetch tests and the repo-wide doc link check (Python)
 npm run test:all         # all three
 npm run doctor           # Expo dependency and config checks
@@ -164,13 +164,15 @@ Add libraries with `npx expo install <package>`, not `npm install`. It picks the
   - `Toast.tsx`: transient messages, shown with `toast("…")`.
   - Android's back button closes Settings, then popovers, then returns to Home.
 - **Settings dialog:** `src/shell/SettingsDialog.tsx`. Every setting from the prototype. Values are saved on the device.
+- **About & credits:** `src/shell/AboutDialog.tsx`, from the last row of Settings (back and DONE return there). What the app is, the team, the temperature model's limits and the data credits by layer (`src/shell/credits.ts`, citations from `MarsDataPipline/raw_data/Citations`). Settings and About share one frame, `src/shell/Dialog.tsx`.
 
 ## What's built (checklist section 2: Map and layers)
 
 - **Map engine:** `src/shell/MapArea.tsx`. One-finger pan, two-finger pinch (with pan), mouse-wheel and trackpad zoom around the cursor on web, tap for the coordinate pill ("4.59°S 137.44°E · −4,498 m · 2° slope"), scale bar, recenter on the rover. Zoom 0.25–4.2 screen px per 100 m.
 - **Coordinate system:** `src/map/geo.ts`. World space is the pipeline's 100 m grid (1477 × 1436 cells, 136.75–139.24° E, 4.15–6.57° S); one transform for every layer.
 - **Data hosting:** `src/map/data.ts` loads `manifest.json` and the terrain grid; `scripts/build_map_data.py`, `scripts/serve-data.mjs`.
-- **Layers** (`src/map/layers/`): CTX tiles, elevation strata, temperature (ground / air, season, LTST slider + play, kelvin legend), hazard zones with type filters, the dust-devil heating index, 19 landmarks with rank-based labels and a selected state, the rover.
+- **Layers** (`src/map/layers/`): CTX tiles, elevation strata, temperature (ground / air, season, LTST slider + play, kelvin legend, model limits), hazard zones with type filters, the dust-devil heating index, 19 landmarks with rank-based labels and a selected state, the rover.
+- **Temperature model limits** (`src/map/heatLimits.ts`): the maps are checked against Curiosity's REMS only near the rover, so the heat legend says "Checked at the rover only" (tap for details), and the heat popover (tap MODEL LIMITS) and the Layers card list the key limits: about 5 K ground / 4 K air error at the rover, not clearly better than a seasonal average; accuracy elsewhere not measured; 82% of pixels outside the thermal-inertia range the rover tests; night air nearly uniform; the THEMIS scaling backed by published REMS studies near the rover only. The About screen adds the full caveats from the map data's manifest (`heat.kinds[].caveats`; built-in fallback text for older data). Numbers come from `MarsDataPipline/README.md`, `docs/plan.md` and `docs/literature_check.md`.
 - **Layer controls:** `src/map/LayerControls.tsx`, used by the dock popovers (`src/layers/DockPopovers.tsx`) and the Layers card (`src/cards/Layers.tsx`).
 - **Everything is reachable with default settings.** Settings → Layer picker = DOCK (the default) opens popovers from the Layers and HM buttons; the elevation popover's **ALL LAYERS** opens the Layers card (landing points, dust-devil sol, every layer at once). While warning zones are on (⚠ button), a **WARNING ZONES · FILTER BY HAZARD** row with the five hazard chips and an "x/5 ON" count sits at the top of the Home, Waypoint, Sequence and Expedition sheets, as in the design. With Layer picker = PANEL, the Layers button opens the Layers card directly. The other settings only switch between two presentations of the same feature (hazard banner or advisory card, stepped or compact progress, chip counts or codes).
 - **Landmarks and hazards:** `src/map/landmarks.ts`, `src/map/hazards.ts`. Real sites use approximate published positions; the invented ones (habitat, relays, pads, checkpoints) and the hazard zones are placed on suitable real ground, read from the terrain data. Each file says how.

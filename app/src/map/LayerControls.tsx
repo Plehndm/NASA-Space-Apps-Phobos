@@ -1,6 +1,6 @@
 // Layer controls, shared by the dock popovers (Settings → Layer controls = DOCK) and the Layers card
 // (= PANEL): elevation strata, temperature, warning zones (with the dust-devil index) and landing points.
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Pressable, View } from "react-native";
 import Slider from "@react-native-community/slider";
 import Svg, { Path, Rect } from "react-native-svg";
@@ -14,6 +14,7 @@ import { useMapData, type Manifest } from "./data";
 import { HAZ_TYPES } from "./hazards";
 import { bandLabel } from "./layers/StrataLayer";
 import { fmtFrame } from "./layers/HeatLayer";
+import { HEAT_CHECKED, keyLimits } from "./heatLimits";
 
 const STRATA_COLOR = { 1: C.strataL1, 2: C.strataL2, 3: C.strataL3 } as const;
 const km = (m: number) => `${m < 0 ? "−" : "+"}${Math.abs(m / 1000).toFixed(1)} km`;
@@ -199,9 +200,48 @@ export function HeatHint({ heat }: { heat: Heat }) {
   return (
     <T w={500} size={10} lh={1.45} color={C.fg3}>
       {season ? `Ls ${season.ls}° (${seasonName(season.ls)}), dust τ ${season.tau}. ` : ""}
-      {range ? `${S.heatKind === "air" ? "Air" : "Ground"} ${Math.round(range[0])}–${Math.round(range[1])} K this season. ` : ""}
-      {S.heatKind === "air" ? "Night air is nearly uniform across the crater: a model limit, not physics." : "Modelled; checked against Curiosity's REMS at the rover only."}
+      {range ? `${S.heatKind === "air" ? "Air" : "Ground"} ${Math.round(range[0])}–${Math.round(range[1])} K this season.` : ""}
     </T>
+  );
+}
+
+/**
+ * The model's limits in short (src/map/heatLimits.ts), under the heat controls. The header line toggles
+ * the list; the dock popover, which has little room, passes `open` and swaps its controls for the list.
+ * ALL LIMITS & SOURCES opens the About screen at the full list.
+ */
+export function HeatLimits({ open: openProp, onToggle }: { open?: boolean; onToggle?: () => void }) {
+  const { state: S, patch } = useApp();
+  const [openSelf, setOpenSelf] = useState(true);
+  const open = openProp ?? openSelf;
+  const toggle = onToggle ?? (() => setOpenSelf(!openSelf));
+  return (
+    <View style={{ gap: 7, paddingTop: 9, borderTopWidth: 1, borderTopColor: C.hair }}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Model limits: ${HEAT_CHECKED.toLowerCase()}`}
+        accessibilityState={{ expanded: open }}
+        onPress={toggle}
+        hitSlop={6}
+        style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 }}
+      >
+        <T w={700} size={10} ls={1} color={C.warm2}>MODEL LIMITS</T>
+        <T w={600} size={9.5} color={C.fg3} numberOfLines={1} style={{ flexShrink: 1 }}>{`${HEAT_CHECKED} ${open ? "▴" : "▾"}`}</T>
+      </Pressable>
+      {open && (
+        <>
+          {keyLimits(S.heatKind).map(l => (
+            <View key={l} style={{ flexDirection: "row", gap: 7 }}>
+              <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: C.warm2, marginTop: 6 }} />
+              <T w={500} size={9.5} lh={1.45} color={C.fg3} style={{ flex: 1 }}>{l}</T>
+            </View>
+          ))}
+          <Pressable accessibilityRole="button" onPress={() => patch({ about: { from: "map", at: "limits" } })} hitSlop={6} style={{ alignSelf: "flex-start" }}>
+            <T w={700} size={10} ls={0.6} color={C.accent2}>ALL LIMITS & SOURCES ›</T>
+          </Pressable>
+        </>
+      )}
+    </View>
   );
 }
 
