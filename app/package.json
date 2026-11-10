@@ -35,13 +35,13 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:py": "cd .. && app/.venv/bin/python -m unittest discover -s mars_streetview/tests && python3 -m unittest discover -s tests",
+    "test:py": "cd .. && node app/scripts/py.mjs -m unittest discover -s mars_streetview/tests && node app/scripts/py.mjs --system -m unittest discover -s tests",
     "test:all": "npm run typecheck && npm test && npm run test:py",
     "doctor": "expo-doctor",
     "design": "node scripts/serve-design.mjs",
     "data": "node scripts/serve-data.mjs",
     "assistant": "node scripts/serve-assistant.mjs",
-    "panos": "cd ../mars_streetview && python3 fetch_raw.py && ../app/.venv/bin/python build_panos.py manifest.json --src raw --out ../app/data/panos"
+    "panos": "cd ../mars_streetview && node ../app/scripts/py.mjs --system fetch_raw.py && node ../app/scripts/py.mjs build_panos.py manifest.json --src raw --out ../app/data/panos"
   },
   "private": true
 }

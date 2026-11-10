@@ -45,8 +45,22 @@ function call(port: number, path: string, o: { method?: string; headers?: Record
 
 // --- map data ---
 
+/** Whether this machine can create symlinks (Windows needs Developer Mode or admin; otherwise EPERM). */
+const canSymlink = (() => {
+  const probe = mkdtempSync(join(tmpdir(), "symlink-probe-"));
+  try {
+    writeFileSync(join(probe, "target"), "");
+    symlinkSync(join(probe, "target"), join(probe, "link"));
+    return true;
+  } catch {
+    return false;
+  } finally {
+    rmSync(probe, { recursive: true, force: true });
+  }
+})();
+
 describe("map data server", () => {
-  let dir: string, outside: string, port: number, server: Server;
+  let dir: string | undefined, outside: string | undefined, port: number, server: Server | undefined;
   beforeAll(async () => {
     dir = mkdtempSync(join(tmpdir(), "mapdata-"));
     outside = mkdtempSync(join(tmpdir(), "outside-"));
@@ -56,16 +70,16 @@ describe("map data server", () => {
     mkdirSync(join(dir, "panos"));
     writeFileSync(join(dir, "panos", "0_0_0.jpg"), Buffer.from([0xff, 0xd8, 0xff]));
     writeFileSync(join(outside, "secret.json"), "{\"secret\":true}");
-    symlinkSync(join(outside, "secret.json"), join(dir, "evil-link.json"));
+    if (canSymlink) symlinkSync(join(outside, "secret.json"), join(dir, "evil-link.json"));
     process.env.MAP_DATA_DIR = dir;
     const { serveMapData } = fresh<{ serveMapData: Handler }>("../scripts/data-middleware.js");
     ({ server, port } = await serve(serveMapData));
   });
   afterAll(() => {
-    server.close();
+    server?.close();
     delete process.env.MAP_DATA_DIR;
-    rmSync(dir, { recursive: true, force: true });
-    rmSync(outside, { recursive: true, force: true });
+    if (dir) rmSync(dir, { recursive: true, force: true });
+    if (outside) rmSync(outside, { recursive: true, force: true });
   });
 
   it("serves files with the right type, caching and headers", async () => {
@@ -92,12 +106,17 @@ describe("map data server", () => {
     ["/mapdata/%5f_cache_terrain.npz", 403],
     ["/mapdata/a%00.json", 403],
     ["/mapdata/%E0%A4%A", 400],
-    ["/mapdata/evil-link.json", 404],
     ["/mapdata/missing.json", 404],
     ["/mapdata/panos", 404],
   ])("refuses %s with %i", async (path, code) => {
     const r = await call(port, path);
     expect(r.status).toBe(code);
+    expect(r.text).not.toContain("secret");
+  });
+
+  it.skipIf(!canSymlink)("refuses a symlink that points outside the data folder with 404", async () => {
+    const r = await call(port, "/mapdata/evil-link.json");
+    expect(r.status).toBe(404);
     expect(r.text).not.toContain("secret");
   });
 

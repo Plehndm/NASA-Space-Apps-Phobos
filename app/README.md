@@ -47,7 +47,7 @@ python3 scripts/fetch_imagery.py                   # satellite tiles from NASA M
 npm run panos                                      # Street Level: 113 MB from NASA, then about 1.5 min
 ```
 
-On Windows, use `.venv\Scripts\pip` and `.venv\Scripts\python` in place of `.venv/bin/pip` and `.venv/bin/python`. `npm run panos` assumes the macOS/Linux layout, so on Windows run its two steps by hand, as in `mars_streetview/README.md`.
+On Windows, use `.venv\Scripts\pip` and `.venv\Scripts\python` in place of `.venv/bin/pip` and `.venv/bin/python`. `npm run panos` and `npm run test:py` find the venv on either layout (`scripts/py.mjs`).
 
 - If an input is missing, `build_map_data.py` lists every missing file and where to get it, and builds nothing. To build only part, name the stages: `imagery`, `terrain`, `strata`, `heat`, `dustDevil`, `telemetry` (for example `build_map_data.py imagery heat`). `--help` shows the full list of inputs.
 - `npm run panos` downloads only from NASA's server, checks every file's checksum, and skips files you already have. The build briefly needs about 14 GB of memory. On a smaller laptop, copy `app/data/panos/` from a teammate instead; the rest of the app doesn't need it.
@@ -107,7 +107,7 @@ The app reads `app/data/` from the dev server at `/mapdata/` (`metro.config.js`,
 
 ### Checks before you push
 
-`npm test` needs only `npm install`. `test:py` and `test:all` also need the Python environment from step 2 (`app/.venv`).
+`npm test` needs only `npm install`. `test:py` and `test:all` also need Python with numpy and Pillow: the environment from step 2 (`app/.venv`), or else `python3`/`python` on your PATH.
 
 ```bash
 npm run typecheck        # TypeScript
@@ -117,7 +117,7 @@ npm run test:all         # all three
 npm run doctor           # Expo dependency and config checks
 ```
 
-The tests in `app/tests/` cover what can run without a phone: the route planner on synthetic terrain (and on the real terrain to every landmark, when `app/data/` is built), search and coordinate parsing, τ, landmark positions, the panorama list and looping strip, the offline assistant's answers and sector snapshot, and both dev-server middlewares over real HTTP (map data: path traversal, symlinks, methods, gzip; assistant: key handling, origin and host checks, size and rate limits, upstream errors, against a fake Claude API, so no key is used). React Native and Expo are stubbed (`tests/stubs/`), so screens and gestures are still checked by hand in the iOS Simulator and the browser. `mars_streetview/tests/` and `tests/` (repo root) hold the Python tests; `test:py` needs the map-data venv in `app/.venv`.
+The tests in `app/tests/` cover what can run without a phone: the route planner on synthetic terrain (and on the real terrain to every landmark, when `app/data/` is built), search and coordinate parsing, τ, landmark positions, the panorama list and looping strip, the offline assistant's answers and sector snapshot, and both dev-server middlewares over real HTTP (map data: path traversal, symlinks, methods, gzip; assistant: key handling, origin and host checks, size and rate limits, upstream errors, against a fake Claude API, so no key is used). React Native and Expo are stubbed (`tests/stubs/`), so screens and gestures are still checked by hand in the iOS Simulator and the browser. `mars_streetview/tests/` and `tests/` (repo root) hold the Python tests; `test:py` uses the map-data venv in `app/.venv` when it exists, else Python on your PATH.
 
 Add libraries with `npx expo install <package>`, not `npm install`. It picks the version that matches SDK 58. Only libraries included in Expo Go will work in Expo Go; check the library's page on docs.expo.dev for "Included in Expo Go".
 
