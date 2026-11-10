@@ -1,6 +1,7 @@
 // Sequence card (sheet mode "route"): the multi-stop plan. Rover position first, then each stop with
 // its leg length and time, ↑ ↓ × to reorder or remove, a warning when Route #1 crosses a hazard zone,
-// and NAVIGATE with the whole trip's time, length and steepest grade.
+// and NAVIGATE with the whole trip's time, length and steepest grade. Add Stop opens Search; the
+// result picked there is appended to the sequence.
 import { Pressable, View } from "react-native";
 import { useApp } from "../state/store";
 import { C, SHADOW } from "../theme";
@@ -47,7 +48,7 @@ function Row({ num, name, tag, sub, children }: { num: string; name: string; tag
 }
 
 export function SequenceCard() {
-  const { state: S, toast, snapTo } = useApp();
+  const { state: S } = useApp();
   const r = useRoutes();
   const o = S.stops.length ? r.routeOpts(S.stops) : null;
   const act = r.activeRoute(S.stops);
@@ -65,7 +66,7 @@ export function SequenceCard() {
         </View>
         <Pressable
           accessibilityRole="button"
-          onPress={() => { snapTo("peek"); toast("Tap a landmark on the map, then Add stop"); }}
+          onPress={r.addStopSearch}
           style={{ marginLeft: "auto", height: 36, paddingHorizontal: 16, borderRadius: 999, backgroundColor: C.cta, justifyContent: "center" }}
         >
           <T w={700} size={13} color={C.ctaInk}>Add Stop</T>

@@ -111,7 +111,7 @@ export function ExpeditionCard() {
             <Btn label="END" onPress={r.endNav} bg={C.dangerDeep} fg="#fff" h={38} w={52} />
           </View>
           <View style={{ flexDirection: "row", gap: 8 }}>
-            <Btn label="ADD STOP" onPress={r.addStopFromNav} h={36} />
+            <Btn label="ADD STOP" onPress={r.addStopSearch} h={36} />
             <Btn {...reroute} h={36} />
           </View>
         </>
@@ -155,7 +155,7 @@ export function ExpeditionCard() {
           </View>
           {settings.inlineNotes && !!v.tgt?.note && <NoteBubble>{v.tgt.note}</NoteBubble>}
           <View style={{ flexDirection: "row", gap: 8, marginTop: 12 }}>
-            <Btn label="ADD STOP" onPress={r.addStopFromNav} />
+            <Btn label="ADD STOP" onPress={r.addStopSearch} />
             <Btn {...reroute} />
             <Btn label="END" onPress={r.endNav} bg={C.dangerDeep} fg="#fff" w={68} />
           </View>

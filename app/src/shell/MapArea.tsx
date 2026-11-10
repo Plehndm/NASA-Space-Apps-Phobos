@@ -11,6 +11,7 @@ import { StrataLayer } from "../map/layers/StrataLayer";
 import { HeatLayer } from "../map/layers/HeatLayer";
 import { HazardLabels, HazardLayer } from "../map/layers/HazardLayer";
 import { DustDevilLayer } from "../map/layers/DustDevilLayer";
+import { GridLayer } from "../map/layers/GridLayer";
 import { LandmarkLayer } from "../map/layers/LandmarkLayer";
 import { RoverMarker } from "../map/layers/RoverMarker";
 import { MapOverlays } from "../map/MapOverlays";
@@ -258,6 +259,7 @@ export function MapArea() {
           {/* Markers and labels: drawn 1:1 above the zoomed world, so they stay sharp (see Pin). */}
           {/* collapsable={false}: keep this a real layer, so the pins' zIndex can't lift them over the dock. */}
           <View collapsable={false} pointerEvents="box-none" style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0, zIndex: 1 }}>
+            <GridLayer />
             <HazardLayer />
             <RouteLayer />
             <HazardLabels />

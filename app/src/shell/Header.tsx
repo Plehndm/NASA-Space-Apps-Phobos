@@ -5,12 +5,19 @@ import { SOL, useMtcClock } from "../state/clock";
 import { alpha, C } from "../theme";
 import { T } from "../ui/Text";
 import { GearIcon } from "../ui/icons";
+import { useMapData } from "../map/data";
 
 /** Top bar: location + MTC clock on the left, status pill and settings gear on the right. */
 export function Header() {
   const { geo, state, settings, patch } = useApp();
   const clock = useMtcClock();
   const desk = geo.device === "desktop";
+  const { status } = useMapData();
+  // Status pill: the demo speed while driving, otherwise whether the map data actually loaded.
+  const pill = state.navActive ? { text: `DEMO ×${settings.demoSpeed}`, color: C.warm }
+    : status === "ready" ? { text: "OFFLINE MAPS ✓", color: C.fg2 }
+    : status === "loading" ? { text: "LOADING MAPS", color: C.fg3 }
+    : { text: "MAP DATA OFFLINE", color: C.danger };
 
   const content = (
     <View style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingTop: geo.insetTop }}>
@@ -20,9 +27,7 @@ export function Header() {
       </View>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         <View style={{ paddingVertical: 6, paddingHorizontal: 11, borderRadius: 999, backgroundColor: alpha("raised", 0.75) }}>
-          <T w={700} size={9.5} ls={0.6} color={state.navActive ? C.warm : C.fg2} numberOfLines={1}>
-            {state.navActive ? `DEMO ×${settings.demoSpeed}` : "OFFLINE MAPS ✓"}
-          </T>
+          <T w={700} size={9.5} ls={0.6} color={pill.color} numberOfLines={1}>{pill.text}</T>
         </View>
         <Pressable
           accessibilityRole="button"

@@ -47,7 +47,8 @@ export interface RouteApi {
   moveStop: (i: number, d: -1 | 1) => void;
   removeStop: (i: number) => void;
   clearRoute: () => void;
-  addStopFromNav: () => void;
+  /** Sequence "Add Stop": open Search; the next result picked is appended to the sequence (see `select`). */
+  addStopSearch: () => void;
   toggleReroute: () => void;
   addVia: (p: Pt) => void;
   autoReroute: () => void;
@@ -243,13 +244,14 @@ export function RouteProvider({ children }: { children: ReactNode }) {
     setMode("home", "peek");
   }, [patch, setMode]);
 
-  // During an expedition: keep driving, edit the remaining stops in the sequence card.
-  const addStopFromNav = useCallback(() => {
+  // The design's addStopSearch: an empty Search at half height. With stops planned, `select` appends
+  // the picked result, and leaving Search (goHome) returns to the sequence.
+  const addStopSearch = useCallback(() => {
     const s = latest.current.S;
-    if (s.nav) patch({ stops: s.nav.stops.filter(id => !id.startsWith("via-")), viaPending: false });
-    setMode("route", "half");
-    toast("Tap a landmark, then Add stop · NAVIGATE restarts from the rover");
-  }, [patch, setMode, toast]);
+    if (s.nav) patch({ stops: s.nav.stops.filter(id => !id.startsWith("via-")) });
+    patch({ q: "", cat: "All", viaPending: false, elevOpen: false, heatOpen: false });
+    setMode("search", "half");
+  }, [patch, setMode]);
 
   const toggleReroute = useCallback(() => patch(s => ({ viaPending: !s.viaPending })), [patch]);
 
@@ -384,11 +386,11 @@ export function RouteProvider({ children }: { children: ReactNode }) {
   const api = useMemo<RouteApi>(
     () => ({
       ready: !!grid, lm, zones, capSafe, capDirect, routeOpts, activeRoute, neededGrade, blockedBy, nearestHazard, elevOf, slopeOf, profileOf,
-      select, pickRoute, addStopSel, startNav, navAll, moveStop, removeStop, clearRoute, addStopFromNav, toggleReroute,
+      select, pickRoute, addStopSel, startNav, navAll, moveStop, removeStop, clearRoute, addStopSearch, toggleReroute,
       addVia, autoReroute, endNav, dismissArrived, goSafeApproach, overrideRisk,
     }),
     [grid, lm, zones, capSafe, capDirect, routeOpts, activeRoute, neededGrade, blockedBy, nearestHazard, elevOf, slopeOf, profileOf, select, pickRoute,
-      addStopSel, startNav, navAll, moveStop, removeStop, clearRoute, addStopFromNav, toggleReroute, addVia, autoReroute, endNav,
+      addStopSel, startNav, navAll, moveStop, removeStop, clearRoute, addStopSearch, toggleReroute, addVia, autoReroute, endNav,
       dismissArrived, goSafeApproach, overrideRisk],
   );
   return <Ctx.Provider value={api}>{children}</Ctx.Provider>;

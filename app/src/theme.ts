@@ -10,6 +10,7 @@ const rgb = {
   accent: "127,212,193",
   cta: "236,122,86",
   warm: "255,195,148",
+  warm3: "255,227,204", // #ffe3cc (map grid)
 } as const;
 
 /** `alpha("bg1", .9)` → "rgba(27,16,13,0.9)", the equivalent of CSS `rgba(var(--bg1-rgb),.9)`. */
