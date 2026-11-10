@@ -24,7 +24,7 @@ npm may warn that it skipped install scripts for `fsevents`; that's an optional 
 
 The map (imagery, terrain, temperature, dust devils, telemetry) and Street Level are built into `app/data/`, which is not in git. Without it the app still opens, but the map is empty, with a "MAP DATA OFFLINE" notice, and the Street Level button stays dimmed.
 
-**Quickest:** ask a teammate for a zip of their `app/data/` and unzip it so you have `app/data/manifest.json`. Then skip to step 3.
+**Quickest:** `npm run data:fetch` downloads the packed data from the repo's `map-data` release into `app/data/` and checks its SHA-256 (needs the GitHub CLI, `gh auth login`, while the repo is private). Or ask a teammate for a zip of their `app/data/`. Then skip to step 3.
 
 **Or build it yourself:**
 
@@ -119,6 +119,18 @@ The app reads `app/data/` from the dev server at `/mapdata/` (`metro.config.js`,
 | Temperature | ground and air maps: 5 seasons (Ls 15/75/195/255/340) × 48 frames, inferno 150–320 K | `heat/{ground,air}/ls{LLL}/{HHMM}.webp` |
 | Dust devils | Dust Devil Heating Index, sols 1850 (clear) and 800 (dusty), levels low/moderate/high | `dustdevil/sol{N}.webp`, `sol{N}_level.bin` |
 | Telemetry | Mastcam τ per sol; ground temperature at 400 m per season and LTST frame (uint8 on the 150–320 K scale) | `telemetry/tau.json`, `telemetry/ground/{season}/{HHMM}.bin` |
+
+### Web demo (GitHub Pages)
+
+`.github/workflows/deploy.yml` publishes the web build to <https://plehndm.github.io/NASA-Space-Apps-Phobos/> on every push to `main` that touches `app/`, or by hand from the Actions tab ("Deploy web demo"). `app/data/` isn't in git, so the workflow takes it from the `map-data` release:
+
+1. Build the data (step 2 above), then pack it: `npm run data:pack`. This writes `mapdata.tar.gz` and its `.sha256` to your temp folder (leaving out build caches and panorama previews) and prints the upload command.
+2. Upload both files: `gh release create map-data <archive> <archive>.sha256 --latest=false` the first time, `gh release upload map-data <archive> <archive>.sha256 --clobber` after that. Then re-run the workflow.
+3. Once: Settings → Pages → Build and deployment → Source: **GitHub Actions**. On a private repo, Pages needs a paid GitHub plan, and the site (including the map data) is public either way.
+
+The workflow exports with `EXPO_PUBLIC_DATA_URL=/NASA-Space-Apps-Phobos/mapdata`, checks the archive's SHA-256, unpacks it to `dist/mapdata/`, and deploys. `experiments.baseUrl` in `app.json` must match the repository name; it only affects exports, so `npx expo start` is unchanged. The demo has no assistant backend, so the assistant answers from its offline planner. Pages caches files for about 10 minutes, so a data update can take that long to show.
+
+To preview a Pages build locally on Windows, run the export from PowerShell: Git Bash rewrites `/NASA-…` values into Windows paths (or set `MSYS_NO_PATHCONV=1`). `npx expo export` also fails inside a OneDrive folder whose `node_modules` files are cloud-only placeholders; mark the repo folder "Always keep on this device" first.
 
 ### Checks before you push
 
