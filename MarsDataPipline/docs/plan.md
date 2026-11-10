@@ -10,7 +10,7 @@ The long-range plan is `docs/1D Thermal Baseline Build Steps.md`. This file hold
 
 ## Later items
 
-1. **Literature check** of REMS-derived TI along the traverse (Hamilton et al. 2014, Vasavada et al. 2017; cited from memory, not checked) against the implied 330-400 tiu.
+1. **Literature check:** done, `docs/literature_check.md`. Partly consistent: published REMS-derived TI (265-452 tiu at Bradbury, about 350-550 on bedrock) matches the implied 330-400 tiu and confirms THEMIS reads high at the rover, but the cause it gives is footprint mixing, not a fixed fraction, so it does not support one `ti_scale` for the whole crater.
 2. **Sealed test** (blocks 4 and 8): done(Step 7). The blocks are spent.
 3. **Proposals only (out of scope):**
    - a two-layer soil, for block 0's remaining shape error;
