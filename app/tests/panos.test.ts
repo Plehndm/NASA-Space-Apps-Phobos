@@ -127,7 +127,9 @@ describe("which panorama a waypoint opens", () => {
 });
 
 const built = fileURLToPath(new URL("../data/panos/panos.json", import.meta.url));
-describe.skipIf(!existsSync(built))("the built panos.json", () => {
+const hasBuilt = existsSync(built);
+describe.skipIf(!hasBuilt)("the built panos.json", () => {
+  if (!hasBuilt) return; // skipIf still runs this body while collecting tests
   const raw = JSON.parse(readFileSync(built, "utf8"));
   const p = parsePanos(raw)!;
 

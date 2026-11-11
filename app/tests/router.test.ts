@@ -85,6 +85,7 @@ const dataDir = fileURLToPath(new URL("../data/", import.meta.url));
 const hasData = existsSync(`${dataDir}terrain.bin`) && existsSync(`${dataDir}manifest.json`);
 
 describe.skipIf(!hasData)("router on the real Gale terrain", () => {
+  if (!hasData) return; // skipIf still runs this body while collecting tests
   const load = (): TerrainArrays => {
     const m = JSON.parse(readFileSync(`${dataDir}manifest.json`, "utf8"));
     const buf = readFileSync(`${dataDir}terrain.bin`);
