@@ -64,9 +64,9 @@ export interface AppState {
   street: { pano: string; heading: number; from: string | null } | null; // Street Level open: panorama, view heading, the waypoint it was opened from
 }
 
-// Zoom is screen px per world px (100 m). The prototype's range was 0.7–4.2 on a 51 km map. The real
-// minimum is minZoom(): the imagery covers the grid exactly, so the map stops zooming out once the grid
-// fills the map area (no empty space past its edges).
+// Zoom is screen px per world px (100 m). The prototype's range was 0.7–4.2 on a 51 km map; the real
+// grid is 148 km wide, so the minimum goes down far enough to show the whole crater on a phone. Past
+// the grid's edges the map shows a dust storm (StormLayer), not empty space.
 export const ZOOM_MIN = 0.25;
 export const ZOOM_MAX = 4.2;
 
@@ -82,18 +82,16 @@ function ltstFrameNow(): number {
 /** Opening view: the rover at the same screen spot as in the prototype, about 1.5× closer than its zoom. */
 function initialView(g: Geometry, r: Pt = ROVER_START): View {
   const [s, sx, sy] = g.device === "desktop" ? [3.2, 421, 450] : [2.0, 162, 179];
-  return clampView({ s, tx: sx - r.x * s, ty: sy - r.y * s, anim: false }, g);
+  return { s, tx: sx - r.x * s, ty: sy - r.y * s, anim: false };
 }
 
-/** Smallest zoom at which the grid (and its imagery) still fills the whole map area. */
-export const minZoom = (g: Geometry) => Math.max(ZOOM_MIN, g.mapW / GRID.W, g.H / GRID.H);
-
-/** Keep the map area inside the grid: the map can't be dragged or zoomed out past the imagery's edges. */
+/** Keep the middle of the map area over the grid, so the map can't be dragged away into the storm. */
 export function clampView(v: View, g: Geometry): View {
-  const s = Math.min(ZOOM_MAX, Math.max(minZoom(g), v.s));
-  const tx = Math.min(0, Math.max(g.mapW - GRID.W * s, v.tx));
-  const ty = Math.min(0, Math.max(g.H - GRID.H * s, v.ty));
-  return { s, tx, ty, anim: v.anim };
+  const s = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, v.s));
+  const cx = g.mapW / 2, cy = g.H / 2;
+  const wx = Math.min(GRID.W, Math.max(0, (cx - v.tx) / s));
+  const wy = Math.min(GRID.H, Math.max(0, (cy - v.ty) / s));
+  return { s, tx: cx - wx * s, ty: cy - wy * s, anim: v.anim };
 }
 
 interface Store {
@@ -280,7 +278,7 @@ export function AppProvider({ geo, children }: { geo: Geometry; children: ReactN
       const c = viewCenter();
       const x = ox ?? c.x, y = oy ?? c.y;
       setState(s => {
-        const ns = Math.min(ZOOM_MAX, Math.max(minZoom(geo), s.view.s * k));
+        const ns = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, s.view.s * k));
         const kk = ns / s.view.s;
         return { ...s, view: clampView({ s: ns, tx: x - (x - s.view.tx) * kk, ty: y - (y - s.view.ty) * kk, anim: true }, geo) };
       });
@@ -294,7 +292,7 @@ export function AppProvider({ geo, children }: { geo: Geometry; children: ReactN
     (p, ns) => {
       const c = viewCenter();
       setState(s => {
-        const z = Math.min(ZOOM_MAX, Math.max(minZoom(geo), ns ?? s.view.s));
+        const z = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, ns ?? s.view.s));
         return { ...s, view: clampView({ s: z, tx: c.x - p.x * z, ty: c.y - p.y * z, anim: true }, geo) };
       });
     },
