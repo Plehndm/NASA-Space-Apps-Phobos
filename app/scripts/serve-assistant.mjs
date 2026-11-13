@@ -8,7 +8,7 @@
 //
 //   ANTHROPIC_API_KEY=... npm run assistant          # from app/
 //   ANTHROPIC_API_KEY=... npm run assistant -- 8094  # different port
-//   ASSISTANT_MODEL=claude-sonnet-5-5 npm run assistant  # different model (default claude-opus-5-5)
+//   ASSISTANT_MODEL=claude-opus-5-5 npm run assistant  # different model (default claude-sonnet-5-5)
 import { createServer } from "node:http";
 import { createRequire } from "node:module";
 

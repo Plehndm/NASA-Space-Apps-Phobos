@@ -129,7 +129,7 @@ The app reads `app/data/` from the dev server at `/mapdata/` (`metro.config.js`,
 2. Upload both files: `gh release create map-data <archive> <archive>.sha256 --latest=false` the first time, `gh release upload map-data <archive> <archive>.sha256 --clobber` after that. Then re-run the workflow.
 3. Once: Settings → Pages → Build and deployment → Source: **GitHub Actions**. On a private repo, Pages needs a paid GitHub plan, and the site (including the map data) is public either way.
 
-The workflow exports with `EXPO_PUBLIC_DATA_URL=/NASA-Space-Apps-Phobos/mapdata`, checks the archive's SHA-256, unpacks it to `dist/mapdata/`, and deploys. `experiments.baseUrl` in `app.json` must match the repository name; it only affects exports, so `npx expo start` is unchanged. The demo has no assistant backend, so the assistant answers from its offline planner. Pages caches files for about 10 minutes, so a data update can take that long to show.
+The workflow exports with `EXPO_PUBLIC_DATA_URL=/NASA-Space-Apps-Phobos/mapdata`, checks the archive's SHA-256, unpacks it to `dist/mapdata/`, and deploys. `experiments.baseUrl` in `app.json` must match the repository name; it only affects exports, so `npx expo start` is unchanged. The route assistant is live when the Cloudflare secrets are set (see "Live assistant on the web demo" below), and otherwise answers from its offline planner. Pages caches files for about 10 minutes, so a data update can take that long to show.
 
 To preview a Pages build locally on Windows, run the export from PowerShell: Git Bash rewrites `/NASA-…` values into Windows paths (or set `MSYS_NO_PATHCONV=1`). `npx expo export` also fails inside a OneDrive folder whose `node_modules` files are cloud-only placeholders; mark the repo folder "Always keep on this device" first.
 
@@ -156,7 +156,7 @@ Add libraries with `npx expo install <package>`, not `npm install`. It picks the
   - Use these, never raw hex.
   - Put all text in `<T>` from `src/ui/Text.tsx` so it gets the Plus Jakarta Sans font.
 - **Layout shells:** `src/layout/geometry.ts` and `src/shell/Sheet.tsx`.
-  - Phone: bottom sheet with peek / half / full snap points. Drag the handle, or tap it to step through the points. The map dims as the sheet rises. The header and sheet allow for the notch and home bar.
+  - Phone: bottom sheet with full / half / peek snap points, plus a minimised one that leaves only the search bar. Drag the handle, tap it to step through the points, or use the chevron beside it to minimise and restore the sheet. The map dims as the sheet rises. The header and sheet allow for the notch and home bar.
   - Desktop: fixed 420 px left panel. Both layouts use the same components.
 - **Header, dock, toasts:**
   - `Header.tsx`: Sol + ticking MTC clock, status pill, settings gear.
@@ -226,14 +226,25 @@ src/
 
 ## What's built (checklist section 5: Route assistant)
 
-The assistant runs **offline**: no API key is configured, and every answer comes from the scripted fallback below, built on the app's own sector data. The status line reads "OFFLINE ASSISTANT · answers from sector data". A backend for a live Claude model is in place but switched off. Its request fields are checked against the Claude API docs and the installed SDK, and tested against a fake API; run the smoke script below to confirm it against the live API.
+The assistant answers with a live Claude model (Sonnet 5.5) when its backend has an API key, and from the scripted fallback below otherwise. The status line says which: "LIVE MODEL · …" or "OFFLINE ASSISTANT · answers from sector data". If the key is missing, expired or out of credit, or the API is down or rate-limited, the app answers from the scripted fallback, so the assistant always replies.
 
 - **Chat** (`src/cards/Assistant.tsx`, `src/assistant/AssistantProvider.tsx`): bubbles, TRY suggestions, a busy pill, the status line, and a PROPOSED ROUTE card under any answer that plans one (stops with leg lengths, total distance and time including 25 min per stop, AVOIDS). LOAD ROUTE puts the stops in the multi-stop sequence on Route #2 (not during an expedition). The input row is pinned under the chat and rides above the iOS keyboard. The conversation survives closing the assistant.
 - **Scripted answers** (`src/assistant/scripted.ts`): by keyword, from the planned routes, hazard zones, dust-devil heating and telemetry: a named landmark (safe route, or why it's blocked), hazards toward a named place, a general hazard check, a 3-stop science day (the nearest reachable science sites), weather and dust, or a short help text.
-- **Live-model backend, off** (`scripts/assistant-middleware.js`, `src/assistant/api.ts`, `src/assistant/context.ts`): `POST /api/assistant` on the Expo dev server would call the Claude API (Claude Opus 5.5) with the key held on the server, never in the app. The app sends the conversation and a snapshot of the sector; the server caps every field, writes the system prompt itself, and keeps only landmark and hazard ids the app sent. `GET /api/assistant` reports whether a key is set; with none, the app never sends chat to the server. Any failure falls back to the scripted answers.
-  - To try it: create `app/.env.local` (git-ignored) with `ANTHROPIC_API_KEY=sk-ant-...` and restart Expo. Never use an `EXPO_PUBLIC_…` name, which is built into the app. The Claude API is billed per use and the cost per message hasn't been measured, so use a spend-limited key and check the live path before relying on it.
+- **Live-model backend** (`scripts/assistant-middleware.js`, `worker/index.js`, `src/assistant/api.ts`, `src/assistant/context.ts`): `POST /api/assistant` on the Expo dev server, or on the Cloudflare Worker for the web demo, calls the Claude API (Claude Sonnet 5.5) with the key held on the server, never in the app. The app sends the conversation and a snapshot of the sector; the server caps every field, writes the system prompt itself, and keeps only landmark and hazard ids the app sent. `GET /api/assistant` reports whether a key is set; with none, the app never sends chat to the server. Any failure falls back to the scripted answers.
+  - Locally: create `app/.env.local` (git-ignored) with `ANTHROPIC_API_KEY=sk-ant-...` and restart Expo. Never use an `EXPO_PUBLIC_…` name, which is built into the app. The Claude API is billed per use and the cost per message hasn't been measured, so use a spend-limited key and check the live path before relying on it.
   - Limits: 12 requests a minute per address, 3 at once, 64 KB bodies, 16 messages of history, JSON only. Requests must come from the app's own origin or a native app, and the Host must be an IP address, `localhost` or an Expo tunnel (blocks DNS-rebinding pages). The dev server listens on your network, so anyone on the same Wi-Fi could reach a configured key.
   - Hosted: `ANTHROPIC_API_KEY=… npm run assistant` (port 8093), with `ASSISTANT_ALLOW_HOSTS=<domain>`, `ASSISTANT_ALLOW_ORIGINS=https://<web app origin>` for a web build elsewhere, and the app built with `EXPO_PUBLIC_ASSISTANT_URL=https://<domain>/api/assistant`.
+
+### Live assistant on the web demo
+
+GitHub Pages only serves files, so the shared key lives in a small Cloudflare Worker (`app/worker/`, free plan), which `.github/workflows/deploy.yml` deploys on every push. One-time setup:
+
+1. Create a Claude API key in the [Claude Console](https://platform.claude.com), and set a monthly spend limit on it: every visitor to the demo uses this key.
+2. Create a free [Cloudflare](https://dash.cloudflare.com) account, open **Workers & Pages** once (this picks your `workers.dev` subdomain), then create an API token with the **Edit Cloudflare Workers** template.
+3. In the GitHub repo, **Settings → Secrets and variables → Actions**, add the secrets `ANTHROPIC_API_KEY` and `CLOUDFLARE_API_TOKEN` (and `CLOUDFLARE_ACCOUNT_ID` only if the token covers more than one account).
+4. Re-run **Deploy web demo** from the Actions tab (or push). The log shows the Worker's address, and the assistant's status line on the demo reads "LIVE MODEL".
+
+To change the key, update the `ANTHROPIC_API_KEY` secret and re-run the workflow. To switch the demo back to offline, delete `CLOUDFLARE_API_TOKEN` and re-run. The model is set in `app/worker/wrangler.toml` (`ASSISTANT_MODEL`). The Worker takes 12 requests a minute per address and 120 a minute in total, and accepts browsers only from `https://<owner>.github.io`.
 
 ### Check the live assistant
 
@@ -247,7 +258,7 @@ ANTHROPIC_API_KEY=sk-ant-... node scripts/assistant-smoke.mjs
 
 It prints the HTTP status, the model that answered (and whether Anthropic's server-side fallback answered instead), `stop_reason`, whether the reply parsed into the app's `{reply, route[], avoid[]}` shape, and token usage, then `PASS` or `FAIL` (exit code 0 or 1). It costs one small request and never prints the key. Without a key it says so and exits.
 
-The model defaults to `claude-opus-5-5`. Set `ASSISTANT_MODEL` (in `app/.env.local`, or in the environment of `npm run assistant` or the smoke script) to use another one, for example `claude-sonnet-5-5`. Requests to Claude Fable 5.1, Opus 5.5, Opus 5 and Sonnet 5.5 opt into server-side refusal fallback (`fallbacks: "default"`); other models are sent without it. Use a current model: the request sets `output_config.effort`, which older models reject.
+The model defaults to `claude-sonnet-5-5`. Set `ASSISTANT_MODEL` (in `app/.env.local`, or in the environment of `npm run assistant` or the smoke script) to use another one, for example `claude-opus-5-5`. Requests to Claude Fable 5.1, Opus 5.5, Opus 5 and Sonnet 5.5 opt into server-side refusal fallback (`fallbacks: "default"`); other models are sent without it. Use a current model: the request sets `output_config.effort`, which older models reject.
 
 ## What's built (checklist section 6: Street Level)
 

@@ -158,7 +158,7 @@ function fakeClaude() {
       // before the text, the served model at top level, a fallback_message in usage.iterations).
       const fb = state.mode === "fallback";
       const content = !text ? [] : fb
-        ? [{ type: "thinking", thinking: "", signature: "sig" }, { type: "fallback", from: { model: "claude-opus-5-5" }, to: { model: "claude-opus-5" } }, { type: "text", text }]
+        ? [{ type: "thinking", thinking: "", signature: "sig" }, { type: "fallback", from: { model: "claude-sonnet-5-5" }, to: { model: "claude-opus-5" } }, { type: "text", text }]
         : [{ type: "text", text }];
       const send = () => {
         res.writeHead(200, { "content-type": "application/json", "request-id": "req_test" });
@@ -215,9 +215,9 @@ describe("route assistant backend", () => {
     upstream.state.mode = "ok";
     const r = await call(port, "/api/assistant", { method: "POST", headers: JSON_HEADERS, body: ask() });
     expect(r.status).toBe(200);
-    expect(r.json()).toEqual({ reply: "Go to Yellowknife Bay.", route: ["yellowknife", "rocknest", "summit"], avoid: ["dust"], model: "claude-opus-5-5" });
+    expect(r.json()).toEqual({ reply: "Go to Yellowknife Bay.", route: ["yellowknife", "rocknest", "summit"], avoid: ["dust"], model: "claude-sonnet-5-5" });
     const sent = upstream.state.last!;
-    expect(sent.body.model).toBe("claude-opus-5-5");
+    expect(sent.body.model).toBe("claude-sonnet-5-5");
     expect(sent.body.fallbacks).toBe("default");
     expect(String(sent.headers["anthropic-beta"])).toContain("server-side-fallback-2026-07-01");
     expect(sent.body.system).toMatch(/^You are the route assistant/);
@@ -239,10 +239,10 @@ describe("route assistant backend", () => {
 
   it("takes the model from ASSISTANT_MODEL, sending fallbacks only to models documented for it", async () => {
     try {
-      process.env.ASSISTANT_MODEL = "claude-sonnet-5-5";
-      expect((await call(port, "/api/assistant")).json()).toEqual({ live: true, model: "claude-sonnet-5-5" });
-      expect((await call(port, "/api/assistant", { method: "POST", headers: JSON_HEADERS, body: ask() })).json()).toMatchObject({ model: "claude-sonnet-5-5" });
-      expect(upstream.state.last!.body).toMatchObject({ model: "claude-sonnet-5-5", fallbacks: "default" });
+      process.env.ASSISTANT_MODEL = "claude-opus-5-5";
+      expect((await call(port, "/api/assistant")).json()).toEqual({ live: true, model: "claude-opus-5-5" });
+      expect((await call(port, "/api/assistant", { method: "POST", headers: JSON_HEADERS, body: ask() })).json()).toMatchObject({ model: "claude-opus-5-5" });
+      expect(upstream.state.last!.body).toMatchObject({ model: "claude-opus-5-5", fallbacks: "default" });
       process.env.ASSISTANT_MODEL = "claude-haiku-5-5";
       expect((await call(port, "/api/assistant", { method: "POST", headers: JSON_HEADERS, body: ask() })).status).toBe(200);
       const sent = upstream.state.last!;
@@ -287,7 +287,7 @@ describe("route assistant backend", () => {
     expect(ok.out).toContain("JSON shape:    ok");
     expect(ok.out).toContain("Result:        PASS");
     expect(ok.code).toBe(0);
-    expect(upstream.state.last!.body).toMatchObject({ model: "claude-opus-5-5", fallbacks: "default" });
+    expect(upstream.state.last!.body).toMatchObject({ model: "claude-sonnet-5-5", fallbacks: "default" });
     expect(ok.out).not.toContain("SECRET-1234");
   }, 20_000);
 

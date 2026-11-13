@@ -11,9 +11,10 @@
 //     from one address. Expo loads app/.env.local into this process, so put ANTHROPIC_API_KEY there
 //     (never as EXPO_PUBLIC_*, which would be bundled into the app).
 //   - by scripts/serve-assistant.mjs, a standalone server for a hosted demo.
+//   - by worker/index.js, the Cloudflare Worker behind the GitHub Pages demo (it reuses respond()).
 // scripts/assistant-smoke.mjs sends one request built by buildRequest() to the real API, to check it.
 const PATH = "/api/assistant";
-const DEFAULT_MODEL = "claude-opus-5-5";
+const DEFAULT_MODEL = "claude-sonnet-5-5";
 /** ASSISTANT_MODEL overrides the model; read per request so the server env is the only source. */
 const model = () => (process.env.ASSISTANT_MODEL || "").trim() || DEFAULT_MODEL;
 // Models documented to take server-side `fallbacks: "default"` (beta server-side-fallback-2026-07-01).
@@ -151,6 +152,27 @@ async function ask(body) {
   return readReply(await getClient().beta.messages.create(req.params), req.ctx);
 }
 
+/** One parsed app request to {status, json}. Every failure becomes a short code; the app then answers from its scripted fallback. */
+async function respond(body) {
+  try {
+    return await ask(body);
+  } catch (err) {
+    const Anthropic = require("@anthropic-ai/sdk").default;
+    // Log the status only; the client gets a short code, never the upstream message.
+    if (err instanceof Anthropic.AuthenticationError || err instanceof Anthropic.PermissionDeniedError) {
+      console.warn("[assistant] Claude API rejected the key (check ANTHROPIC_API_KEY)");
+      return { status: 503, json: { error: "not_configured" } };
+    }
+    if (err instanceof Anthropic.RateLimitError) return { status: 429, json: { error: "upstream_busy" } };
+    if (err instanceof Anthropic.APIError) {
+      console.warn(`[assistant] Claude API error ${err.status ?? "(connection)"}`);
+      return { status: 502, json: { error: "upstream" } };
+    }
+    console.warn(`[assistant] ${err && err.name}`);
+    return { status: 500, json: { error: "internal" } };
+  }
+}
+
 // --- HTTP ---
 
 const hits = new Map(); // remote address -> request times in the last minute
@@ -234,27 +256,10 @@ function serveAssistant(req, res) {
     let body;
     try { body = JSON.parse(Buffer.concat(chunks).toString("utf8")); } catch { return finish(400, { error: "bad_json" }); }
     if (!body || typeof body !== "object") return finish(400, { error: "bad_json" });
-    try {
-      const r = await ask(body);
-      finish(r.status, r.json);
-    } catch (err) {
-      const Anthropic = require("@anthropic-ai/sdk").default;
-      // Log the status only; the client gets a short code, never the upstream message.
-      if (err instanceof Anthropic.AuthenticationError || err instanceof Anthropic.PermissionDeniedError) {
-        console.warn("[assistant] Claude API rejected the key (check ANTHROPIC_API_KEY)");
-        finish(503, { error: "not_configured" });
-      } else if (err instanceof Anthropic.RateLimitError) {
-        finish(429, { error: "upstream_busy" });
-      } else if (err instanceof Anthropic.APIError) {
-        console.warn(`[assistant] Claude API error ${err.status ?? "(connection)"}`);
-        finish(502, { error: "upstream" });
-      } else {
-        console.warn(`[assistant] ${err && err.name}`);
-        finish(500, { error: "internal" });
-      }
-    }
+    const r = await respond(body);
+    finish(r.status, r.json);
   });
   return true;
 }
 
-module.exports = { serveAssistant, PATH, DEFAULT_MODEL, model, getClient, buildRequest, readReply, _test: { cleanContext, cleanMessages, systemPrompt } };
+module.exports = { serveAssistant, respond, configured, PATH, MAX_BODY, DEFAULT_MODEL, model, getClient, buildRequest, readReply, _test: { cleanContext, cleanMessages, systemPrompt } };

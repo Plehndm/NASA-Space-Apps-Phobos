@@ -6,7 +6,7 @@
 // small request on your account. The key is read from the environment and never printed.
 //
 //   ANTHROPIC_API_KEY=... node scripts/assistant-smoke.mjs                       # from app/
-//   ANTHROPIC_API_KEY=... ASSISTANT_MODEL=claude-sonnet-5-5 node scripts/assistant-smoke.mjs
+//   ANTHROPIC_API_KEY=... ASSISTANT_MODEL=claude-opus-5-5 node scripts/assistant-smoke.mjs
 //
 // Exit code 0 when the reply parsed, 1 otherwise.
 import { createRequire } from "node:module";

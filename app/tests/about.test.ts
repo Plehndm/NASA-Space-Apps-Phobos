@@ -69,6 +69,14 @@ describe("credits", () => {
       expect(text).toContain(doi);
     }
   });
+
+  it("cites every DOI in MarsDataPipline/raw_data/Citations", () => {
+    const citations = readFileSync(fileURLToPath(new URL("../../MarsDataPipline/raw_data/Citations", import.meta.url)), "utf8");
+    const dois = [...citations.matchAll(/\b10\.\d{4,}\/[^\s,]+/g)].map(d => d[0].replace(/\.$/, ""));
+    expect(dois.length).toBeGreaterThanOrEqual(15);
+    const text = creditGroups(null).flatMap(x => x.lines.map(l => l.url ?? "")).join(" ");
+    for (const doi of dois) expect(text).toContain(doi);
+  });
 });
 
 const built = fileURLToPath(new URL("../data/manifest.json", import.meta.url));

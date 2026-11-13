@@ -9,7 +9,7 @@ Two sources of footage:
 
 `?scene=<name>` jumps the app into a prepared state (`app/README.md`, "Demo scenes"). Scenes marked * wait for the map data, so give them a second or two before you start talking. Open each link in a fresh tab. To get a scene on the phone, restart the dev server with `EXPO_PUBLIC_SCENE=<name> npx expo start` (PowerShell: `$env:EXPO_PUBLIC_SCENE='<name>'; npx expo start`).
 
-Before recording: check that the map shows satellite imagery around Bradbury Landing and the header reads "Sol 742". If the map is empty ("MAP DATA OFFLINE"), the map data isn't loaded. The assistant runs offline (scripted answers from the app's own data), so the demo needs no network beyond loading the page.
+Before recording: check that the map shows satellite imagery around Bradbury Landing and the header reads "Sol 742". If the map is empty ("MAP DATA OFFLINE"), the map data isn't loaded. Open the assistant and check its status line: "LIVE MODEL" means the Claude-backed assistant is on; "OFFLINE ASSISTANT" means it answers from the app's own data (still fine to film).
 
 | # | Time | Source | Open | Do | Say |
 | --- | --- | --- | --- | --- | --- |

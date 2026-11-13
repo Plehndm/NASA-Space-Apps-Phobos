@@ -4,8 +4,10 @@
 # app/data/ is git-ignored (built locally by the data pipeline), so this workflow takes it from a
 # release asset instead: `npm run data:pack` (app/scripts/package-data.mjs) packs it into
 # mapdata.tar.gz + mapdata.tar.gz.sha256, which are uploaded once to the release tagged MAP_DATA_TAG.
-# The route assistant's live model needs a server, so the Pages build has none: the assistant
-# answers from its offline scripted planner.
+# The route assistant's live model needs a server holding the Claude API key, which Pages can't be.
+# With the CLOUDFLARE_API_TOKEN and ANTHROPIC_API_KEY secrets set, this also deploys app/worker/ to
+# Cloudflare Workers and builds the app against it; without them, the assistant answers from its
+# offline scripted planner. Either way, if the key stops working the app falls back to that planner.
 name: Deploy web demo
 
 on:
@@ -58,13 +60,36 @@ jobs:
 
       - run: npm ci
 
+      - name: Deploy assistant Worker
+        id: assistant
+        working-directory: app/worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::notice::CLOUDFLARE_API_TOKEN or ANTHROPIC_API_KEY is not set, so the demo's assistant stays offline (scripted answers)"
+            exit 0
+          fi
+          # Only needed when the token can see more than one Cloudflare account.
+          [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || unset CLOUDFLARE_ACCOUNT_ID
+          npx -y wrangler@4.151.3 deploy --var "ALLOWED_ORIGINS:https://${{ github.repository_owner }}.github.io" | tee "$RUNNER_TEMP/wrangler.log"
+          printf '%s' "$ANTHROPIC_API_KEY" | npx -y wrangler@4.151.3 secret put ANTHROPIC_API_KEY
+          url=$(grep -oE 'https://[a-zA-Z0-9.-]+\.workers\.dev' "$RUNNER_TEMP/wrangler.log" | head -1)
+          if [ -z "$url" ]; then
+            echo "::error::No workers.dev address in the deploy output. Open Workers & Pages in the Cloudflare dashboard once to choose a workers.dev subdomain, then re-run."
+            exit 1
+          fi
+          echo "url=$url/api/assistant" >> "$GITHUB_OUTPUT"
+
       - name: Export web build
         run: npx expo export --platform web --output-dir dist
         env:
           # The map data is copied next to the app below, at <base>/mapdata/.
           EXPO_PUBLIC_DATA_URL: ${{ steps.base.outputs.path }}/mapdata
-          # Deliberately not set: no assistant backend on Pages, so the scripted assistant answers.
-          # EXPO_PUBLIC_ASSISTANT_URL:
+          # The Worker deployed above; empty without it, and the scripted assistant answers.
+          EXPO_PUBLIC_ASSISTANT_URL: ${{ steps.assistant.outputs.url }}
 
       - name: Add map data
         run: node scripts/fetch-data.mjs --tag "$MAP_DATA_TAG" --repo "$GITHUB_REPOSITORY" --dest dist/mapdata

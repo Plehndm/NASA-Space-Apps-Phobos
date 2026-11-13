@@ -45,3 +45,7 @@ yarn-error.*
 
 # local Python env for scripts/build_map_data.py
 /.venv/
+
+# Cloudflare Worker (worker/): local secrets and wrangler state
+.dev.vars
+.wrangler/

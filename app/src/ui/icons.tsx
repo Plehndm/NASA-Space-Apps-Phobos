@@ -46,6 +46,12 @@ export const CrosshairIcon = ({ size = 18, color = C.accent2 }: P) => (
   </Svg>
 );
 
+export const ChevronIcon = ({ size = 14, color = C.fg, up = false }: P & { up?: boolean }) => (
+  <Svg pointerEvents="none" viewBox="0 0 16 16" width={size} height={size} fill="none" stroke={color} strokeWidth={1.8} strokeLinejoin="round" strokeLinecap="round">
+    <Path d={up ? "m3.5 10 4.5-4.5 4.5 4.5" : "m3.5 6 4.5 4.5 4.5-4.5"} />
+  </Svg>
+);
+
 export const CloseIcon = ({ size = 14, color = C.fg }: P) => (
   <Svg pointerEvents="none" viewBox="0 0 16 16" width={size} height={size} fill="none" stroke={color} strokeWidth={2} strokeLinecap="round">
     <Path d="M4 4l8 8M12 4l-8 8" />

@@ -1,7 +1,8 @@
 // Talks to the route assistant's backend (scripts/assistant-middleware.js). The Claude API key lives
 // only there: the app sends the conversation and a snapshot of what it knows, and gets back
 // {reply, route, avoid}. Served by the Expo dev server at /api/assistant, so it follows the app's own
-// address like the map data does; for a hosted demo set EXPO_PUBLIC_ASSISTANT_URL.
+// address like the map data does. The GitHub Pages build sets EXPO_PUBLIC_ASSISTANT_URL to the
+// Cloudflare Worker (worker/index.js).
 import { Platform } from "react-native";
 import Constants from "expo-constants";
 import type { AssistantContext } from "./context";

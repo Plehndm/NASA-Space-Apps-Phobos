@@ -10,7 +10,7 @@ import { DEFAULT_SETTINGS, loadOverrides, loadRecent, RECENT_MAX, saveOverrides,
 
 /** Which card stack the sheet / side panel shows. */
 export type Mode = "home" | "search" | "waypoint" | "route" | "nav" | "arrived" | "layers" | "assistant";
-export type SnapName = "full" | "half" | "peek";
+export type SnapName = "full" | "half" | "peek" | "min";
 
 /** Map view transform: world px → screen px is `translate(tx,ty) scale(s)`. */
 export interface View {
@@ -222,7 +222,7 @@ export function AppProvider({ geo, children }: { geo: Geometry; children: ReactN
     prevDevice.current = geo.device;
     setState(s => {
       const p = geo.snap;
-      const name = (["full", "half", "peek"] as SnapName[]).sort((a, b) => Math.abs(p[a] - s.sheetY) - Math.abs(p[b] - s.sheetY))[0];
+      const name = (["full", "half", "peek", "min"] as SnapName[]).sort((a, b) => Math.abs(p[a] - s.sheetY) - Math.abs(p[b] - s.sheetY))[0];
       sheetTop.setValue(p[name]);
       return { ...s, sheetY: p[name], view: deviceChanged ? initialView(geo, s.rover) : clampView(s.view, geo) };
     });
