@@ -113,6 +113,10 @@ jobs:
           cp dist/index.html dist/404.html
           du -sh dist dist/mapdata
 
+      # Pages lets browsers cache pages for 10 minutes; this makes open links switch to a new deploy at once.
+      - name: Stamp build
+        run: node scripts/stamp-build.mjs dist "${{ steps.base.outputs.path }}" "${{ github.sha }}"
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: app/dist

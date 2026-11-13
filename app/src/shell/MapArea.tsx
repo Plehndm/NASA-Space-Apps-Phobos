@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Animated, Easing, PanResponder, Platform, View, type GestureResponderEvent, type HostInstance } from "react-native";
 import Reanimated, { useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
-import { clampView, useApp, ZOOM_MAX, ZOOM_MIN } from "../state/store";
+import { clampView, minZoom, useApp, ZOOM_MAX } from "../state/store";
+import type { Geometry } from "../layout/geometry";
 import { fmtInt, fmtLatLon, GRID, inWorld } from "../map/geo";
 import { terrainAt, useMapData } from "../map/data";
 import { MapViewProvider, type V3, type Viewport } from "../map/view";
@@ -31,7 +32,7 @@ type Gesture = {
   pinched: boolean;
 };
 
-const clampS = (s: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, s));
+const clampS = (s: number, g: Geometry) => Math.min(ZOOM_MAX, Math.max(minZoom(g), s));
 
 /**
  * The map area: the world container (every layer, positioned in world px and moved by one
@@ -183,7 +184,7 @@ export function MapArea() {
           } else {
             const [a, b] = pts;
             const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-            const ns = clampS(st.s * Math.hypot(a.x - b.x, a.y - b.y) / cur.d0), k = ns / st.s;
+            const ns = clampS(st.s * Math.hypot(a.x - b.x, a.y - b.y) / cur.d0, latest.current.app.geo), k = ns / st.s;
             // Keep the world point that was under the fingers' midpoint under it as they move.
             apply({ s: ns, tx: mx - (cur.x0 - st.tx) * k, ty: my - (cur.y0 - st.ty) * k });
           }
@@ -214,7 +215,7 @@ export function MapArea() {
       const r = el.getBoundingClientRect();
       const ox = ev.clientX - r.left, oy = ev.clientY - r.top;
       const lines = ev.deltaMode === 1 ? 16 : 1;
-      const cur = live.current, ns = clampS(cur.s * Math.exp(-ev.deltaY * lines * (ev.ctrlKey ? 0.01 : 0.002))), k = ns / cur.s;
+      const cur = live.current, ns = clampS(cur.s * Math.exp(-ev.deltaY * lines * (ev.ctrlKey ? 0.01 : 0.002)), latest.current.app.geo), k = ns / cur.s;
       apply({ s: ns, tx: ox - (ox - cur.tx) * k, ty: oy - (oy - cur.ty) * k });
       clearTimeout(timer);
       timer = setTimeout(commit, 180);
