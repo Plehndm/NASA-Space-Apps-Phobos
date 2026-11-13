@@ -18,10 +18,11 @@ export const HazardIcon = ({ size = 18, color = C.fg }: P) => (
   </Svg>
 );
 
+// An 8-tooth gear (teeth between radius 5.3 and 6.9 around the centre) with a hole in the middle.
 export const GearIcon = ({ size = 16, color = C.fg }: P) => (
-  <Svg pointerEvents="none" viewBox="0 0 16 16" width={size} height={size} fill="none" stroke={color} strokeWidth={1.6} strokeLinecap="round">
-    <Circle cx="8" cy="8" r="2.4" />
-    <Path d="M8 1.5v2.2M8 12.3v2.2M1.5 8h2.2M12.3 8h2.2M3.4 3.4l1.6 1.6M11 11l1.6 1.6M3.4 12.6 5 11M11 5l1.6-1.6" />
+  <Svg pointerEvents="none" viewBox="0 0 16 16" width={size} height={size} fill="none" stroke={color} strokeWidth={1.4} strokeLinejoin="round">
+    <Path d="M13.14 6.72L14.81 6.87L14.81 9.13L13.14 9.28L12.54 10.73L13.61 12.01L12.01 13.61L10.73 12.54L9.28 13.14L9.13 14.81L6.87 14.81L6.72 13.14L5.27 12.54L3.99 13.61L2.39 12.01L3.46 10.73L2.86 9.28L1.19 9.13L1.19 6.87L2.86 6.72L3.46 5.27L2.39 3.99L3.99 2.39L5.27 3.46L6.72 2.86L6.87 1.19L9.13 1.19L9.28 2.86L10.73 3.46L12.01 2.39L13.61 3.99L12.54 5.27Z" />
+    <Circle cx="8" cy="8" r="2.2" />
   </Svg>
 );
 
