@@ -10,6 +10,9 @@ export const ABOUT_GOAL =
 
 export const ABOUT_TEAM = "Team Phobos · NASA Space Apps 2026";
 export interface Member { name: string; role: string; github: string }
+
+/** A member's GitHub profile picture (GitHub serves it at <profile>.png). */
+export const avatarUrl = (m: Member, px = 96) => `${m.github}.png?size=${px}`;
 export const ABOUT_MEMBERS: readonly Member[] = [
   { name: "David Plehn", role: "Software Developer", github: "https://github.com/Plehndm" },
   { name: "Ashton Peng", role: "Data Scientist", github: "https://github.com/Ayawningp" },

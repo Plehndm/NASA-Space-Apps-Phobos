@@ -3,7 +3,7 @@
 // "limits" link (opens at the limits; closing returns to the map). Text lives in ./credits.ts and
 // ../map/heatLimits.ts.
 import { useEffect, useRef, useState, type ComponentRef } from "react";
-import { Linking, Pressable, View, type ScrollView } from "react-native";
+import { Image, Linking, Pressable, View, type ScrollView } from "react-native";
 import { useApp, type AppState } from "../state/store";
 import { useMapData } from "../map/data";
 import { HEAT_CHECKED, heatCaveats, KEY_LIMITS, LIMITS_DOCS } from "../map/heatLimits";
@@ -11,7 +11,7 @@ import { C } from "../theme";
 import { Card, SectionLabel } from "../ui/Card";
 import { T } from "../ui/Text";
 import { Dialog } from "./Dialog";
-import { ABOUT_CHALLENGE, ABOUT_GOAL, ABOUT_MEMBERS, ABOUT_TEAM, creditGroups } from "./credits";
+import { ABOUT_CHALLENGE, ABOUT_GOAL, ABOUT_MEMBERS, ABOUT_TEAM, avatarUrl, creditGroups, type Member } from "./credits";
 
 function Bullets({ lines, color = C.fg2 }: { lines: readonly string[]; color?: string }) {
   return (
@@ -36,6 +36,17 @@ function Link({ url }: { url: string }) {
     <Pressable accessibilityRole="link" accessibilityLabel={url} onPress={() => { Linking.openURL(url).catch(() => {}); }} hitSlop={4}>
       <T w={600} size={10} lh={1.45} color={C.accent2}>{url.replace(/^https:\/\//, "")}</T>
     </Pressable>
+  );
+}
+
+/** GitHub profile picture over the member's initials, which show if the picture can't load (offline). */
+function Avatar({ m }: { m: Member }) {
+  const initials = m.name.split(" ").map(w => w[0]).join("").slice(0, 2);
+  return (
+    <View style={{ width: 38, height: 38, borderRadius: 19, overflow: "hidden", backgroundColor: C.raised, alignItems: "center", justifyContent: "center" }}>
+      <T w={800} size={12} color={C.warm}>{initials}</T>
+      <Image source={{ uri: avatarUrl(m) }} accessibilityIgnoresInvertColors style={{ position: "absolute", width: 38, height: 38 }} />
+    </View>
   );
 }
 
@@ -76,9 +87,12 @@ function About({ about }: { about: NonNullable<AppState["about"]> }) {
         <T w={700} size={10.5} ls={1} color={C.accent2}>{ABOUT_TEAM.toUpperCase()}</T>
         <View style={{ gap: 8 }}>
           {ABOUT_MEMBERS.map(m => (
-            <View key={m.name} style={{ gap: 1 }}>
-              <T w={600} size={12} lh={1.4}>{m.name} <T w={500} size={11} color={C.fg3}>· {m.role}</T></T>
-              <Link url={m.github} />
+            <View key={m.name} style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <Avatar m={m} />
+              <View style={{ gap: 1, flex: 1 }}>
+                <T w={600} size={12} lh={1.4}>{m.name} <T w={500} size={11} color={C.fg3}>· {m.role}</T></T>
+                <Link url={m.github} />
+              </View>
             </View>
           ))}
         </View>
