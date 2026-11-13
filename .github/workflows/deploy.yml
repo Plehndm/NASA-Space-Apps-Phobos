@@ -15,6 +15,8 @@ on:
     branches: [main]
     paths:
       - "app/**"
+      - "site/**"
+      - "docs/screenshots/**"
       - ".github/workflows/deploy.yml"
   workflow_dispatch:
 
@@ -98,6 +100,13 @@ jobs:
 
       # .nojekyll: Jekyll would drop the _expo/ folder. 404.html: any unknown path under the site
       # still loads the app (which has no routes of its own).
+      # The project showcase (site/) at <base>/showcase/, with the app screenshots it shows.
+      - name: Add showcase page
+        run: |
+          mkdir -p dist/showcase/screens
+          cp ../site/index.html dist/showcase/
+          cp ../docs/screenshots/*.jpg dist/showcase/screens/
+
       - name: Finish site
         run: |
           touch dist/.nojekyll

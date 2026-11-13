@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mars Navigator · Team Phobos</title>
+<meta name="description" content="Mars Navigator: hazard-aware surface navigation for crews in Gale Crater, built on real NASA orbital and rover data. NASA Space Apps 2026, Team Phobos.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!--
+  Project showcase, published with the web demo at <Pages site>/showcase/ by .github/workflows/deploy.yml
+  (screenshots are copied in from docs/screenshots/ at deploy time). Colours, type and radii are the app's
+  design tokens ("Mars Navigator App Design/README.md").
+
+  DEMO VIDEO: paste its link into VIDEO_URL in the script at the bottom. A YouTube or Vimeo link plays
+  on the page; any other link (Google Drive, a file) opens in a new tab.
+-->
+<style>
+  :root {
+    --bg0: #140b09; --bg1: #1b100d; --bg2: #231512; --row: #2e1e19; --card: #36251f; --raised: #47322a;
+    --line: #5e4537; --hair: rgba(255,216,190,.08);
+    --fg: #f8ece4; --fg2: #dcb9a6; --fg3: #ab8878;
+    --accent: #7fd4c1; --accent2: #cdf3ea; --accent-ink: #0d2a24;
+    --cta: #ec7a56; --cta-hover: #f78d6b; --cta-ink: #2b0d04;
+    --warm: #ffc394; --warm2: #f2b98f;
+    --danger: #ff6b5e; --haz-dust: #d946ef; --haz-steep: #ef4444;
+    --r-pebble: 30px 24px 28px 18px / 28px 22px 30px 20px;
+    --r-pebble2: 18px 28px 24px 30px / 20px 30px 22px 28px;
+    --shadow1: 0 8px 20px rgba(10,4,2,.4); --shadow2: 0 14px 36px rgba(10,4,2,.5);
+    --glow: 0 10px 26px rgba(236,122,86,.35);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg1); color: var(--fg);
+    font: 500 15px/1.6 "Plus Jakarta Sans", system-ui, sans-serif; font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent2); }
+  img { display: block; max-width: 100%; height: auto; }
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 0 20px; }
+
+  /* header: the app's top bar */
+  header.top {
+    position: sticky; top: 0; z-index: 10; background: rgba(27,16,13,.88); backdrop-filter: blur(28px);
+    border-bottom: 1px solid var(--hair);
+  }
+  header.top .wrap { display: flex; align-items: center; gap: 16px; height: 64px; }
+  .brand { display: flex; flex-direction: column; line-height: 1.2; }
+  .brand b { font-size: 15px; font-weight: 700; }
+  .brand span { font-size: 11px; color: var(--fg3); font-weight: 600; }
+  nav.links { margin-left: auto; display: flex; gap: 6px; }
+  nav.links a { color: var(--fg2); text-decoration: none; font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 999px; }
+  nav.links a:hover { background: var(--row); color: var(--fg); }
+  .pill-status {
+    font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--accent2); padding: 6px 12px;
+    border-radius: 999px; background: var(--row); white-space: nowrap;
+  }
+  @media (max-width: 760px) { nav.links { display: none; } .pill-status { margin-left: auto; } }
+
+  /* buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 50px; padding: 0 24px;
+    border-radius: 999px; font: 700 14px/1 "Plus Jakarta Sans", system-ui, sans-serif; text-decoration: none; cursor: pointer; border: 0;
+    transition: background .15s, transform .15s;
+  }
+  .btn.cta { background: var(--cta); color: var(--cta-ink); box-shadow: var(--glow); }
+  .btn.cta:hover { background: var(--cta-hover); transform: translateY(-1px); }
+  .btn.sec { background: var(--raised); color: var(--fg); }
+  .btn.sec:hover { background: var(--line); }
+  .btn.acc { background: var(--accent); color: var(--accent-ink); }
+  .btn[aria-disabled="true"] { opacity: .55; cursor: default; box-shadow: none; transform: none; }
+
+  .label { font-size: 10.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--fg3); }
+  .label.acc { color: var(--accent); }
+  .label.warm { color: var(--warm); }
+  h1, h2, h3 { margin: 0; letter-spacing: -.5px; }
+  h2 { font-size: clamp(26px, 4vw, 36px); font-weight: 800; line-height: 1.15; }
+  h3 { font-size: 17px; font-weight: 700; letter-spacing: -.2px; }
+  p { margin: 0; }
+  .lede { color: var(--fg2); font-size: 16px; max-width: 640px; }
+  section.wrap { padding-top: 84px; }
+  .sec-head { display: grid; gap: 10px; margin-bottom: 28px; }
+
+  /* hero: the map, tinted like the app's CTX base layer */
+  .hero { position: relative; overflow: hidden; padding: 72px 0 64px; }
+  .hero::before {
+    content: ""; position: absolute; inset: 0; background: url("screens/desktop-home.jpg") center/cover;
+    filter: sepia(.5) saturate(1.3) contrast(1.02) brightness(.5) hue-rotate(-8deg) blur(2px); transform: scale(1.04);
+  }
+  .hero::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(255,172,122,.16), transparent 32%), linear-gradient(90deg, rgba(27,16,13,.97) 30%, rgba(27,16,13,.7) 65%, rgba(27,16,13,.45)), linear-gradient(0deg, var(--bg1), transparent 30%);
+  }
+  .hero .wrap { position: relative; z-index: 1; display: grid; grid-template-columns: 1.15fr .85fr; gap: 40px; align-items: center; }
+  .hero h1 { font-size: clamp(36px, 6vw, 60px); font-weight: 800; line-height: 1.04; letter-spacing: -1.5px; margin: 14px 0 18px; }
+  .hero h1 em { font-style: normal; color: var(--warm); }
+  .hero .lede { font-size: 17px; }
+  .hero .ctas { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 22px; }
+  .chip { font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 999px; background: rgba(46,30,25,.85); color: var(--fg2); border: 1px solid var(--hair); }
+  .phone {
+    justify-self: center; width: min(300px, 80vw); border-radius: 40px; padding: 8px; background: var(--bg0);
+    box-shadow: var(--shadow2), 0 0 0 1px var(--line); transform: rotate(2deg);
+  }
+  .phone img { border-radius: 33px; }
+  @media (max-width: 860px) {
+    .hero .wrap { grid-template-columns: 1fr; }
+    .phone { transform: none; width: min(260px, 70vw); }
+  }
+
+  /* problem stats */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .tile { background: var(--card); padding: 22px 22px 20px; border-radius: var(--r-pebble); }
+  .tile:nth-child(even) { border-radius: var(--r-pebble2); }
+  .tile .num { font-size: 30px; font-weight: 800; letter-spacing: -1px; color: var(--warm); line-height: 1.1; margin: 8px 0 6px; }
+  .tile p { color: var(--fg2); font-size: 13.5px; }
+  @media (max-width: 860px) { .stats { grid-template-columns: 1fr; } }
+
+  /* features: alternating rows */
+  .feature {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 36px; align-items: center; padding: 28px;
+    background: var(--bg2); border-radius: var(--r-pebble); margin-bottom: 14px; border: 1px solid var(--hair);
+  }
+  .feature:nth-child(even) { border-radius: var(--r-pebble2); }
+  .feature:nth-child(even) .shot { order: 2; }
+  .feature .shot { border-radius: 22px; overflow: hidden; box-shadow: var(--shadow1); background: var(--bg0); }
+  .feature .body { display: grid; gap: 12px; }
+  .feature .body > p { color: var(--fg2); font-size: 14.5px; }
+  .impact {
+    background: rgba(127,212,193,.08); border: 1px solid rgba(127,212,193,.22); border-radius: 18px; padding: 14px 16px;
+    display: grid; gap: 4px;
+  }
+  .impact p { color: var(--accent2); font-size: 14px; }
+  .feature .try { justify-self: start; font-size: 13px; font-weight: 700; color: var(--accent); text-decoration: none; }
+  .feature .try:hover { text-decoration: underline; }
+  @media (max-width: 860px) {
+    .feature { grid-template-columns: 1fr; gap: 20px; padding: 18px; }
+    .feature:nth-child(even) .shot { order: 0; }
+  }
+
+  /* video */
+  .video {
+    background: var(--card); border-radius: var(--r-pebble2); padding: 18px; display: grid; gap: 16px;
+  }
+  .video .frame { aspect-ratio: 16/9; border-radius: 22px; overflow: hidden; background: var(--bg0); position: relative; }
+  .video iframe { width: 100%; height: 100%; border: 0; display: block; }
+  .video .poster { position: absolute; inset: 0; background: url("screens/desktop-nav.jpg") center/cover; filter: brightness(.45) sepia(.3); }
+  .video .play { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; gap: 10px; align-content: center; padding: 16px; }
+  .video .play .ring {
+    width: 74px; height: 74px; border-radius: 50%; background: var(--cta); display: grid; place-items: center; box-shadow: var(--glow);
+    margin: 0 auto;
+  }
+  .video .play .ring svg { margin-left: 4px; }
+  .video .play.soon .ring { background: var(--raised); box-shadow: none; }
+  .video .meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding: 0 6px 4px; }
+  .video .meta p { color: var(--fg2); font-size: 13.5px; }
+
+  /* data + honesty */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .card { background: var(--card); border-radius: 22px; padding: 22px; display: grid; gap: 12px; align-content: start; }
+  .rows { display: grid; gap: 6px; }
+  .rowi { display: flex; gap: 12px; align-items: baseline; background: var(--row); border-radius: 18px; padding: 11px 14px; }
+  .rowi b { font-size: 13.5px; font-weight: 700; min-width: 128px; }
+  .rowi span { color: var(--fg2); font-size: 13px; }
+  .bul { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }
+  .bul li { display: flex; gap: 10px; color: var(--fg2); font-size: 13.5px; }
+  .bul li::before { content: ""; flex: none; width: 5px; height: 5px; border-radius: 50%; background: var(--warm2); margin-top: 9px; }
+  @media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } .rowi { flex-direction: column; gap: 2px; } .rowi b { min-width: 0; } }
+
+  /* team + footer */
+  .team { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .member { background: var(--bg2); border: 1px solid var(--hair); border-radius: 22px; padding: 18px; display: flex; gap: 12px; align-items: center; }
+  .avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--raised); color: var(--warm); display: grid; place-items: center; font-weight: 800; font-size: 14px; flex: none; }
+  .member b { font-size: 14px; }
+  @media (max-width: 860px) { .team { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 460px) { .team { grid-template-columns: 1fr; } }
+  .final {
+    margin-top: 84px; padding: 44px 28px; text-align: center; border-radius: 34px 34px 0 0; background: var(--bg2);
+    box-shadow: 0 -18px 50px rgba(10,4,2,.5), inset 0 1px 0 rgba(255,216,190,.08);
+  }
+  .final h2 { margin: 10px 0 12px; }
+  .final .lede { margin: 0 auto; }
+  .final .ctas { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 24px; }
+  footer { background: var(--bg2); color: var(--fg3); font-size: 12px; padding: 0 0 36px; text-align: center; }
+  footer p { max-width: 760px; margin: 0 auto; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><b>Mars Navigator</b><span>Team Phobos · NASA Space Apps 2026</span></div>
+    <nav class="links" aria-label="Sections">
+      <a href="#why">Why</a><a href="#features">Features</a><a href="#video">Video</a><a href="#data">Data</a><a href="#team">Team</a>
+    </nav>
+    <span class="pill-status">GALE CRATER · SOL 742</span>
+  </div>
+</header>
+
+<main>
+  <div class="hero">
+    <div class="wrap">
+      <div>
+        <span class="label acc">Interplanetary Survival Guide: Martian Map</span>
+        <h1>Navigation for the first crews <em>driving on Mars</em>.</h1>
+        <p class="lede">Mars Navigator is a Google-Maps-style app for astronauts driving a rover in Gale Crater. It brings real NASA orbital and rover data together on one map, plans routes that stay on safe slopes and away from hazards, and keeps working when Earth is too far away to help.</p>
+        <div class="ctas">
+          <a class="btn cta" href="../">Open the live demo
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+          </a>
+          <a class="btn sec" href="#video">Watch the video</a>
+        </div>
+        <div class="chip-row" aria-label="Data sources">
+          <span class="chip">MRO CTX</span><span class="chip">Stereo DTMs</span><span class="chip">THEMIS</span><span class="chip">TES</span><span class="chip">Curiosity REMS</span><span class="chip">Mastcam τ</span>
+        </div>
+      </div>
+      <div class="phone"><img src="screens/phone-home.jpg" alt="Mars Navigator on a phone: the Gale Crater map with the Home card showing surface temperature, dust opacity and ground slope" width="786" height="1704"></div>
+    </div>
+  </div>
+
+  <section id="why" class="wrap">
+    <div class="sec-head">
+      <span class="label warm">The problem</span>
+      <h2>On Mars, nobody can tell you which way to turn.</h2>
+      <p class="lede">Rovers have been driven from Earth for decades, with teams planning each move a day at a time. A crew on the surface has to make those calls on the spot, about terrain that has already stopped rovers.</p>
+    </div>
+    <div class="stats">
+      <div class="tile"><span class="label">Light delay to Earth</span><div class="num">4–24 min</div><p>One way, depending on where the planets are. A question and its answer can take most of an hour, so crews need answers on board.</p></div>
+      <div class="tile"><span class="label">Spirit, 2009</span><div class="num">Stuck</div><p>NASA's Spirit rover bogged down in soft soil and never drove free. Hidden terrain, not distance, is what ends a traverse.</p></div>
+      <div class="tile"><span class="label">Curiosity, 2013</span><div class="num">Re-routed</div><p>Sharp rocks punctured Curiosity's wheels, and drivers changed its routes to protect them. Terrain-aware routing is how you avoid that damage.</p></div>
+    </div>
+  </section>
+
+  <section id="features" class="wrap">
+    <div class="sec-head">
+      <span class="label acc">Key features and their impact</span>
+      <h2>Everything a crew needs to plan a safe traverse.</h2>
+      <p class="lede">Each feature runs on real Gale Crater data in the demo. Use the links to open the demo on that feature.</p>
+    </div>
+
+    <article class="feature">
+      <div class="shot"><img src="screens/desktop-waypoint.jpg" alt="Waypoint card with two route options, direct and safe, and an elevation profile" loading="lazy" width="1440" height="900"></div>
+      <div class="body">
+        <span class="label warm">01 · Hazard-aware routing</span>
+        <h3>Two routes on real terrain: direct, or safe.</h3>
+        <p>The router plans across the stereo terrain model with a grade limit for the rover, steers around mapped hazard zones, and shows the elevation profile of each route. If no route is safe, it says so instead of drawing one anyway.</p>
+        <div class="impact"><span class="label acc">Impact</span><p>Keeps crews off slopes and ground that can roll or trap a rover, before they commit to a drive.</p></div>
+        <a class="try" href="../?device=desktop&amp;scene=waypoint">Try it in the demo →</a>
+      </div>
+    </article>
+
+    <article class="feature">
+      <div class="shot"><img src="screens/desktop-nav.jpg" alt="Expedition in progress: ETA card, leg progress and the rover marker on the grade profile" loading="lazy" width="1440" height="900"></div>
+      <div class="body">
+        <span class="label warm">02 · Multi-stop expeditions</span>
+        <h3>Plan the whole sol, then drive it.</h3>
+        <p>Chain science stops into one trip, reorder them, and simulate the drive. Speed changes with the grade, so the ETA, time per leg and grade profile reflect the actual ground. Tap the map to add a via-point and the route re-plans around hazards.</p>
+        <div class="impact"><span class="label acc">Impact</span><p>Realistic timelines for EVAs and drives, so crews can budget power, consumables and daylight before they leave.</p></div>
+        <a class="try" href="../?device=desktop&amp;scene=route">Try it in the demo →</a>
+      </div>
+    </article>
+
+    <article class="feature">
+      <div class="shot"><img src="screens/desktop-layers.jpg" alt="Temperature layer over Gale Crater with the time-of-day slider and kelvin legend" loading="lazy" width="1440" height="900"></div>
+      <div class="body">
+        <span class="label warm">03 · Temperature through the sol</span>
+        <h3>Ground and air temperature, hour by hour, in five seasons.</h3>
+        <p>Our model runs soil physics on THEMIS thermal inertia and TES albedo for every pixel, corrected against Curiosity's weather station. Scrub the slider to see the crater heat and cool through a whole sol. The app shows the model's limits next to the map.</p>
+        <div class="impact"><span class="label acc">Impact</span><p>Helps crews time EVAs and drives around the coldest and hottest hours, which matters for suits, batteries and instruments.</p></div>
+        <a class="try" href="../?device=desktop&amp;scene=layers">Try it in the demo →</a>
+      </div>
+    </article>
+
+    <article class="feature">
+      <div class="shot"><img src="screens/desktop-home.jpg" alt="Home card with live telemetry tiles and the dust devil advisory" loading="lazy" width="1440" height="900"></div>
+      <div class="body">
+        <span class="label warm">04 · Dust and telemetry</span>
+        <h3>Dust opacity, dust devils and slope at a glance.</h3>
+        <p>The Home card shows modelled ground temperature, dust opacity τ from Curiosity's Mastcam record, and the slope under the rover. A dust-devil heating index flags where the ground heats most strongly, and an advisory warns when a hot spot is close.</p>
+        <div class="impact"><span class="label acc">Impact</span><p>Dust cuts solar power and visibility. Seeing it early lets crews plan around it instead of reacting to it.</p></div>
+        <a class="try" href="../?device=desktop&amp;scene=home">Try it in the demo →</a>
+      </div>
+    </article>
+
+    <article class="feature">
+      <div class="shot"><img src="screens/desktop-street.jpg" alt="Street Level: a Curiosity rover panorama with walking arrows" loading="lazy" width="1440" height="900"></div>
+      <div class="body">
+        <span class="label warm">05 · Street Level</span>
+        <h3>Stand where Curiosity stood.</h3>
+        <p>Five real Curiosity panoramas, placed on the map at the spots where they were taken. Look around in 360° and follow the arrows to walk between them.</p>
+        <div class="impact"><span class="label acc">Impact</span><p>Crews can see a site at ground level before they arrive. The same views work for training and for showing the public what Gale Crater looks like.</p></div>
+        <a class="try" href="../?device=desktop&amp;scene=waypoint">Try it in the demo →</a>
+      </div>
+    </article>
+
+    <article class="feature">
+      <div class="shot"><img src="screens/desktop-assistant.jpg" alt="Route assistant chat proposing a three-stop science day with a Load Route button" loading="lazy" width="1440" height="900"></div>
+      <div class="body">
+        <span class="label warm">06 · Route assistant</span>
+        <h3>Ask in plain words, get a route you can load.</h3>
+        <p>"Plan a 3-stop science day that stays clear of dust devils." A Claude-powered assistant answers from the app's own landmarks, hazards and telemetry and proposes a route you can load with one tap. When the model can't be reached, a built-in planner answers from the same data.</p>
+        <div class="impact"><span class="label acc">Impact</span><p>A second opinion on the surface, without waiting up to an hour for Earth. It keeps answering even with no connection.</p></div>
+        <a class="try" href="../?device=desktop&amp;scene=assistant">Try it in the demo →</a>
+      </div>
+    </article>
+  </section>
+
+  <section id="video" class="wrap">
+    <div class="sec-head">
+      <span class="label acc">Demo video</span>
+      <h2>See a traverse planned and driven.</h2>
+    </div>
+    <div class="video">
+      <div class="frame" id="video-frame">
+        <div class="poster"></div>
+        <div class="play soon" id="video-play">
+          <div class="ring"><svg width="26" height="26" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 2.5v11l9-5.5z"/></svg></div>
+          <h3 id="video-title">Demo video coming soon</h3>
+          <p style="color: var(--fg2); font-size: 13.5px;" id="video-note">In the meantime, the live demo runs in your browser.</p>
+        </div>
+      </div>
+      <div class="meta">
+        <p>About 3 minutes: the map, temperature layers, routing, Street Level, a simulated drive and the route assistant.</p>
+        <a class="btn acc" id="video-link" href="#video" aria-disabled="true">Watch video</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="data" class="wrap">
+    <div class="sec-head">
+      <span class="label warm">Built on NASA data</span>
+      <h2>Real data, with the limits stated.</h2>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <span class="label">Sources</span>
+        <div class="rows">
+          <div class="rowi"><b>Base map</b><span>Mars Reconnaissance Orbiter CTX mosaic (NASA/JPL-Caltech/MSSS)</span></div>
+          <div class="rowi"><b>Terrain and slope</b><span>Stereo CTX DTMs of Gale Crater (NHM London)</span></div>
+          <div class="rowi"><b>Temperature</b><span>THEMIS thermal inertia (USGS), TES albedo, Curiosity REMS</span></div>
+          <div class="rowi"><b>Dust</b><span>Curiosity Mastcam optical depth record</span></div>
+          <div class="rowi"><b>Street Level</b><span>Curiosity Navcam and Mastcam panoramas</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <span class="label">What we checked, and what we didn't</span>
+        <ul class="bul">
+          <li>Ground temperature is within about 5 K of Curiosity's readings at the rover, and air temperature within about 4 K, on data held back from the fit.</li>
+          <li>Accuracy away from the rover is not measured: every REMS reading comes from an area of about 10 × 5 km. The app says this next to the heat map.</li>
+          <li>The dust-devil layer is a heating index, not a probability.</li>
+          <li>Every data source is credited, with links, on the app's About screen.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="team" class="wrap">
+    <div class="sec-head">
+      <span class="label acc">Team Phobos</span>
+      <h2>Who built it</h2>
+    </div>
+    <div class="team">
+      <div class="member"><div class="avatar">DP</div><b>David Plehn</b></div>
+      <div class="member"><div class="avatar">AP</div><b>Ashton Peng</b></div>
+      <div class="member"><div class="avatar">AC</div><b>Anna Chen</b></div>
+      <div class="member"><div class="avatar">VP</div><b>Vanessa Pham</b></div>
+    </div>
+  </section>
+
+  <div class="final">
+    <span class="label acc">Try it now</span>
+    <h2>Open Gale Crater in your browser.</h2>
+    <p class="lede">No install. Works on desktop and phone.</p>
+    <div class="ctas">
+      <a class="btn cta" href="../">Open the live demo</a>
+      <a class="btn sec" href="https://github.com/Plehndm/NASA-Space-Apps-Phobos">Source on GitHub</a>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <p>Mars Navigator · Team Phobos · NASA Space Apps 2026. Imagery: NASA/JPL-Caltech/MSSS. DTM: NASA/JPL-Caltech/MSSS/NHM. THEMIS/TES: NASA/JPL-Caltech/ASU. A student project, not affiliated with or endorsed by NASA.</p>
+</footer>
+
+<script>
+  // Paste the demo video's link here. YouTube and Vimeo links play on the page; anything else opens in a new tab.
+  const VIDEO_URL = "";
+
+  (function () {
+    const url = VIDEO_URL.trim();
+    if (!url) return;
+    const link = document.getElementById("video-link");
+    link.href = url;
+    link.removeAttribute("aria-disabled");
+    link.target = "_blank";
+    link.rel = "noopener";
+    document.getElementById("video-title").textContent = "Watch the demo";
+    document.getElementById("video-note").textContent = "About 3 minutes.";
+    document.getElementById("video-play").classList.remove("soon");
+
+    let embed = null;
+    try {
+      const u = new URL(url);
+      const yt = u.hostname.includes("youtu.be") ? u.pathname.slice(1) : u.searchParams.get("v");
+      if (/youtube\.com|youtu\.be/.test(u.hostname) && yt) embed = "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(yt);
+      const vm = u.hostname.endsWith("vimeo.com") && u.pathname.match(/\/(\d+)/);
+      if (vm) embed = "https://player.vimeo.com/video/" + vm[1];
+    } catch (e) { /* not a URL: leave it as a plain link */ }
+
+    const frame = document.getElementById("video-frame");
+    const play = document.getElementById("video-play");
+    play.style.cursor = "pointer";
+    play.setAttribute("role", "button");
+    play.tabIndex = 0;
+    const start = () => {
+      if (!embed) { window.open(url, "_blank", "noopener"); return; }
+      frame.innerHTML = '<iframe src="' + embed + '?autoplay=1" title="Mars Navigator demo video" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>';
+    };
+    play.addEventListener("click", start);
+    play.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); start(); } });
+  })();
+</script>
+</body>
+</html>

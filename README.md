@@ -2,6 +2,8 @@
 
 Team Phobos's entry for NASA Space Apps 2026, challenge **"Interplanetary Survival Guide: Martian Map"**.
 
+**Live demo:** <https://plehndm.github.io/NASA-Space-Apps-Phobos/> · **Project page:** <https://plehndm.github.io/NASA-Space-Apps-Phobos/showcase/> (source in [`site/`](site/index.html); to add the demo video, paste its link into `VIDEO_URL` at the bottom of that file).
+
 ## The goal
 
 **Mars Navigator** is a Google-Maps-style navigation app for crews driving a rover in **Gale Crater** (Curiosity's landing site, with Mount Sharp at the centre). It combines real NASA orbital and rover data into one map:
