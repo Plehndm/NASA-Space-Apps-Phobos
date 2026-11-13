@@ -174,7 +174,12 @@
   .team { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
   .member { background: var(--bg2); border: 1px solid var(--hair); border-radius: 22px; padding: 18px; display: flex; gap: 12px; align-items: center; }
   .avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--raised); color: var(--warm); display: grid; place-items: center; font-weight: 800; font-size: 14px; flex: none; }
+  .member { text-decoration: none; color: inherit; transition: background .15s, border-color .15s; }
+  .member:hover { background: var(--row); border-color: rgba(127,212,193,.3); }
+  .member .who { display: grid; gap: 1px; min-width: 0; }
   .member b { font-size: 14px; }
+  .member .role { font-size: 12px; color: var(--fg2); }
+  .member .gh { font-size: 11.5px; font-weight: 700; color: var(--accent); display: inline-flex; align-items: center; gap: 5px; margin-top: 3px; }
   @media (max-width: 860px) { .team { grid-template-columns: 1fr 1fr; } }
   @media (max-width: 460px) { .team { grid-template-columns: 1fr; } }
   .final {
@@ -364,10 +369,10 @@
       <h2>Who built it</h2>
     </div>
     <div class="team">
-      <div class="member"><div class="avatar">DP</div><b>David Plehn</b></div>
-      <div class="member"><div class="avatar">AP</div><b>Ashton Peng</b></div>
-      <div class="member"><div class="avatar">AC</div><b>Anna Chen</b></div>
-      <div class="member"><div class="avatar">VP</div><b>Vanessa Pham</b></div>
+      <a class="member" href="https://github.com/Plehndm"><div class="avatar">DP</div><div class="who"><b>David Plehn</b><span class="role">Software Developer</span><span class="gh">GitHub @Plehndm →</span></div></a>
+      <a class="member" href="https://github.com/Ayawningp"><div class="avatar">AP</div><div class="who"><b>Ashton Peng</b><span class="role">Data Scientist</span><span class="gh">GitHub @Ayawningp →</span></div></a>
+      <a class="member" href="https://github.com/annaaac"><div class="avatar">AC</div><div class="who"><b>Anna Chen</b><span class="role">Software Developer</span><span class="gh">GitHub @annaaac →</span></div></a>
+      <a class="member" href="https://github.com/kistarz"><div class="avatar">VP</div><div class="who"><b>Vanessa Pham</b><span class="role">UI/UX Designer</span><span class="gh">GitHub @kistarz →</span></div></a>
     </div>
   </section>
 

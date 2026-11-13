@@ -9,7 +9,13 @@ export const ABOUT_GOAL =
   "Mars Navigator is a Google-Maps-style navigation app for crews driving a rover in Gale Crater (Curiosity's landing site, with Mount Sharp at the centre). It combines real NASA orbital and rover data into one map: CTX imagery and stereo terrain, modelled ground and air temperature through the day, a dust-devil heating index, hazard-aware routing, Street Level panoramas and a route assistant.";
 
 export const ABOUT_TEAM = "Team Phobos · NASA Space Apps 2026";
-export const ABOUT_MEMBERS = ["David Plehn", "Ashton Peng", "Anna Chen", "Vanessa Pham"] as const;
+export interface Member { name: string; role: string; github: string }
+export const ABOUT_MEMBERS: readonly Member[] = [
+  { name: "David Plehn", role: "Software Developer", github: "https://github.com/Plehndm" },
+  { name: "Ashton Peng", role: "Data Scientist", github: "https://github.com/Ayawningp" },
+  { name: "Anna Chen", role: "Software Developer", github: "https://github.com/annaaac" },
+  { name: "Vanessa Pham", role: "UI/UX Designer", github: "https://github.com/kistarz" },
+];
 export const ABOUT_CHALLENGE = "Interplanetary Survival Guide: Martian Map";
 
 export interface CreditLine {

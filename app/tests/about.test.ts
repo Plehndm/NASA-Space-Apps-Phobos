@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import type { Manifest } from "../src/map/data";
 import { FALLBACK_CAVEATS, heatCaveats, KEY_LIMITS, keyLimits } from "../src/map/heatLimits";
-import { creditGroups } from "../src/shell/credits";
+import { ABOUT_MEMBERS, creditGroups } from "../src/shell/credits";
 
 type Heat = NonNullable<Manifest["heat"]>;
 const heatWith = (caveats: Record<string, unknown>) =>
@@ -67,6 +67,14 @@ describe("credits", () => {
     const text = creditGroups(null).flatMap(x => x.lines.map(l => `${l.text} ${l.url ?? ""}`)).join("\n");
     for (const doi of ["10.6084/m9.figshare.6584984.v1", "10.17632/tbh3pg39xc.3", "Gale_CTX_BlockAdj_dd", "mslrem_1001", "themis_thermal_inertia_mosaic", "inertia/2007/albedo"]) {
       expect(text).toContain(doi);
+    }
+  });
+
+  it("lists the team with a role and a GitHub profile each", () => {
+    expect(ABOUT_MEMBERS.map(m => m.name)).toEqual(["David Plehn", "Ashton Peng", "Anna Chen", "Vanessa Pham"]);
+    for (const m of ABOUT_MEMBERS) {
+      expect(m.role).toBeTruthy();
+      expect(m.github).toMatch(/^https:\/\/github\.com\/[A-Za-z0-9-]+$/);
     }
   });
 

@@ -74,7 +74,14 @@ function About({ about }: { about: NonNullable<AppState["about"]> }) {
         <T w={500} size={11.5} lh={1.5} color={C.fg2}>{ABOUT_GOAL}</T>
         <View style={{ height: 1, backgroundColor: C.hair, marginVertical: 2 }} />
         <T w={700} size={10.5} ls={1} color={C.accent2}>{ABOUT_TEAM.toUpperCase()}</T>
-        <T w={600} size={11.5} lh={1.45}>{ABOUT_MEMBERS.join(" · ")}</T>
+        <View style={{ gap: 8 }}>
+          {ABOUT_MEMBERS.map(m => (
+            <View key={m.name} style={{ gap: 1 }}>
+              <T w={600} size={12} lh={1.4}>{m.name} <T w={500} size={11} color={C.fg3}>· {m.role}</T></T>
+              <Link url={m.github} />
+            </View>
+          ))}
+        </View>
         <T w={500} size={11} lh={1.45} color={C.fg3}>Challenge: “{ABOUT_CHALLENGE}”</T>
       </Card>
 
