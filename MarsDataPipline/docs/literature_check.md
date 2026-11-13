@@ -1,6 +1,6 @@
 # Literature Check: REMS-Derived Thermal Inertia Along the Traverse
 
-Checked Nov 10, 2026. Units: tiu = J m^-2 K^-1 s^-1/2. No notebooks were rerun; our numbers come from `progress.md` (Session 2e, Session 2d) and `discoveries.md`.
+Units: tiu = J m^-2 K^-1 s^-1/2. No notebooks were rerun; our numbers come from `progress.md` (Session 2e, Session 2d) and `discoveries.md`.
 
 ## Question
 

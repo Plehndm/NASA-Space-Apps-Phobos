@@ -1,4 +1,4 @@
-"""Gate 12: three fixed levels (user decision Nov 2). Cuts at the top CLASS_TOP_PCTS (50 / 30 / 10) % of the reference
+"""Gate 12: three fixed levels (user decision). Cuts at the top CLASS_TOP_PCTS (50 / 30 / 10) % of the reference
 sol's daily-mean map, the same cut values for every sol; the high cut is the existing threshold. Overlays shade
 low / moderate / high in LEVEL_COLOURS."""
 import json

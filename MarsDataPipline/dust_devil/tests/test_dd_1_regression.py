@@ -1,6 +1,6 @@
 """Gate 1: with SOLS = [800], the multi-sol path reproduces the single-sol daily mean and max.
 
-Changed Oct 30 with the user's approval: maps are scored on a fixed LTST grid (96 quarter-hour bin centres; daily
+Changed with the user's approval: maps are scored on a fixed LTST grid (96 quarter-hour bin centres; daily
 mean over the 28 inside 9-16 LTST), not on each sol's REMS bins, so the old single-sol output is no longer the
 target. The single-sol oracle is now run on that fixed grid (synthetic, and a real 300 x 300 crop that fits in
 memory). dust_devil/outputs/_dev/baseline_sol800/ still checks two things: the core arithmetic, fed sol 800's REMS bins,

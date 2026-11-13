@@ -1,4 +1,4 @@
-"""Rover check (added Oct 30 at the user's request): noisy and missing REMS ground temperatures.
+"""Rover check (added at the user's request): noisy and missing REMS ground temperatures.
 The rover check must skip missing bins and night bins, and must never touch the maps. The scale is
 max(observed)/max(model), so a single spike moves it; test_single_spike_moves_scale documents that weakness."""
 import numpy as np

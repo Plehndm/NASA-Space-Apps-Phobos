@@ -1,6 +1,6 @@
 # Dust devil layer: multi-sol plan, progress and closed ideas
 
-Handover for the next session (last updated Nov 2, 2026). Read `CLAUDE.md` and `README.md` in this folder first;
+Handover for the next session. Read `CLAUDE.md` and `README.md` in this folder first;
 this file says where the work stands and what to do next. Where this file and `CLAUDE.md` disagree, this file
 records a later user decision (see "Decisions changed since CLAUDE.md").
 
@@ -8,14 +8,14 @@ records a later user decision (see "Decisions changed since CLAUDE.md").
 
 ## 1. Where things stand (one paragraph)
 
-Done (Nov 2): the layer is now the **Dust Devil Heating Index** (outputs renamed from `likelihood`); reference sol 1850, and the overlays and GIFs now shade **three fixed levels** (low / moderate / high, cut at
+Done: the layer is now the **Dust Devil Heating Index** (outputs renamed from `likelihood`); reference sol 1850, and the overlays and GIFs now shade **three fixed levels** (low / moderate / high, cut at
 the top 50 / 30 / 10% of sol 1850's map: 0.348 / 0.474 / 0.590). The dusty sols 799-804 show their pattern in low (27%)
 and moderate (7-10%) instead of a nearly blank map. Notebook run top to bottom (three runs), README updated (new
 "What the score means" section). Suite `70 passed`. Nothing further is scheduled; see "Later" in section 3.
 
 ---
 
-## 2. What the score means (agreed with the user, Nov 2)
+## 2. What the score means (agreed with the user)
 
 **One sentence:** a score of 0.59 means that, averaged over 9:00-16:00 local solar time, this pixel's surface heating is
 59% of the near-maximum heating on the reference sol (1850). It is a relative measure of how hard the Sun drives the
@@ -50,7 +50,7 @@ activity is likely (sol 800's map correlates 0.996 with sol 1850's).
 
 ## 3. Next steps
 
-### Done: three-level overlay (user go-ahead Nov 2; design kept for reference)
+### Done: three-level overlay (user go-ahead; design kept for reference)
 
 **Problem.** One binary threshold (0.590, top 10% of sol 1850) sits just above sol 800's 99th percentile (0.548), so the
 dusty overlays show 0.3%. The pattern is there (correlation 0.996 with sol 1850), only below the cutoff.
@@ -103,7 +103,7 @@ change both together.
 
 ---
 
-## 4. Decisions changed since CLAUDE.md (user decisions, Oct 30 and Nov 2)
+## 4. Decisions changed since CLAUDE.md (user decisions)
 
 | Topic | CLAUDE.md says | Now |
 |---|---|---|
@@ -112,18 +112,18 @@ change both together.
 | `frac_at_cap` | "how many pixels hit the cap" | Fraction of valid pixels (finite TI) whose uncapped ratio proxy / ref_proxy reaches `SCORE_CAP` in at least one of the 96 bins; 0 when `SCORE_CAP = None`. |
 | Rover pixel | `col = (lon - T_C)/T_A`, `row = (lat - T_F)/T_E` | Same formula with `floor`, not `int()`: `int()` maps positions up to one pixel north/west of the edge to row/col 0. No in-template pixel changes (sols 799-804 stay at (304, 372)). |
 | Rover check | max/max scale, correlation | Unchanged, plus a test file for noisy and missing REMS temperatures (`tests/test_dd_9_rover_check.py`, user request). |
-| Reference cache | ref_sol, tau band, slope scale, day window, cap | **Also `likely_top_pct` and `map_ltst`** (the 96 bin centres); loading a cache without them (old scheme) or with other values fails. Gate 7 extended (user OK, Nov 2). |
-| Summary CSV name | `dust_devil_multisol_summary.csv` | `dust_devil_multisol_summary_<first>-<last>.csv`, like the GIF, so runs do not overwrite each other (Nov 2). |
-| Sols for the notebook | example 799-804 | Two runs: `SOLS = [799..804]` and `SOLS_CLIM_CHECK = [21, 22, 23, 26, 1770, 1775, 1860]`, one GIF each (Nov 2). |
-| Notebook command | `jupyter.exe nbconvert` | `gale-env/Scripts/python.exe -m nbconvert` (root `CLAUDE.md` and `README.md` updated, Nov 2). |
-| Reference sol | `REF_SOL = 800` (decision 2) | **`REF_SOL = 1850`** (Nov 2): median of the reference statistic over the 263 sols with >= 40 bins; sol 800 was the 12th dimmest, so 243 sols had > 20% of pixels at the cap. Sol 800 stays in the runs as the dusty-season example. Tests keep sol 800 (they check arithmetic, and `baseline_sol800/` is sol 800); Gate 11 checks another reference sol. |
-| Runs in the notebook | `SOLS` | `SOLS_CLEAR = [1830, 1840, 1845, 1850, 1860, 1865]`, `SOLS_DUSTY = [799..804]`, `SOLS_CLIM_CHECK` (Nov 2). |
+| Reference cache | ref_sol, tau band, slope scale, day window, cap | **Also `likely_top_pct` and `map_ltst`** (the 96 bin centres); loading a cache without them (old scheme) or with other values fails. Gate 7 extended (user OK). |
+| Summary CSV name | `dust_devil_multisol_summary.csv` | `dust_devil_multisol_summary_<first>-<last>.csv`, like the GIF, so runs do not overwrite each other. |
+| Sols for the notebook | example 799-804 | Two runs: `SOLS = [799..804]` and `SOLS_CLIM_CHECK = [21, 22, 23, 26, 1770, 1775, 1860]`, one GIF each. |
+| Notebook command | `jupyter.exe nbconvert` | `gale-env/Scripts/python.exe -m nbconvert` (root `CLAUDE.md` and `README.md` updated). |
+| Reference sol | `REF_SOL = 800` (decision 2) | **`REF_SOL = 1850`**: median of the reference statistic over the 263 sols with >= 40 bins; sol 800 was the 12th dimmest, so 243 sols had > 20% of pixels at the cap. Sol 800 stays in the runs as the dusty-season example. Tests keep sol 800 (they check arithmetic, and `baseline_sol800/` is sol 800); Gate 11 checks another reference sol. |
+| Runs in the notebook | `SOLS` | `SOLS_CLEAR = [1830, 1840, 1845, 1850, 1860, 1865]`, `SOLS_DUSTY = [799..804]`, `SOLS_CLIM_CHECK`. |
 
 ---
 
 ## 5. Progress log
 
-### Nov 2, 2026 (fourth part): renamed to Dust Devil Heating Index
+### Session 2d: renamed to Dust Devil Heating Index
 
 - User decision: the layer is the **Dust Devil Heating Index** (a heuristic of surface heating), not a likelihood.
   Output names: `gale_dust_devil_heating_index_sol<N>.npz/.tif`, `heating_index_overlay_sol<N>[_imagery|_hillshade].png`,
@@ -142,7 +142,7 @@ change both together.
   likely questions). Root README line and a stale notebook pointer in `data_prep/build_mastcam_tau_table.ipynb` updated.
   `dev/run_sanity.py` marked superseded (not updated or run).
 
-### Nov 2, 2026 (third part): three-level overlay
+### Session 2c: three-level overlay
 
 - "What the score means" written into this plan (section 2) and the README first, as the user asked.
 - Tests first: `tests/test_dd_12_levels.py` (10 tests) plus helper changes (`CLASS_TOP_PCTS` and `LEVEL_COLOURS` in
@@ -161,7 +161,7 @@ change both together.
   runs identical apart from "built" vs "loaded" reference. Overlay code itself: about 8 s per sol.
 - GIF frames use a 256-colour palette: swatch colours shift slightly and the cyan rover ring can drop out. PNG overlays exact.
 
-### Nov 2, 2026 (second part): reference sol 1850
+### Session 2b: reference sol 1850
 
 Candidate search (scratch script, subsampled grid every 6th row/col; sol 800 p995 12.798 vs 12.785 full grid):
 
@@ -187,7 +187,7 @@ Candidate search (scratch script, subsampled grid every 6th row/col; sol 800 p99
 
 Rover: sols 1830-1865 corr 0.84 (1830) to 0.97, DEM - REMS +6 to +20 m.
 
-### Nov 2, 2026
+### Session 2
 
 - Answered the four open questions (user: "go with your suggestions").
 - Suite rerun `53 passed in 77.81s`; committed `5a03c54` (dev implementation + tests).
@@ -213,14 +213,14 @@ Climatology run (first end-to-end use of the fallback):
 | 1775 | 42.5 | 0.631 (77) | 54 | 26.6 % | 56.2 % | (339, 367) | 0.92 | 3.366 | +27.9 |
 | 1860 | 80.9 | 0.477 (82) | 62 | 27.7 % | 56.5 % | (342, 370) | 0.94 | 2.034 | +19.8 |
 
-Main run (799-804): identical to the Oct 30 table below.
+Main run (799-804): identical to the Session 1 table below.
 
-### Oct 30, 2026
+### Session 1
 
 
 **Step 0, baseline.** `rover_sol800_table.csv` existed; the sol-800 npz and tif were missing everywhere (not in
 `dust_devil.zip`, `outputs/`, `_Trash_Review/`). Recreated by re-running the unmodified notebook (commit a8de56f) via
-nbconvert on `gale-env`; stages 0-1 skipped. Evidence: the regenerated rover table is identical to the Oct 27 file
+nbconvert on `gale-env`; stages 0-1 skipped. Evidence: the regenerated rover table is identical to the earlier file
 (max abs diff 0.0, all 11 columns); printed values match the notebook's stored outputs (tau 1.498, scale 3.475,
 corr 0.97, mean max 0.86833054, threshold 0.567). Copied to `processed_data/baseline_sol800/` (npz, tif, rover table).
 Side effect: the old single-sol sol-800 npz, tif and overlays were rewritten in `processed_data/`.
@@ -262,12 +262,12 @@ shares 9.1-12.5 % ordered by tau and max day-to-day change 0.012. User approved 
 
 ## 6. Discoveries (evidence)
 
-- **Clear sols saturate against the sol-800 reference** (Nov 2). Climatology sols (tau 0.48-0.80, other seasons) reach
+- **Clear sols saturate against the sol-800 reference**. Climatology sols (tau 0.48-0.80, other seasons) reach
   the cap on 56-85% of pixels and clear the threshold on 27-35%, against 6-11% and 9-12.5% for sols 799-804 (tau about
   1.5). Sols 21-26 (Ls 162-165: about mean Sun distance, declination about +3 deg, so the noon Sun is nearly overhead at
   Gale, 4.6 S) saturate more than 1770-1860 (Ls 40-81: near aphelion, declination +14 to +25 deg) despite higher tau,
   consistent with stronger sunlight. The maps for such sols show little spatial contrast.
-- **Climatology path works end to end on real data** (Nov 2): labels in npz, summary CSV, overlay title and GIF frame.
+- **Climatology path works end to end on real data**: labels in npz, summary CSV, overlay title and GIF frame.
 - **REMS coverage, not dust, drove day-to-day map changes** under the per-sol-bin scheme (see progress table). The maps
   are pure model and do not need REMS times.
 - **Gate 2 monotonicity holds in practice.** The diffuse term grows with tau, so in principle more dust can raise the
@@ -292,7 +292,7 @@ shares 9.1-12.5 % ordered by tau and max day-to-day change 0.012. User approved 
 | README caveat that more dust can raise the score | Effect is negligible | largest increase 2.5e-24, only on 70-73 deg slopes |
 | Full-grid single-sol oracle in the real-data test | Does not fit in memory (needs 3-4 GB at 96 bins) | 1.7 GB free; replaced by a real 300 x 300 crop (exact, both sides compute their own percentile) |
 | `int()` for the rover pixel | Truncation maps positions up to one pixel outside the north/west edge to row/col 0 | Gate 6 case (-0.3 pixel north) |
-| `frac_at_cap` as the share of pixel x bin pairs at the cap | User chose "pixels reaching the cap in at least one bin" | decision Oct 30 |
+| `frac_at_cap` as the share of pixel x bin pairs at the cap | User chose "pixels reaching the cap in at least one bin" | user decision |
 | Per-sol 99.5th-percentile normalisation | Replaced by the shared sol-800 reference (CLAUDE.md decision 2) | spec |
 | Kelvin scale in the maps | Does not cancel under a shared reference (CLAUDE.md) | Gate 3 tests it stays out |
 | Placeholder `TAU = 0.5` in multi-sol runs | Forbidden (CLAUDE.md decision 4) | `tau_for_sol` has no placeholder path |
