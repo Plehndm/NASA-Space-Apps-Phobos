@@ -10,7 +10,10 @@
 //     right) each showing their part of one repeat anchored at world (-FOG, -FOG), so the texture runs
 //     on unbroken from box to box but never covers the grid;
 //   - gradients darken the band to the app's ground colour toward its outer edge, so past it the map
-//     area's own background carries on seamlessly, and feather the storm EDGE px into the grid;
+//     area's own background carries on seamlessly;
+//   - the same texture continues EDGE px into the grid in overlapping rings, so the storm thickens toward
+//     the edge and the imagery's straight border never shows (no landmark is that close to the edge:
+//     the nearest, North Rim Crater, is about 117 px in), with a smooth dust gradient over the rings;
 //   - wisps of lighter dust straddle the edges and drift slowly back and forth.
 import { useEffect, useRef } from "react";
 import { Animated, Easing, Image, Platform, View } from "react-native";
@@ -19,7 +22,9 @@ import { alpha } from "../../theme";
 import { GRID } from "../geo";
 
 const FOG = 1600; // world px of storm around the grid (160 km), more than half a screen at the lowest zoom
-const EDGE = 70; // world px the storm feathers into the grid (7 km)
+const EDGE = 100; // world px the storm reaches into the grid (10 km)
+const RINGS = [1, 0.75, 0.5, 0.25]; // inner storm rings, as fractions of EDGE (each one adds more dust nearer the edge)
+const RING_OPACITY = 0.38;
 const DRIFT_MS = 26_000; // one sweep of the wisps
 
 const STORM = require("../../../assets/storm.png");
@@ -30,20 +35,33 @@ const CLEAR = "rgba(104,66,46,0)";
 type Box = { left: number; top: number; width: number; height: number };
 const abs = (b: Box) => ({ position: "absolute" as const, ...b });
 
-/** Wisps along each edge: centre (world px), size, and how far and which way each one drifts. */
+/** Wisps along each edge, centred on it: centre (world px), width, and how far and which way each drifts. */
 const WISPS = (() => {
   const out: { x: number; y: number; w: number; dx: number; dy: number }[] = [];
   const along = (n: number, len: number) => Array.from({ length: n }, (_, i) => ((i + 0.5) / n) * len);
-  along(4, GRID.W).forEach((x, i) => {
-    out.push({ x, y: -60, w: 760, dx: i % 2 ? 90 : -90, dy: 20 });
-    out.push({ x: x + 120, y: GRID.H + 60, w: 760, dx: i % 2 ? -90 : 90, dy: -20 });
+  along(6, GRID.W).forEach((x, i) => {
+    out.push({ x, y: 10, w: 820, dx: i % 2 ? 110 : -110, dy: 25 });
+    out.push({ x: x + 90, y: GRID.H - 10, w: 820, dx: i % 2 ? -110 : 110, dy: -25 });
   });
-  along(3, GRID.H).forEach((y, i) => {
-    out.push({ x: -80, y, w: 680, dx: 30, dy: i % 2 ? 80 : -80 });
-    out.push({ x: GRID.W + 80, y: y + 100, w: 680, dx: -30, dy: i % 2 ? -80 : 80 });
+  along(5, GRID.H).forEach((y, i) => {
+    out.push({ x: 10, y, w: 760, dx: 30, dy: i % 2 ? 100 : -100 });
+    out.push({ x: GRID.W - 10, y: y + 80, w: 760, dx: -30, dy: i % 2 ? -100 : 100 });
   });
+  // The corners, where two edges meet.
+  for (const [x, y] of [[0, 0], [GRID.W, 0], [0, GRID.H], [GRID.W, GRID.H]]) out.push({ x, y, w: 900, dx: 60, dy: 40 });
   return out;
 })();
+
+/** Inner storm rings: for each depth, the four strips that far into the grid along its edges. */
+const INNER: Box[] = RINGS.flatMap(f => {
+  const d = Math.round(EDGE * f);
+  return [
+    { left: 0, top: 0, width: GRID.W, height: d },
+    { left: 0, top: GRID.H - d, width: GRID.W, height: d },
+    { left: 0, top: d, width: d, height: GRID.H - 2 * d },
+    { left: GRID.W - d, top: d, width: d, height: GRID.H - 2 * d },
+  ];
+});
 
 /**
  * The storm band around the grid, as four boxes that never overlap the grid. The side boxes reach J px
@@ -59,9 +77,9 @@ const BANDS: Box[] = [
 ];
 
 /** One clipped box of storm: its window onto the repeat anchored at world (-FOG, -FOG). */
-function Band({ b }: { b: Box }) {
+function Band({ b, opacity = 1 }: { b: Box; opacity?: number }) {
   return (
-    <View style={[abs(b), { overflow: "hidden" }]}>
+    <View style={[abs(b), { overflow: "hidden", opacity }]}>
       <Image
         source={STORM}
         resizeMode="repeat" // at the texture's own size, 512 world px (51 km) per repeat
@@ -97,7 +115,8 @@ export function StormLayer() {
       <LinearGradient colors={[ground, thin]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={abs({ left: -FOG, top: -FOG, width: FOG, height: H + 2 * FOG })} />
       <LinearGradient colors={[thin, ground]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={abs({ left: W, top: -FOG, width: FOG, height: H + 2 * FOG })} />
 
-      {/* The storm creeps a little way over the edge of the data. */}
+      {/* The storm thickens over the edge of the data: textured rings, smoothed by a dust gradient. */}
+      {INNER.map((b, i) => <Band key={`in${i}`} b={b} opacity={RING_OPACITY} />)}
       <LinearGradient colors={[DUST, CLEAR]} style={abs({ left: 0, top: 0, width: W, height: EDGE })} />
       <LinearGradient colors={[CLEAR, DUST]} style={abs({ left: 0, top: H - EDGE, width: W, height: EDGE })} />
       <LinearGradient colors={[DUST, CLEAR]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={abs({ left: 0, top: 0, width: EDGE, height: H })} />

@@ -66,9 +66,11 @@ export interface AppState {
 
 // Zoom is screen px per world px (100 m). The prototype's range was 0.7–4.2 on a 51 km map; the real
 // grid is 148 km wide, so the minimum goes down far enough to show the whole crater on a phone. Past
-// the grid's edges the map shows a dust storm (StormLayer), not empty space.
+// the grid's edges the map shows a dust storm (StormLayer), not empty space. The maximum is as close as
+// the imagery holds up: its finest tiles (zoom 11, about 20 m per pixel) carry 4.9 px per world px,
+// so at 10 a 2x screen shows them about 1:1 (40 m across a screen point, ~4 km across a phone).
 export const ZOOM_MIN = 0.25;
-export const ZOOM_MAX = 4.2;
+export const ZOOM_MAX = 10;
 
 /** Curiosity's landing site, Bradbury Landing (the prototype's rover position). */
 export const ROVER_START: Rover = { ...toWorld({ lon: 137.4417, lat: -4.5895 }), h: 35 };

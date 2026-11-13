@@ -42,7 +42,7 @@ function fakeRoutes(opts: { zones?: Zone[]; ready?: boolean; safeOk?: boolean; d
 }
 
 const state = (over: Partial<AppState> = {}) => ({
-  rover, extraLm: [] as Landmark[], elev: 0, heat: "off", hazOn: true,
+  rover, extraLm: [] as Landmark[], elev: 0, heat: "off", hazOn: true, stops: [] as string[], nav: null,
   hazTypes: { weather: true, steep: true, rough: true, radiation: true, sand: true }, ...over,
 }) as unknown as AppState;
 
@@ -139,6 +139,41 @@ describe("scripted answers", () => {
     expect(a.reply).toMatch(/^There is no safe track to Glen Torridon under the 18° limit\. The direct route works/);
     expect(a.route).toEqual(["glen"]);
   });
+});
+
+describe("the wider range of offline questions", () => {
+  // [question, start of the reply (or a part of it), the route it proposes]
+  const cases: [string, RegExp, string[]][] = [
+    ["hi", /^I'm the route assistant/, []],
+    ["what can you do?", /^I'm the route assistant/, []],
+    ["thanks!", /^Anytime/, []],
+    ["where am I?", /^The rover is at 4\.59°S 137\.44°E, at Bradbury Landing/, []],
+    ["give me a sitrep", /^Sol 742, 14:32 MTC\. Rover at Bradbury Landing\. Ground -67°C, dust τ 0\.78/, []],
+    ["nearest water ice", /^Nearest water-ice site is Yellowknife Bay/, ["yellowknife"]],
+    ["find a relay for comms", /^Nearest relay mast is Relay Mast R-1/, ["relay1"]],
+    ["closest landing pad", /^Nearest landing pad is LZ-2 Aeolis Palus/, ["lz2"]],
+    ["take me home", /^Heading back to Habitat Alpha/, ["habitat"]],
+    ["emergency, we need to evacuate", /^Nearest pickup point is LZ-3 Emergency Pad/, ["lz3"]],
+    ["what's nearby?", /^Closest to the rover: The Rocknest/, []],
+    ["any radiation around?", /^Radiation: \d+\.\d km from the rover/, []],
+    ["are there sand traps?", /^Low thermal inertia: \d+\.\d km from the rover/, []],
+    ["how steep is it here?", /^Ground under the rover slopes 2°/, []],
+    ["what is Yellowknife Bay?", /^Yellowknife Bay \(water-ice, visited by Curiosity\): Ancient lakebed/, ["yellowknife"]],
+    ["how far is Murray Buttes?", /^Murray Buttes is \d+\.\d km from the rover.*On foot at 4 km\/h/, ["murray"]],
+    ["what's the elevation of Peace Vallis Fan", /^Peace Vallis Fan sits at −4,500 m/, []],
+    ["how steep is Glen Torridon", /^Ground slope at Glen Torridon is 2°/, ["glen"]],
+    ["how fast can the rover go?", /^The rover drives up to 8 km\/h/, []],
+    ["is there a dust storm coming?", /Dust opacity τ 0\.78 is moderate/, []],
+    ["what sol is it", /^It's sol 742, 14:32/, []],
+    ["what do the map layers show?", /^Map layers: elevation strata off/, []],
+  ];
+  for (const [q, re, route] of cases) {
+    it(`answers “${q}”`, () => {
+      const a = scripted(q, sources());
+      expect(a.reply).toMatch(re);
+      expect(a.route).toEqual(route);
+    });
+  }
 });
 
 describe("the sector snapshot", () => {

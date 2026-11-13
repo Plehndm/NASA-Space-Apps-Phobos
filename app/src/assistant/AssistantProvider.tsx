@@ -1,6 +1,7 @@
-// Route assistant state: the conversation, the busy flag and whether the live model is available.
-// Asks the backend first; on any failure answers from the scripted fallback, so the crew always gets
-// a reply. Kept outside the sheet so the conversation survives leaving and reopening the assistant.
+// Route assistant state: the conversation, the busy flag, the mode the crew picked and whether the live
+// model is available. Two modes: LIVE asks the backend first and, on any failure, answers from the
+// scripted assistant, so the crew always gets a reply; OFFLINE always answers from the scripted
+// assistant (no network). Kept outside the sheet so the conversation survives leaving and reopening it.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useApp } from "../state/store";
 import { useRoutes } from "../route/RouteProvider";
@@ -22,10 +23,15 @@ export interface ChatMsg {
   live?: boolean;
 }
 
+export type AssistantMode = "live" | "offline";
+
 interface AssistantApi {
   chat: ChatMsg[];
   busy: boolean;
   live: boolean | null; // backend has a key (true), has none (false), unknown or unreachable (null)
+  mode: AssistantMode;
+  /** Pick LIVE (checks the backend again) or OFFLINE. */
+  setMode: (m: AssistantMode) => void;
   /** Ask a question. `offline` answers from the scripted fallback without trying the backend (demo scenes). */
   send: (text: string, opts?: { offline?: boolean }) => void;
   loadRoute: (ids: string[]) => void;
@@ -48,6 +54,7 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
   const [chat, setChat] = useState<ChatMsg[]>([]);
   const [busy, setBusy] = useState(false);
   const [live, setLive] = useState<boolean | null>(null);
+  const [mode, setModeState] = useState<AssistantMode>("live");
 
   // Sends read the latest app state through a ref (a reply can arrive after several renders).
   const src = useRef<Omit<Sources, "clock">>({ S, r, tele, adv });
@@ -61,9 +68,10 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!open) return;
     let on = true;
-    modelStatus().then(v => on && setLive(v));
+    if (mode === "live") modelStatus().then(v => on && setLive(v));
     return () => { on = false; };
-  }, [open]);
+  }, [open, mode]);
+  const pickMode = useCallback((m: AssistantMode) => setModeState(m), []);
 
   const send = useCallback(async (input: string, opts?: { offline?: boolean }) => {
     const text = input.trim().slice(0, MAX_INPUT);
@@ -75,7 +83,7 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
     await tick(); // let the busy pill draw before the route planning below
     let out: Answer, wasLive = false;
     try {
-      if (live === false || opts?.offline) throw new Error("no model");
+      if (mode === "offline" || live === false || opts?.offline) throw new Error("no model");
       // The backend keeps the last 16 messages; send no more than that.
       const turns: ChatTurn[] = history.slice(-16).map(m => ({ role: m.role, content: m.raw }));
       const a = await askModel(turns, buildContext(sources()));
@@ -85,10 +93,10 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
     } catch {
       out = scripted(text, sources());
     }
-    if (wasLive !== live) setLive(wasLive);
+    if (mode === "live" && !opts?.offline && wasLive !== live) setLive(wasLive);
     setChat(c => [...c, { role: "assistant", text: out.reply, raw: JSON.stringify(out), route: out.route, avoid: out.avoid, live: wasLive }]);
     setBusy(false);
-  }, [live]);
+  }, [live, mode]);
 
   const loadRoute = useCallback((ids: string[]) => {
     const s = src.current.S;
@@ -100,6 +108,6 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
     toast("Assistant route loaded · review the sequence");
   }, [patch, setMode, toast]);
 
-  const value = useMemo(() => ({ chat, busy, live, send, loadRoute }), [chat, busy, live, send, loadRoute]);
+  const value = useMemo(() => ({ chat, busy, live, mode, setMode: pickMode, send, loadRoute }), [chat, busy, live, mode, pickMode, send, loadRoute]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

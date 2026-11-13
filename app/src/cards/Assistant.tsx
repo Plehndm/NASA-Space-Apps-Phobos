@@ -8,10 +8,11 @@ import { useApp } from "../state/store";
 import { C, font, SHADOW } from "../theme";
 import { T } from "../ui/Text";
 import { CloseIcon } from "../ui/icons";
+import { Segmented } from "../ui/Segmented";
 import { useRoutes } from "../route/RouteProvider";
 import { cumul } from "../route/router";
 import { fmtKm, fmtMin } from "../route/format";
-import { MAX_INPUT, useAssistant, type ChatMsg } from "../assistant/AssistantProvider";
+import { MAX_INPUT, useAssistant, type AssistantMode, type ChatMsg } from "../assistant/AssistantProvider";
 import { DUST_ID, STOP_MIN } from "../assistant/context";
 import { HAZARD_ZONES } from "../map/hazards";
 
@@ -95,25 +96,28 @@ function Bubble({ m }: { m: ChatMsg }) {
       >
         <T w={500} size={13} lh={1.5} selectable>{m.text}</T>
       </View>
+      {!u && <T w={700} size={9} ls={0.8} color={m.live ? C.accent : C.fg3} style={{ marginTop: -4, marginLeft: 6 }}>{m.live ? "✦ LIVE AGENT" : "OFFLINE ANSWER"}</T>}
       {!u && m.route.length > 0 && <RouteCard m={m} />}
     </View>
   );
 }
 
+/** What the assistant is answering with right now, for the status line under the mode switch. */
+export function assistantStatus(mode: AssistantMode, live: boolean | null): { text: string; on: boolean } {
+  if (mode === "offline") return { text: "OFFLINE · answers from the app's own sector data, no network needed", on: false };
+  if (live === true) return { text: "LIVE AGENT · Claude, grounded in every landmark, hazard track and the telemetry", on: true };
+  if (live === null) return { text: "LIVE AGENT · checking the connection (falls back to offline answers if it's down)", on: false };
+  return { text: "LIVE AGENT UNAVAILABLE · answering offline from sector data", on: false };
+}
+
 /**
- * Title, status line and close button, pinned above the scrolling chat (placed by the Sheet), so the
- * assistant can be closed however long the conversation gets.
+ * Title, LIVE / OFFLINE switch, status line and close button, pinned above the scrolling chat (placed by
+ * the Sheet), so the assistant can be closed however long the conversation gets.
  */
 export function AssistantHeader() {
   const { goHome } = useApp();
-  const { chat, live } = useAssistant();
-  const last = [...chat].reverse().find(m => m.role === "assistant");
-  // Offline (no key, no network, or a failed request) is a normal way to run, so it reads as a mode, not an error.
-  const offline = "OFFLINE ASSISTANT · answers from sector data";
-  const status = last
-    ? last.live ? "LIVE MODEL · grounded in sector telemetry and hazard tracks" : offline
-    : live === true ? "LIVE MODEL · knows every landmark, hazard track and the current telemetry"
-    : offline;
+  const { live, mode, setMode } = useAssistant();
+  const status = assistantStatus(mode, live);
   return (
     <View style={{ paddingHorizontal: 16, paddingBottom: 8, gap: 4 }}>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 2 }}>
@@ -130,7 +134,11 @@ export function AssistantHeader() {
           <CloseIcon />
         </Pressable>
       </View>
-      <T w={500} size={10.5} ls={0.2} color={C.fg3}>{status}</T>
+      <Segmented<AssistantMode> value={mode} options={[["live", "✦ LIVE AGENT"], ["offline", "OFFLINE"]]} onChange={setMode} />
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+        <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: status.on ? C.accent : C.warm2 }} />
+        <T w={500} size={10.5} ls={0.2} color={C.fg3} style={{ flex: 1 }}>{status.text}</T>
+      </View>
     </View>
   );
 }

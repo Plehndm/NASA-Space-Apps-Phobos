@@ -58,7 +58,9 @@ export function Dock() {
     patch({ hazOn: on, heatOpen: false });
     if (on) toast("Warning zones on · 5 hazard types tracked");
   };
-  const openAssistant = () => {
+  /** Opens the assistant, or closes it when it is already open. */
+  const toggleAssistant = () => {
+    if (S.mode === "assistant") return goHome();
     setMode("assistant", "full");
     patch({ heatOpen: false, elevOpen: false });
   };
@@ -91,7 +93,7 @@ export function Dock() {
           <DockButton active={S.heat !== "off" || S.heatOpen} label="Heatmap" onPress={toggleHeat}>
             {fg => <T w={800} size={11} ls={0.6} color={fg}>HM</T>}
           </DockButton>
-          <DockButton active={S.mode === "assistant"} label="Route assistant" onPress={openAssistant} idleFg={C.accent2}>
+          <DockButton active={S.mode === "assistant"} label="Route assistant" onPress={toggleAssistant} idleFg={C.accent2}>
             {fg => <T w={500} size={17} color={fg} style={{ lineHeight: 20 }}>✦</T>}
           </DockButton>
         </>
