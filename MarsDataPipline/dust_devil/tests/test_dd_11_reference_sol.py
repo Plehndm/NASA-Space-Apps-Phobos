@@ -1,4 +1,4 @@
-"""Gate 11: the reference sol is a setting (user decision Nov 2: REF_SOL = 1850; sol 800 stays as a dusty-season example).
+"""Gate 11: the reference sol is a setting (user decision: REF_SOL = 1850; sol 800 stays as a dusty-season example).
 With REF_SOL = 801 on synthetic inputs, the reference, threshold, npz, GeoTIFF band descriptions and file names all follow
 sol 801, and sol 800 is scored against it like any other sol."""
 import json

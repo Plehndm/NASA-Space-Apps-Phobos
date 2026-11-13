@@ -10,12 +10,12 @@ This repo builds the physics baseline `T_base(x, t)` for the Gale Crater tempera
 `T_base` is a custom 1D soil heat-conduction model, run per pixel. The residual model `f` comes later.
 The only in-situ truth is Curiosity's REMS ground temperature at the rover's position.
 
-Background, decisions and past mistakes: `docs/discoveries.md`, `docs/closed_ideas.md` and `docs/1D Thermal Baseline Build Steps.md`. The Oct 26 handover brief and the plan summary PDF were removed from the repo (commits 3776685 and d5969c6); `git show 3776685^:"MarsDataPipline/docs/Handover Brief Gale Crater Temperature Heatmap (Oct 26).md"` still prints the brief.
+Background, decisions and past mistakes: `docs/discoveries.md`, `docs/closed_ideas.md` and `docs/1D Thermal Baseline Build Steps.md`. The handover brief and the plan summary PDF were removed from the repo (commits 3776685 and d5969c6); `git show 3776685^:"MarsDataPipline/docs/Handover Brief Gale Crater Temperature Heatmap (Oct 26).md"` still prints the brief.
 Read the relevant section there before changing a rule in this file.
 
 ## Current status
 
-Steps 0-4 are done (Oct 28): Gates 1 and 2 pass, and the fitted baseline does not beat the benchmark in leave-one-block-out scoring (macro RMSE 6.72 K vs 5.38 K). Step 5 (residual model) is done for ground temperature (Oct 28). The map uses `flann_safe_no_ti` (user decision Oct 28: FLANN ridge without albedo or TI terms, clamped covariates; LOBO macro 4.86 K against the benchmark's 5.38 K), from `heatmap/notebooks/residual_flann_lobo.ipynb`. Step 6 (the map) is done (Oct 28): full grid exported in all four formats to `heatmap/outputs/maps/ground/`, all automated checks pass (`map_export.py`, `heatmap/notebooks/map_run.ipynb`). The user's QGIS check passed. Step 5b (air model) was scored on Oct 29 (`heatmap/notebooks/air_lobo.ipynb`): `air_hybrid` fails the adoption rule (macro 4.05 K vs benchmark 4.04 K, 4 of 9 blocks) and is published under the fallback. Step 6b (air map) is done (Oct 29): `heatmap/outputs/maps/air/`, all checks pass (`heatmap/notebooks/air_map_run.ipynb`); the user chose to publish with the caveats stated (night air is nearly uniform, from a ground-model error, not physics). The air map uses the ground colour scale (150-320 K; user decision Oct 29). Step 7 (sealed test) is done (Oct 29, user go-ahead, `heatmap/notebooks/sealed_test.ipynb`): ground model 5.25 K vs benchmark 5.06 K, air 4.10 K vs 4.19 K, macro over blocks 4 and 8. The test blocks are spent: never use them to choose or tune anything. Nothing further is scheduled; see `docs/plan.md`.
+Steps 0-4 are done: Gates 1 and 2 pass, and the fitted baseline does not beat the benchmark in leave-one-block-out scoring (macro RMSE 6.72 K vs 5.38 K). Step 5 (residual model) is done for ground temperature. The map uses `flann_safe_no_ti` (user decision: FLANN ridge without albedo or TI terms, clamped covariates; LOBO macro 4.86 K against the benchmark's 5.38 K), from `heatmap/notebooks/residual_flann_lobo.ipynb`. Step 6 (the map) is done: full grid exported in all four formats to `heatmap/outputs/maps/ground/`, all automated checks pass (`map_export.py`, `heatmap/notebooks/map_run.ipynb`). The user's QGIS check passed. Step 5b (air model) was scored (`heatmap/notebooks/air_lobo.ipynb`): `air_hybrid` fails the adoption rule (macro 4.05 K vs benchmark 4.04 K, 4 of 9 blocks) and is published under the fallback. Step 6b (air map) is done: `heatmap/outputs/maps/air/`, all checks pass (`heatmap/notebooks/air_map_run.ipynb`); the user chose to publish with the caveats stated (night air is nearly uniform, from a ground-model error, not physics). The air map uses the ground colour scale (150-320 K; user decision). Step 7 (sealed test) is done (user go-ahead, `heatmap/notebooks/sealed_test.ipynb`): ground model 5.25 K vs benchmark 5.06 K, air 4.10 K vs 4.19 K, macro over blocks 4 and 8. The test blocks are spent: never use them to choose or tune anything. Nothing further is scheduled; see `docs/plan.md`.
 
 Project notes in `docs/`, read before starting work:
 - `plan.md`: the next step's concrete design.
@@ -32,9 +32,9 @@ Update them at the end of each session: append to `progress.md`, `discoveries.md
 2. Mars forcing.
 3. The physics-only diagnostic against REMS.
 4. The global-parameter fit with leave-one-block-out (LOBO) scoring.
-5. The residual model for ground temperature (user request, Oct 28; done).
-6. The full-grid export (Step 6; user go-ahead Oct 28; done).
-7. Air temperature: model (Step 5b) and map (Step 6b). User request Oct 28; design and decision rules in `docs/plan.md`. No elevation term, no lapse rate.
+5. The residual model for ground temperature (user request; done).
+6. The full-grid export (Step 6; user go-ahead; done).
+7. Air temperature: model (Step 5b) and map (Step 6b). User request; design and decision rules in `docs/plan.md`. No elevation term, no lapse rate.
 
 **Out of scope until the user asks:**
 - the dust devil layer (parked)
@@ -50,15 +50,15 @@ Do not add a physics term or a fitted parameter that is not listed in this file.
 - Python: `C:\Users\aypen\Downloads\MarsDataPipeline\gale-env\Scripts\python.exe`.
 - The virtual environment `gale-env/` lives inside the project root. Never edit, search or index it, and keep it out of git.
 - Always call the environment's executables by path from the project root: `gale-env/Scripts/python.exe` (also for nbconvert, as `python.exe -m nbconvert`). Never use a bare `python` or `jupyter`: in Git Bash those may resolve to a different Python.
-- Jupyter kernel for nbconvert: `gale-env` (registered, confirmed Oct 27).
+- Jupyter kernel for nbconvert: `gale-env` (registered, confirmed).
 - Do not install, upgrade or remove packages. If something is missing, stop and report it.
 - Allowed libraries:
   - `thermal1d.py` uses numpy only.
   - Notebooks may also use pandas and matplotlib.
-  - Step 5 (residual model) may use xgboost and scikit-learn (installed Oct 28 with user approval: xgboost 3.4.1, scikit-learn 1.9.1, which pulled in scipy 1.18.1). Use them in Step 5 code only, never in `thermal1d.py`.
-  - Step 6 (map export) may use rasterio 1.5.2 (GeoTIFF) and Pillow 13.0.0 (PNG), both already in `gale-env`; allowed by the user on Oct 28. The export module may also use matplotlib, for the colour scale. Never use them in `thermal1d.py` or `residual.py`.
+  - Step 5 (residual model) may use xgboost and scikit-learn (installed with user approval: xgboost 3.4.1, scikit-learn 1.9.1, which pulled in scipy 1.18.1). Use them in Step 5 code only, never in `thermal1d.py`.
+  - Step 6 (map export) may use rasterio 1.5.2 (GeoTIFF) and Pillow 13.0.0 (PNG), both already in `gale-env`; allowed by the user. The export module may also use matplotlib, for the colour scale. Never use them in `thermal1d.py` or `residual.py`.
   - lightgbm and xarray are not installed and are not part of this phase.
-  - Installed by request on Oct 27: pytest 9.2.0, nbconvert 7.17.2.
+  - Installed by request: pytest 9.2.0, nbconvert 7.17.2.
 - Past crashes (0xC06D007F) were fixed only by the clean environment. Never run notebooks on the default `python3` kernel.
 
 ### Commands
@@ -68,7 +68,7 @@ Do not add a physics term or a fitted parameter that is not listed in this file.
 gale-env/Scripts/python.exe -m pytest heatmap -q
 
 # execute a notebook into heatmap/executed/ (sources stay unchanged)
-# python -m nbconvert, not jupyter.exe nbconvert: the latter found Anaconda's nbconvert/zmq on PATH (Oct 30; user decision Nov 2)
+# python -m nbconvert, not jupyter.exe nbconvert: the latter found Anaconda's nbconvert/zmq on PATH (user decision)
 gale-env/Scripts/python.exe -m nbconvert --to notebook --execute heatmap/notebooks/<name>.ipynb \
   --output-dir heatmap/executed \
   --ExecutePreprocessor.timeout=3600 \
@@ -81,7 +81,7 @@ gale-env/Scripts/python.exe -m nbconvert --to notebook --execute heatmap/noteboo
 MarsDataPipeline/
   README.md              # team guide: what each folder holds, where the maps are
   CLAUDE.md
-  heatmap/               # this project (moved here Nov 2, user request; mirrors dust_devil/)
+  heatmap/               # this project (moved here by user request; mirrors dust_devil/)
     paths.py             # every folder path: HEATMAP_DIR = this folder, REPO_ROOT = its parent, DATA_DIR = REPO_ROOT / "processed_data", OUT_DIR = HEATMAP_DIR / "outputs/model_scores/1_physics_baseline", MAP_OUT_DIR = HEATMAP_DIR / "outputs/maps/ground", ...
     thermal1d.py         # grid, solver, surface energy balance, solar geometry, data loader
     residual.py          # Step 5: residual-model predictors, learner, benchmark
@@ -126,7 +126,7 @@ Before writing the loader, read the CSV header and `data_prep/build_rems_trainin
 
 Do not guess these names.
 
-Recorded Oct 27 (from the header, `data_prep/build_rems_training_table.ipynb` and `data_prep/rems_batch.ipynb`):
+Recorded (from the header, `data_prep/build_rems_training_table.ipynb` and `data_prep/rems_batch.ipynb`):
 - sol: `sol`; ground temperature: `ground_temp_k`; time: `bin`, with `ltst_bin_start_hr = bin / 4`.
 - Each REMS value is the mean of 1 Hz readings over [start, start + 15 min), so the model is compared at the bin **centre**, `ltst_bin_start_hr + 0.125`.
 - `ltst_bin_center_hr` is rounded to 0.01 h (up to 0.005 h off). The table's `flux_*` and `sun_elev_deg` columns were computed at that rounded value and the rover `latitude_deg`; Gate 2 uses the same LTST so the check isolates the formulas.
@@ -226,7 +226,7 @@ Only these three. Each must stay inside its bounds, and a fit that lands on a bo
 - **Skin depth:** `delta = sqrt(k * P / (pi * rho_c))`, per column.
 - **Grid:**
   - first layer thickness `delta / 30`
-  - geometric stretch factor 1.10 (1.15 gave 28 layers and failed the Gate 1 half-space amplitude at 2 delta by 1.18%; changed Oct 27 with user approval)
+  - geometric stretch factor 1.10 (1.15 gave 28 layers and failed the Gate 1 half-space amplitude at 2 delta by 1.18%; changed with user approval)
   - total depth at least `10 * delta`
   - expected 30 to 40 layers
 - **Time stepping:**
@@ -236,7 +236,7 @@ Only these three. Each must stay inside its bounds, and a fit that lands on a bo
 - **Spin-up:**
   - start from the radiative-equilibrium mean temperature
   - repeat sols until the maximum |dT| between consecutive sols is under 0.01 K at all depths
-  - after each unconverged sol, shift the whole column so the deepest node equals that sol's mean surface temperature (zero shift in the periodic state; without it spin-up took about 60 sols; added Oct 27 with user approval)
+  - after each unconverged sol, shift the whole column so the deepest node equals that sol's mean surface temperature (zero shift in the periodic state; without it spin-up took about 60 sols; added with user approval)
   - assert this happens within 50 sols
 - **Vectorization:**
   - vectorize the tridiagonal (Thomas) solve over a batch of columns, shape `(n_columns, n_layers)`

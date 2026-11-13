@@ -1,4 +1,4 @@
-"""Fixed LTST grid (user decision Oct 30): maps and the reference are scored on 96 quarter-hour bin centres
+"""Fixed LTST grid (user decision): maps and the reference are scored on 96 quarter-hour bin centres
 (daily mean over the 28 inside 9-16 LTST), independent of which REMS bins a sol has. REMS bins are used only for
 the rover check. The sanity run on sols 799-804 showed REMS coverage, not tau, drove the day-to-day changes."""
 import numpy as np

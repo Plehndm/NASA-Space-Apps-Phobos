@@ -52,7 +52,7 @@ def solar_const(ls):
     return 589.0 * (1.52368 / r)**2               # W/m2 at Mars distance
 
 
-# Fixed LTST grid for the maps and the reference (user decision Oct 30): the 96 quarter-hour REMS bin centres.
+# Fixed LTST grid for the maps and the reference (user decision): the 96 quarter-hour REMS bin centres.
 # The daily mean uses the 28 inside DAY_LTST (9.125..15.875); the daily max and the reference percentile use all 96.
 # Each sol's own REMS bins are used only for the rover check, so REMS coverage gaps cannot change the maps.
 MAP_LTST = np.arange(96) * 0.25 + 0.125
@@ -197,7 +197,7 @@ def score_maps(grid, ls, ltst_centers, tau, ref_proxy, slope_scale_deg, day_ltst
     (never a (bins, H, W) array). Returns dict likelihood_mean (bins with LTST in day_ltst, NaN where ti is NaN),
     likelihood_max (all bins), frac_at_cap. score_cap=None disables the cap. The maps pass MAP_LTST.
     frac_at_cap: fraction of valid pixels (finite ti) whose uncapped ratio proxy / ref_proxy reaches score_cap in at
-    least one bin (any bin, not only the day window); 0 when score_cap is None. Decided by the user, Oct 30."""
+    least one bin (any bin, not only the day window); 0 when score_cap is None. Decided by the user."""
     ltst_centers = np.asarray(ltst_centers, float)
     dm = (ltst_centers >= day_ltst[0]) & (ltst_centers <= day_ltst[1])
     assert dm.any(), f"no REMS bin inside the day window {day_ltst}"

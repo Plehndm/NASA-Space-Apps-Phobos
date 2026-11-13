@@ -69,7 +69,7 @@ def test_rover_tables(run):
 
 def test_summary_csv(run):
     cfg, summary = run
-    csv = pd.read_csv(cfg["OUT_DIR"] / "dust_devil_heating_index_summary_800-900.csv")   # named by sol range, like the GIF (Nov 2)
+    csv = pd.read_csv(cfg["OUT_DIR"] / "dust_devil_heating_index_summary_800-900.csv")   # named by sol range, like the GIF
     assert not (cfg["OUT_DIR"] / "dust_devil_heating_index_summary.csv").exists()
     assert list(csv.columns) == SUMMARY_COLS
     assert csv.sol.tolist() == sorted(SOLS) and len(csv) == len(SOLS)
@@ -92,7 +92,7 @@ def test_gif(run):
 
 
 def test_names_say_heating_index(run):
-    """User decision Nov 2: the layer is the Dust Devil Heating Index (a heuristic), not a likelihood. No output file name
+    """User decision: the layer is the Dust Devil Heating Index (a heuristic), not a likelihood. No output file name
     says "likelihood"; GeoTIFF bands are described as heating index."""
     import rasterio
     cfg, _ = run

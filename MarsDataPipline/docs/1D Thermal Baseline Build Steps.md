@@ -1,6 +1,6 @@
 # 1D Thermal Baseline: Build Steps
 
-Nov 14, 2026 · @Turtle\_Food
+@Turtle\_Food
 
 ## Overview
 
@@ -92,7 +92,7 @@ Claude Code stops for your review after Steps 2, 3 and 4. Those are the points w
 
 **Goal:** learn what the physics misses.
 
-- Learn the REMS-minus-baseline residual with the planned covariates, and repeat the Oct 27 feature ablation on it.
+- Learn the REMS-minus-baseline residual with the planned covariates, and repeat the earlier feature ablation on it.
 - Outcome: gradient boosting gave a macro RMSE of 5.28 K. A FLANN-style ridge did better, and the map uses its safe form without albedo or TI terms and with clamped covariates (4.86 K). 
 - Model air temperature separately, from predicted ground temperature, elevation and time of day. Not started.
 

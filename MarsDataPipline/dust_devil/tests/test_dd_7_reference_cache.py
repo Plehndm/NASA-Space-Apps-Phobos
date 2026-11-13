@@ -1,6 +1,6 @@
 """Gate 7: loading a cached reference built with a different config fails (maps would not be comparable).
 The cache also records LIKELY_TOP_PCT (the threshold depends on it) and the LTST grid the reference was scored on
-(user decision Nov 2), so a reference from the old per-sol REMS-bin scheme cannot be loaded by mistake."""
+(user decision), so a reference from the old per-sol REMS-bin scheme cannot be loaded by mistake."""
 import numpy as np
 import pytest
 

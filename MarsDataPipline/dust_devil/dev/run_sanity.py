@@ -1,4 +1,4 @@
-"""SUPERSEDED (Nov 2): kept as the record of the Oct 30 sanity run (sol-800 reference). It predates the three levels
+"""SUPERSEDED: kept as the record of the first sanity run (sol-800 reference). It predates the three levels
 (CLASS_TOP_PCTS, LEVEL_COLOURS) and the heating_index file names, so it no longer runs as is; use the notebook.
 
 Sanity run of the multi-sol path on the real data: sols 799-804 around the reference sol.

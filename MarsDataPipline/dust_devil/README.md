@@ -7,7 +7,7 @@ Two notebooks for the dust devil layer of the NASA Space Apps 2026 entry "Interp
 
 **What the layer is.** The **Dust Devil Heating Index**: a per-pixel, per-sol *heuristic* (0 to 1) of how strongly the Sun heats the ground, the main ingredient dust devils need, on the 100 m THEMIS grid (1436 x 1477 pixels, 136.75 to 139.24 E, 6.57 to 4.15 S). It is not a probability of dust devils and not a set of detected dust devils. All weights are assumptions, not fitted. Every sol is scored against the same reference (sol 1850), so the index can be compared between sols: a dusty sol such as 800 heats less, a clear one more.
 
-Naming: output files say `heating_index` (renamed from `likelihood` on Nov 2). Inside the npz files the two arrays keep their original keys, `likelihood_mean` and `likelihood_max`, so the regression tests and the `baseline_sol800/` fixture still compare like with like.
+Naming: output files say `heating_index` (renamed from `likelihood`). Inside the npz files the two arrays keep their original keys, `likelihood_mean` and `likelihood_max`, so the regression tests and the `baseline_sol800/` fixture still compare like with like.
 
 ## How to explain it (for the judges)
 
@@ -75,7 +75,7 @@ The correlation checks the **heating**, not dust devils. Say so if asked.
 | 3 | Per sol | Scores the sol on a fixed grid of 96 quarter-hour LTST bins (daily mean over the 28 bins in 9 to 16 LTST, daily max over all 96), accumulating one bin at a time. Then the rover check on the sol's own REMS bins. Writes the maps, GeoTIFF, rover table and overlays (three levels: low yellow, moderate orange, high red; rover as a cyan ring). | `gale_dust_devil_heating_index_sol<N>.npz`, `gale_dust_devil_heating_index_sol<N>.tif`, `rover_sol<N>_table.csv`, `heating_index_overlay_sol<N>.png`, `..._imagery.png`, `..._hillshade.png` |
 | 4 | Per run | One summary row per sol and one GIF frame per sol on the hillshade, labelled with sol, Ls, tau, tau source and the share in each level. Then checks that the threshold and level cuts equal the reference sol's percentiles and compares the runs. | `dust_devil_heating_index_summary_<first>-<last>.csv`, `dust_devil_heating_index_<first>-<last>.gif` |
 
-### Outputs (in `outputs/`, inside this folder; moved from `../processed_data/` on Nov 2)
+### Outputs (in `outputs/`, inside this folder; moved from `../processed_data/`)
 
 | File | Content |
 |---|---|
@@ -87,7 +87,7 @@ The correlation checks the **heating**, not dust devils. Say so if asked.
 | `dust_devil_heating_index_summary_<first>-<last>.csv` | per sol: ls_deg, tau, tau_source, n_bins, frac_above_threshold, frac_at_cap, rover_corr, rover_scale_k, dem_minus_rems_m, frac_low, frac_moderate, frac_high (`frac_high` = `frac_above_threshold`) |
 | `dust_devil_heating_index_<first>-<last>.gif` | one frame per sol (800 ms, loops) |
 
-`outputs/_dev/baseline_sol800/` holds the pre-multi-sol single-sol output of sol 800 (used by the regression tests; do not overwrite). `outputs/_dev/dust_devil_sanity/` holds the Oct 30 development run of sols 799-804 (sol-800 reference). Both keep the old `likelihood` file names. `dust_devil_reference_sol800.json` is the superseded sol-800 reference; the pipeline no longer reads it.
+`outputs/_dev/baseline_sol800/` holds the pre-multi-sol single-sol output of sol 800 (used by the regression tests; do not overwrite). `outputs/_dev/dust_devil_sanity/` holds the first development run of sols 799-804 (sol-800 reference). Both keep the old `likelihood` file names. `dust_devil_reference_sol800.json` is the superseded sol-800 reference; the pipeline no longer reads it.
 
 ## Settings (config cell)
 
@@ -134,7 +134,7 @@ A score of 0.59 means that, averaged over 9:00-16:00 local solar time, the pixel
 
 ## Things to know
 
-- **Why sol 1850.** The reference statistic (p99.5 of the proxy) varies about 2x across the record: 10.4 to 23.1 over the 263 sols with at least 40 bins. The first reference, sol 800 (tau 1.5), was the 12th dimmest, so almost every other sol saturated (243 of 263 sols had more than 20% of pixels at the cap; sols 21-26 had 84%). The sunniest sols (around sol 90) fail the other way: the median sol would have 0.04% of pixels above the threshold. Sol 1850 (Ls 76, tau 0.44 measured that sol, rover correlation 0.97, 57 bins) sits at the median. Candidates were limited to Mastcam tau within 1 sol, 55-96 bins, rover correlation >= 0.93, and outside sols 3763-3778 and the sealed test blocks (1343-1360, 3069-3110). User decision Nov 2.
+- **Why sol 1850.** The reference statistic (p99.5 of the proxy) varies about 2x across the record: 10.4 to 23.1 over the 263 sols with at least 40 bins. The first reference, sol 800 (tau 1.5), was the 12th dimmest, so almost every other sol saturated (243 of 263 sols had more than 20% of pixels at the cap; sols 21-26 had 84%). The sunniest sols (around sol 90) fail the other way: the median sol would have 0.04% of pixels above the threshold. Sol 1850 (Ls 76, tau 0.44 measured that sol, rover correlation 0.97, 57 bins) sits at the median. Candidates were limited to Mastcam tau within 1 sol, 55-96 bins, rover correlation >= 0.93, and outside sols 3763-3778 and the sealed test blocks (1343-1360, 3069-3110). User decision.
 - **Saturation is reduced, not gone.** With sol 1850, about 100 of 263 sols still have more than 20% of pixels at the cap (estimated on a subsampled grid), and about 21 have less than 1% above the threshold. A single fixed reference cannot cover a 2x range of sunlight with a 0-1 cap. In the current runs: clear season 3-6% at cap, climatology sols 2-20%, dusty sols 0-0.1%. `frac_at_cap` counts pixels that reach the cap in at least one of the 96 bins.
 - **Three levels, fixed cut values.** Every sol is shaded with the same cuts from sol 1850 (0.348 / 0.474 / 0.590), so the shares vary by sol. Sol 1850: 20 / 20 / 10% low / moderate / high (half the crater unshaded). Sols 1830-1865: 20-22 / 19-20 / 6-10%. Sols 21-26: 16-17 / 20 / 16-17%. Dusty sols 799-804: 27 / 7-10 / 0.2-0.4%: the pattern stays visible in low and moderate, and the near-absent high level says the dusty season is quieter. The legend names score bands, not shares of the sol shown. The GIF uses a 256-colour palette, so its swatches and the rover ring are slightly off; the PNG overlays have exact colours.
 - **The maps use a fixed LTST grid,** not each sol's REMS bins. REMS coverage inside 9 to 16 LTST varies by sol (16 to 21 bins) and, when used for the maps, it drove the day-to-day change more than dust did. REMS bins are used only for the rover check.

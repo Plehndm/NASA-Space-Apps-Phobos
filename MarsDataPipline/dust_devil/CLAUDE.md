@@ -8,7 +8,7 @@ inputs, grid conventions and known pitfalls. This file covers how to work here a
 
 - This folder: `dust_devil/` (inside `MarsDataPipeline/`). Main deliverable: `dust_devil_pipeline.ipynb`.
 - Notebook paths are relative to this folder: inputs in `../processed_data/`, outputs in `outputs/`
-  (moved from `../processed_data/` on Nov 2, user request; git-ignored), executed copies in `executed/`,
+  (moved from `../processed_data/`, user request; git-ignored), executed copies in `executed/`,
   Mastcam tau tables in `../raw_data/`, zoom-11 previews in `../gale_tiles/out_tiles/`.
 - Put iteration scripts in `dev/` and tests in `tests/` (create them). Do not write into `../raw_data/`.
 - Before overwriting any existing sol-800 output, copy it to `outputs/_dev/baseline_sol800/`
@@ -37,9 +37,9 @@ inputs, grid conventions and known pitfalls. This file covers how to work here a
 - Be objective: lead with risks and flaws, not agreement. Flag bad assumptions.
 - The score is a heuristic, not a probability. Keep that wording in titles and legends.
 
-## Current task: multi-sol outputs with a shared reference (outputs renamed to `heating_index` on Nov 2; see `plan.md`)
+## Current task: multi-sol outputs with a shared reference (outputs renamed to `heating_index`; see `plan.md`)
 
-**Status (Nov 2): done; read `plan.md` first.** It holds the next steps, progress and closed ideas, and records later user
+**Status: done; read `plan.md` first.** It holds the next steps, progress and closed ideas, and records later user
 decisions that override parts of this section: the maps and the reference now use a fixed LTST grid (96 quarter-hour
 centres, daily mean over the 28 in 9-16 LTST), each sol's REMS bins are used only for the rover check, and Gate 1 was
 rewritten accordingly.
@@ -49,7 +49,7 @@ rewritten accordingly.
 1. **Sols**: an observed list or range set in the config, e.g. `SOLS = [799, 800, 801, 802, 803, 804]`.
    Each sol uses its own REMS bins (`rems_binned_all_sols.csv`) and its own rover position.
    Provide a helper that lists sols with >= `MIN_BINS` (40) bins so the user can pick.
-2. **Shared reference = sol 800** (`REF_SOL = 800`). **Changed to sol 1850 on Nov 2 (user decision; see `plan.md`).** Replace the per-sol 99.5th percentile with ONE reference
+2. **Shared reference = sol 800** (`REF_SOL = 800`). **Changed to sol 1850 (user decision; see `plan.md`).** Replace the per-sol 99.5th percentile with ONE reference
    value computed from sol 800, used for every sol, so dusty / low-sun sols show less activity.
 3. **Fixed threshold**: the highlight cutoff is the 90th percentile of sol 800's daily-mean score
    (`LIKELY_TOP_PCT = 10` now only defines the cutoff on the reference sol). Other sols use that same
