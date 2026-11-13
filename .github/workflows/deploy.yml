@@ -74,15 +74,21 @@ jobs:
             echo "::notice::CLOUDFLARE_API_TOKEN or ANTHROPIC_API_KEY is not set, so the demo's assistant stays offline (scripted answers)"
             exit 0
           fi
+          # Spaces or line breaks pasted in with a secret make Cloudflare reject it ("Invalid format for
+          # Authorization header"), so strip them.
+          trim() { printf '%s' "$1" | tr -d '[:space:]'; }
+          export CLOUDFLARE_API_TOKEN="$(trim "$CLOUDFLARE_API_TOKEN")" ANTHROPIC_API_KEY="$(trim "$ANTHROPIC_API_KEY")"
           # Only needed when the token can see more than one Cloudflare account.
-          [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || unset CLOUDFLARE_ACCOUNT_ID
-          npx -y wrangler@4.151.3 deploy --var "ALLOWED_ORIGINS:https://${{ github.repository_owner }}.github.io" | tee "$RUNNER_TEMP/wrangler.log"
-          printf '%s' "$ANTHROPIC_API_KEY" | npx -y wrangler@4.151.3 secret put ANTHROPIC_API_KEY
+          CLOUDFLARE_ACCOUNT_ID="$(trim "$CLOUDFLARE_ACCOUNT_ID")"
+          if [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then export CLOUDFLARE_ACCOUNT_ID; else unset CLOUDFLARE_ACCOUNT_ID; fi
+          # A Worker problem never blocks the site: warn, and publish it with the offline assistant.
+          offline() { echo "::warning::$1 The demo is published with the offline assistant (scripted answers)."; exit 0; }
+          npx -y wrangler@4.151.3 deploy --var "ALLOWED_ORIGINS:https://${{ github.repository_owner }}.github.io" > "$RUNNER_TEMP/wrangler.log" 2>&1 \
+            || { cat "$RUNNER_TEMP/wrangler.log"; offline "Deploying the assistant Worker failed. Check that the CLOUDFLARE_API_TOKEN secret is an API token made with the 'Edit Cloudflare Workers' template (not the Global API Key or the account ID)."; }
+          cat "$RUNNER_TEMP/wrangler.log"
           url=$(grep -oE 'https://[a-zA-Z0-9.-]+\.workers\.dev' "$RUNNER_TEMP/wrangler.log" | head -1)
-          if [ -z "$url" ]; then
-            echo "::error::No workers.dev address in the deploy output. Open Workers & Pages in the Cloudflare dashboard once to choose a workers.dev subdomain, then re-run."
-            exit 1
-          fi
+          [ -n "$url" ] || offline "No workers.dev address in the deploy output. Open Workers & Pages in the Cloudflare dashboard once to choose a workers.dev subdomain, then re-run."
+          printf '%s' "$ANTHROPIC_API_KEY" | npx -y wrangler@4.151.3 secret put ANTHROPIC_API_KEY || offline "Storing ANTHROPIC_API_KEY in the Worker failed."
           echo "url=$url/api/assistant" >> "$GITHUB_OUTPUT"
 
       - name: Export web build

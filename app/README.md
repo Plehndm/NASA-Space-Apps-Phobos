@@ -169,6 +169,7 @@ Add libraries with `npx expo install <package>`, not `npm install`. It picks the
 ## What's built (checklist section 2: Map and layers)
 
 - **Map engine:** `src/shell/MapArea.tsx`. One-finger pan, two-finger pinch (with pan), mouse-wheel and trackpad zoom around the cursor on web, tap for the coordinate pill ("4.59°S 137.44°E · −4,498 m · 2° slope"), scale bar, recenter on the rover. Zoom 0.25–4.2 screen px per 100 m.
+- **Dust storm past the edges** (`src/map/layers/StormLayer.tsx`): the map data ends at the grid, so beyond it the map fades into a drifting Martian dust storm instead of empty space, thickening and darkening with distance and feathering a few km over the edge. The textures (`assets/storm.png`, `assets/wisp.png`) come from `scripts/make_storm_textures.py`. The map opens closer in (zoom 3.2 on desktop, 2.0 on phone) and still zooms out to show the whole crater.
 - **Coordinate system:** `src/map/geo.ts`. World space is the pipeline's 100 m grid (1477 × 1436 cells, 136.75–139.24° E, 4.15–6.57° S); one transform for every layer.
 - **Data hosting:** `src/map/data.ts` loads `manifest.json` and the terrain grid; `scripts/build_map_data.py`, `scripts/serve-data.mjs`.
 - **Layers** (`src/map/layers/`): CTX tiles, elevation strata, temperature (ground / air, season, LTST slider + play, kelvin legend, model limits), hazard zones with type filters, the dust-devil heating index, 19 landmarks with rank-based labels and a selected state, the rover.
