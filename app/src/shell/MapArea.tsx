@@ -17,7 +17,7 @@ import { LandmarkLayer } from "../map/layers/LandmarkLayer";
 import { RoverMarker } from "../map/layers/RoverMarker";
 import { MapOverlays } from "../map/MapOverlays";
 import { RouteLayer } from "../route/RouteLayer";
-import { useRoutes } from "../route/RouteProvider";
+import { isPin, useRoutes } from "../route/RouteProvider";
 import { C, EASE } from "../theme";
 import { Dock } from "./Dock";
 
@@ -124,11 +124,14 @@ export function MapArea() {
       if (inWorld(p)) r.addVia(p);
       return;
     }
-    // Tapping empty map closes a target card (back to the sequence or Home).
-    if (a.state.mode === "waypoint") a.goHome();
+    // With a landmark's card open, tapping empty map closes it (back to the sequence or Home). Otherwise
+    // the tap drops a pin there, or moves the pin whose card is open (not mid-expedition).
+    const named = a.state.mode === "waypoint" && !isPin(a.state.sel);
+    if (named) a.goHome();
     if (!inWorld(p)) return;
     const t = terrainAt(d.terrain, p);
     a.showCoord(t ? `${fmtLatLon(p)} · ${fmtInt(t.elev)} m · ${Math.round(t.slope)}° slope` : fmtLatLon(p));
+    if (!named && !a.state.nav) r.dropPin(p);
   };
 
   // Page coordinates → map-area coordinates. The map area may sit inside a centred phone frame.

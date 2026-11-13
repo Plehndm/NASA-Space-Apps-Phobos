@@ -73,9 +73,9 @@ export function SearchBar() {
     if (p) {
       input.current?.blur();
       const t = terrainAt(terrain, p);
-      goHome("peek");
-      centerOn(p);
       showCoord(t ? `${fmtLatLon(p)} · ${fmtInt(t.elev)} m · ${Math.round(t.slope)}° slope` : fmtLatLon(p), 4000);
+      // A coordinate becomes a dropped pin there, ready to route to (not mid-expedition).
+      if (S.nav) { goHome("peek"); centerOn(p); } else r.dropPin(p);
       return;
     }
     const first = results(q, S.cat, S.rover)[0];

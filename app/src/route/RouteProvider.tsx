@@ -5,7 +5,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useApp } from "../state/store";
 import { useMapData, loadDustLevels, terrainAt } from "../map/data";
-import { distanceM, fmtLatLon, M_PER_PX, type Pt } from "../map/geo";
+import { distanceM, fmtInt, fmtLatLon, inWorld, M_PER_PX, toLonLat, type Pt } from "../map/geo";
 import { HAZARD_ZONES, type HazardZone } from "../map/hazards";
 import { LANDMARKS, type Landmark } from "../map/landmarks";
 import { mtcSeconds } from "../state/clock";
@@ -59,7 +59,13 @@ export interface RouteApi {
   dismissArrived: () => void;
   goSafeApproach: () => void;
   overrideRisk: () => void;
+  /** Google-Maps-style dropped pin: any point on the map becomes a target with its own waypoint card. */
+  dropPin: (p: Pt) => void;
 }
+
+/** Dropped pins are run-time landmarks with ids starting with this. */
+export const PIN_PREFIX = "pin-";
+export const isPin = (id: string | null | undefined) => !!id && id.startsWith(PIN_PREFIX);
 
 const Ctx = createContext<RouteApi | null>(null);
 
@@ -352,6 +358,31 @@ export function RouteProvider({ children }: { children: ReactNode }) {
     setTimeout(() => select(id), 0);
   }, [patch, select, terrain]);
 
+  const newPin = useRef<string | null>(null); // dropped but not selected yet: safe from the clean-up below
+  const dropPin = useCallback((p: Pt) => {
+    if (!inWorld(p)) return toast("That point is outside the mapped area");
+    const s = latest.current.S;
+    const t = terrainAt(terrain, p);
+    const id = `${PIN_PREFIX}${Date.now().toString(36)}`;
+    const pin: Landmark = {
+      id, name: `Pin ${fmtLatLon(p)}`, cat: "Traverse", rank: 1, real: false, x: p.x, y: p.y, ...toLonLat(p),
+      desc: `Dropped pin${t ? ` at ${fmtInt(t.elev)} m on a ${Math.round(t.slope)}° slope` : ""}. Plan a route to it, add it as a stop or navigate to it like any landmark.`,
+      note: "Unsurveyed ground: check the slope and the warning zones before you drive.",
+    };
+    // One loose pin at a time: a new pin replaces the last one unless that one is a stop.
+    const keep = new Set([...s.stops, ...(s.nav?.stops ?? [])]);
+    newPin.current = id;
+    patch({ extraLm: [...s.extraLm.filter(l => !isPin(l.id) || keep.has(l.id)), pin] });
+    setTimeout(() => select(id), 0);
+  }, [patch, select, terrain, toast]);
+
+  // A pin nobody kept (its card closed and it isn't a stop) goes, like closing a dropped pin in Google Maps.
+  useEffect(() => {
+    if (newPin.current && S.sel === newPin.current) newPin.current = null;
+    const keep = new Set([...S.stops, ...(S.nav?.stops ?? []), ...(S.sel ? [S.sel] : []), ...(newPin.current ? [newPin.current] : [])]);
+    if (S.extraLm.some(l => isPin(l.id) && !keep.has(l.id))) patch(s => ({ extraLm: s.extraLm.filter(l => !isPin(l.id) || keep.has(l.id)) }));
+  }, [S.sel, S.stops, S.nav, S.extraLm, patch]);
+
   const overrideRisk = useCallback(() => {
     patch(s => ({ override: s.sel, routeOpt: 1 }));
     toast("Risk acknowledged · grade and hazard limits lifted for this target only");
@@ -399,11 +430,11 @@ export function RouteProvider({ children }: { children: ReactNode }) {
     () => ({
       ready: !!grid, lm, zones, capSafe, capDirect, routeOpts, activeRoute, neededGrade, blockedBy, nearestHazard, elevOf, slopeOf, profileOf,
       select, pickRoute, addStopSel, startNav, beginNav, skipAhead, navAll, moveStop, removeStop, clearRoute, addStopSearch, toggleReroute,
-      addVia, autoReroute, endNav, dismissArrived, goSafeApproach, overrideRisk,
+      addVia, autoReroute, endNav, dismissArrived, goSafeApproach, overrideRisk, dropPin,
     }),
     [grid, lm, zones, capSafe, capDirect, routeOpts, activeRoute, neededGrade, blockedBy, nearestHazard, elevOf, slopeOf, profileOf, select, pickRoute,
       addStopSel, startNav, beginNav, skipAhead, navAll, moveStop, removeStop, clearRoute, addStopSearch, toggleReroute, addVia, autoReroute, endNav,
-      dismissArrived, goSafeApproach, overrideRisk],
+      dismissArrived, goSafeApproach, overrideRisk, dropPin],
   );
   return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
 }

@@ -7,6 +7,7 @@ import Svg, { Circle, Path } from "react-native-svg";
 import { useApp } from "../state/store";
 import { C, R, SHADOW } from "../theme";
 import { T } from "../ui/Text";
+import { CloseIcon } from "../ui/icons";
 import { fmtLatLon } from "../map/geo";
 import { ElevationProfile } from "../route/ElevationProfile";
 import { useRoutes } from "../route/RouteProvider";
@@ -51,7 +52,7 @@ function RoutePick({ title, sub, subColor, on, onPress, leftCorner }: { title: s
 }
 
 export function WaypointCard() {
-  const { state: S, settings, toast } = useApp();
+  const { state: S, settings, toast, goHome } = useApp();
   const r = useRoutes();
   const sel = r.lm(S.sel);
   if (!sel) return null;
@@ -70,10 +71,22 @@ export function WaypointCard() {
           <T w={700} size={22} ls={-0.5} lh={1.15} style={{ marginTop: 3 }}>{sel.name}</T>
           <T w={500} size={10.5} ls={0.2} color={C.fg2} style={{ marginTop: 6 }}>{meta}</T>
         </View>
-        <View style={{ alignItems: "flex-end", flexShrink: 0 }}>
-          <T w={600} size={9.5} ls={0.6} color={C.fg2}>ESTIMATED TRANSIT</T>
-          <T w={700} size={15} ls={-0.2} color={C.accent2} style={{ marginTop: 3 }}>{eta}</T>
-          <T w={500} size={9.5} color={C.fg2} style={{ marginTop: 2 }}>{km}</T>
+        <View style={{ flexDirection: "row", gap: 10, flexShrink: 0 }}>
+          <View style={{ alignItems: "flex-end" }}>
+            <T w={600} size={9.5} ls={0.6} color={C.fg2}>ESTIMATED TRANSIT</T>
+            <T w={700} size={15} ls={-0.2} color={C.accent2} style={{ marginTop: 3 }}>{eta}</T>
+            <T w={500} size={9.5} color={C.fg2} style={{ marginTop: 2 }}>{km}</T>
+          </View>
+          {/* Back to the sequence or Home (a dropped pin that isn't a stop goes with it). */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Close target"
+            onPress={() => goHome()}
+            hitSlop={6}
+            style={({ pressed }) => ({ width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center", backgroundColor: pressed ? C.line : C.raised })}
+          >
+            <CloseIcon size={12} />
+          </Pressable>
         </View>
       </View>
       <T w={500} size={13} lh={1.5} color={C.fg2} style={{ marginTop: 10 }}>{sel.desc}</T>

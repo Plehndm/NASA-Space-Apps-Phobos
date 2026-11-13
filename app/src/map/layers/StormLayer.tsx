@@ -11,9 +11,10 @@
 //     on unbroken from box to box but never covers the grid;
 //   - gradients darken the band to the app's ground colour toward its outer edge, so past it the map
 //     area's own background carries on seamlessly;
-//   - the same texture continues EDGE px into the grid in overlapping rings, so the storm thickens toward
-//     the edge and the imagery's straight border never shows (no landmark is that close to the edge:
-//     the nearest, North Rim Crater, is about 117 px in), with a smooth dust gradient over the rings;
+//   - at each edge, a smooth band of dust: fully opaque on the edge itself, so the imagery's straight
+//     border never shows, easing to clear EDGE px into the grid (no landmark is that close to the edge:
+//     the nearest, North Rim Crater, is about 117 px in) and OUT px out over the storm, so the solid
+//     edge blends into the storm's texture instead of meeting it at a line;
 //   - wisps of lighter dust straddle the edges and drift slowly back and forth.
 import { useEffect, useRef } from "react";
 import { Animated, Easing, Image, Platform, View } from "react-native";
@@ -22,15 +23,28 @@ import { alpha } from "../../theme";
 import { GRID } from "../geo";
 
 const FOG = 1600; // world px of storm around the grid (160 km), more than half a screen at the lowest zoom
-const EDGE = 100; // world px the storm reaches into the grid (10 km)
-const RINGS = [1, 0.75, 0.5, 0.25]; // inner storm rings, as fractions of EDGE (each one adds more dust nearer the edge)
-const RING_OPACITY = 0.38;
+const EDGE = 100; // world px the dust reaches into the grid (10 km)
+const OUT = 70; // world px the solid edge fades out over the storm outside
 const DRIFT_MS = 26_000; // one sweep of the wisps
 
 const STORM = require("../../../assets/storm.png");
 const WISP = require("../../../assets/wisp.png");
-const DUST = "rgba(104,66,46,0.92)"; // the storm texture's average colour
-const CLEAR = "rgba(104,66,46,0)";
+const DUST_RGB = "97,61,43"; // storm.png's average colour
+
+/**
+ * The edge band's colour stops, outside → edge → inside: clear OUT px outside, fully opaque on the
+ * edge, then easing (a smoothstep, so no visible start or end) to clear EDGE px inside.
+ */
+type Stops = { colors: readonly [string, string, ...string[]]; locations: readonly [number, number, ...number[]] };
+const EDGE_STOPS: Stops = (() => {
+  const total = OUT + EDGE, at = (px: number) => px / total;
+  const outside: [number, number][] = [[0, 0], [0.5, 0.55], [1, 1]].map(([f, a]) => [at(f * OUT), a]);
+  const inside: [number, number][] = [0.2, 0.4, 0.6, 0.8, 1].map(f => [at(OUT + f * EDGE), 1 - f * f * (3 - 2 * f)]);
+  const stops = [...outside, ...inside];
+  return { colors: stops.map(([, a]) => `rgba(${DUST_RGB},${a.toFixed(3)})`), locations: stops.map(([l]) => l) } as unknown as Stops;
+})();
+/** The same band for the bottom and right edges, where the inside comes first. */
+const reversed = { colors: [...EDGE_STOPS.colors].reverse(), locations: EDGE_STOPS.locations.map(l => 1 - l).reverse() } as unknown as Stops;
 
 type Box = { left: number; top: number; width: number; height: number };
 const abs = (b: Box) => ({ position: "absolute" as const, ...b });
@@ -52,16 +66,6 @@ const WISPS = (() => {
   return out;
 })();
 
-/** Inner storm rings: for each depth, the four strips that far into the grid along its edges. */
-const INNER: Box[] = RINGS.flatMap(f => {
-  const d = Math.round(EDGE * f);
-  return [
-    { left: 0, top: 0, width: GRID.W, height: d },
-    { left: 0, top: GRID.H - d, width: GRID.W, height: d },
-    { left: 0, top: d, width: d, height: GRID.H - 2 * d },
-    { left: GRID.W - d, top: d, width: d, height: GRID.H - 2 * d },
-  ];
-});
 
 /**
  * The storm band around the grid, as four boxes that never overlap the grid. The side boxes reach J px
@@ -77,9 +81,9 @@ const BANDS: Box[] = [
 ];
 
 /** One clipped box of storm: its window onto the repeat anchored at world (-FOG, -FOG). */
-function Band({ b, opacity = 1 }: { b: Box; opacity?: number }) {
+function Band({ b }: { b: Box }) {
   return (
-    <View style={[abs(b), { overflow: "hidden", opacity }]}>
+    <View style={[abs(b), { overflow: "hidden" }]}>
       <Image
         source={STORM}
         resizeMode="repeat" // at the texture's own size, 512 world px (51 km) per repeat
@@ -104,23 +108,25 @@ export function StormLayer() {
     return () => loop.stop();
   }, [t]);
 
-  const W = GRID.W, H = GRID.H, ground = alpha("bg1", 1), thin = alpha("bg1", 0.1);
+  const W = GRID.W, H = GRID.H;
+  // Clear at the grid's edge (a non-zero start would leave a step there), darkening to solid ground outside.
+  const dark = { colors: [alpha("bg1", 1), alpha("bg1", 0.3), alpha("bg1", 0)] as const, locations: [0, 0.55, 1] as const };
+  const darkRev = { colors: [alpha("bg1", 0), alpha("bg1", 0.3), alpha("bg1", 1)] as const, locations: [0, 0.45, 1] as const };
   return (
     <View pointerEvents="none" style={abs({ left: 0, top: 0, width: W, height: H })}>
       {BANDS.map(b => <Band key={`${b.left},${b.top}`} b={b} />)}
 
       {/* Thicker and darker toward the outer edge, ending in the map area's own ground colour. */}
-      <LinearGradient colors={[ground, thin]} style={abs({ left: -FOG, top: -FOG, width: W + 2 * FOG, height: FOG })} />
-      <LinearGradient colors={[thin, ground]} style={abs({ left: -FOG, top: H, width: W + 2 * FOG, height: FOG })} />
-      <LinearGradient colors={[ground, thin]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={abs({ left: -FOG, top: -FOG, width: FOG, height: H + 2 * FOG })} />
-      <LinearGradient colors={[thin, ground]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={abs({ left: W, top: -FOG, width: FOG, height: H + 2 * FOG })} />
+      <LinearGradient {...dark} style={abs({ left: -FOG, top: -FOG, width: W + 2 * FOG, height: FOG })} />
+      <LinearGradient {...darkRev} style={abs({ left: -FOG, top: H, width: W + 2 * FOG, height: FOG })} />
+      <LinearGradient {...dark} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={abs({ left: -FOG, top: -FOG, width: FOG, height: H + 2 * FOG })} />
+      <LinearGradient {...darkRev} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={abs({ left: W, top: -FOG, width: FOG, height: H + 2 * FOG })} />
 
-      {/* The storm thickens over the edge of the data: textured rings, smoothed by a dust gradient. */}
-      {INNER.map((b, i) => <Band key={`in${i}`} b={b} opacity={RING_OPACITY} />)}
-      <LinearGradient colors={[DUST, CLEAR]} style={abs({ left: 0, top: 0, width: W, height: EDGE })} />
-      <LinearGradient colors={[CLEAR, DUST]} style={abs({ left: 0, top: H - EDGE, width: W, height: EDGE })} />
-      <LinearGradient colors={[DUST, CLEAR]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={abs({ left: 0, top: 0, width: EDGE, height: H })} />
-      <LinearGradient colors={[CLEAR, DUST]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={abs({ left: W - EDGE, top: 0, width: EDGE, height: H })} />
+      {/* Solid dust on the edge of the data, fading smoothly both ways. */}
+      <LinearGradient {...EDGE_STOPS} style={abs({ left: -OUT, top: -OUT, width: W + 2 * OUT, height: OUT + EDGE })} />
+      <LinearGradient {...reversed} style={abs({ left: -OUT, top: H - EDGE, width: W + 2 * OUT, height: OUT + EDGE })} />
+      <LinearGradient {...EDGE_STOPS} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={abs({ left: -OUT, top: -OUT, width: OUT + EDGE, height: H + 2 * OUT })} />
+      <LinearGradient {...reversed} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={abs({ left: W - EDGE, top: -OUT, width: OUT + EDGE, height: H + 2 * OUT })} />
 
       {WISPS.map((w, i) => (
         <Animated.Image

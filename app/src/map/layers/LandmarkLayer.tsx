@@ -11,7 +11,7 @@ import { LABEL_ZOOM, LANDMARKS, type Landmark } from "../landmarks";
 import type { Pt } from "../geo";
 import Reanimated from "react-native-reanimated";
 import { Pin, useLabelFade, useMapView } from "../view";
-import { useRoutes } from "../../route/RouteProvider";
+import { isPin, useRoutes } from "../../route/RouteProvider";
 import { isFiltering, matches } from "../../home/search";
 
 const STEM = 16, DOT = 14, PILL_H = 25;
@@ -67,6 +67,7 @@ function visibleLabels(list: Landmark[], s: number, sel: string | null, rover: P
 const Marker = memo(function Marker({ l, label, selected, num, dim, s0, onPress }: { l: Landmark; label: boolean; selected: boolean; num: number; dim: boolean; s0: number; onPress: (l: Landmark) => void }) {
   const fade = useLabelFade(s0);
   const landing = l.cat === "Landing";
+  const pin = isPin(l.id); // a dropped pin: orange, like the map's call-to-action colour
   // Selected: route fill. In the sequence: faint route tint with a number badge.
   const bg = selected ? C.route : num ? "rgba(127,212,193,0.22)" : landing ? alpha("bg1", 0.9) : alpha("raised", 0.9);
   const fg = selected ? C.routeInk : landing ? C.warm : C.route2;
@@ -98,7 +99,7 @@ const Marker = memo(function Marker({ l, label, selected, num, dim, s0, onPress 
         <View
           style={{
             width: DOT, height: DOT, borderRadius: DOT / 2, alignItems: "center", justifyContent: "center",
-            backgroundColor: selected ? C.route : landing ? C.warm : C.route2,
+            backgroundColor: selected ? C.route : pin ? C.cta : landing ? C.warm : C.route2,
             boxShadow: `0px 0px 0px 3px ${alpha("bg1", 0.55)}`,
           }}
         >
