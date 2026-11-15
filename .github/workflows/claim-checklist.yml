@@ -1,0 +1,86 @@
+# Feature checklist (issue #3): ticking a box claims that feature for whoever
+# clicked it, along with every unclaimed item nested under it; unticking
+# releases it and the nested items held by the same person. Lines look like:
+#   - [ ] 👤 **unclaimed** · **Feature name**: description
+name: Claim checklist items
+
+on:
+  issues:
+    types: [edited]
+
+permissions:
+  issues: write
+
+concurrency:
+  group: claim-checklist-${{ github.event.issue.number }}
+
+jobs:
+  claim:
+    # Only checklist issues, and only when the body changed.
+    if: contains(github.event.issue.body, '👤') && github.event.changes.body
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const ITEM = /^(\s*- \[)([ xX])(\] 👤 \*\*)(.+?)(\*\* · )(.*)$/;
+            const who = `@${context.payload.sender.login}`;
+
+            // Checked state per feature before the click.
+            const before = new Map();
+            for (const line of (context.payload.changes.body.from || '').split('\n')) {
+              const m = line.match(ITEM);
+              if (m) before.set(m[6], m[2] !== ' ');
+            }
+
+            // Re-read the issue so a quick second edit is not overwritten.
+            const { data: issue } = await github.rest.issues.get({
+              ...context.repo, issue_number: context.payload.issue.number,
+            });
+
+            const lines = issue.body.split('\n');
+            const items = [];
+            lines.forEach((line, i) => {
+              const m = line.match(ITEM);
+              if (m) items.push({ i, m, indent: m[1].length, key: m[6],
+                                  checked: m[2] !== ' ', name: m[4] });
+            });
+
+            // Items nested under items[k]: everything after it that is indented deeper.
+            const subtree = k => {
+              const out = [];
+              for (let j = k + 1; j < items.length && items[j].indent > items[k].indent; j++) out.push(items[j]);
+              return out;
+            };
+
+            items.forEach((it, k) => {
+              if (!before.has(it.key)) return;
+              const was = before.get(it.key);
+              if (!was && it.checked) {
+                // Ticked: claim it and every unclaimed item under it.
+                for (const c of [it, ...subtree(k)]) {
+                  c.checked = true;
+                  if (c.name === 'unclaimed') c.name = who;
+                }
+              } else if (was && !it.checked) {
+                // Unticked: release it, and the items under it held by the same person.
+                const holder = it.name;
+                it.name = 'unclaimed';
+                for (const c of subtree(k)) {
+                  if (c.name === holder) { c.checked = false; c.name = 'unclaimed'; }
+                }
+              }
+            });
+
+            let changed = false;
+            for (const it of items) {
+              const line = it.m[1] + (it.checked ? 'x' : ' ') + it.m[3] + it.name + it.m[5] + it.m[6];
+              if (line !== lines[it.i]) { lines[it.i] = line; changed = true; }
+            }
+            const body = lines.join('\n');
+
+            if (changed) {
+              await github.rest.issues.update({
+                ...context.repo, issue_number: issue.number, body,
+              });
+            }
