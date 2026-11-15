@@ -1,0 +1,136 @@
+{
+  "region": "Gale crater, Mars",
+  "approx_bounds_deg": {
+    "west": 136.75,
+    "east": 139.25,
+    "south": -6.55,
+    "north": -4.2,
+    "note": "Read off the THEMIS panel axes. Heatmaps are assumed to share this footprint (not confirmed by the data team)."
+  },
+  "layers": [
+    {
+      "id": "ground_temp",
+      "type": "time_series_raster",
+      "folder": "heatmaps",
+      "season": "Ls 340",
+      "frames": [
+        {
+          "time_ltst": "01:30",
+          "file": "ltst_0130.png"
+        },
+        {
+          "time_ltst": "02:00",
+          "file": "ltst_0200.png"
+        },
+        {
+          "time_ltst": "02:30",
+          "file": "ltst_0230.png"
+        },
+        {
+          "time_ltst": "03:00",
+          "file": "ltst_0300.png"
+        },
+        {
+          "time_ltst": "03:30",
+          "file": "ltst_0330.png"
+        },
+        {
+          "time_ltst": "04:00",
+          "file": "ltst_0400.png"
+        },
+        {
+          "time_ltst": "04:30",
+          "file": "ltst_0430.png"
+        },
+        {
+          "time_ltst": "05:00",
+          "file": "ltst_0500.png"
+        },
+        {
+          "time_ltst": "05:30",
+          "file": "ltst_0530.png"
+        },
+        {
+          "time_ltst": "06:00",
+          "file": "ltst_0600.png"
+        },
+        {
+          "time_ltst": "06:30",
+          "file": "ltst_0630.png"
+        },
+        {
+          "time_ltst": "07:00",
+          "file": "ltst_0700.png"
+        },
+        {
+          "time_ltst": "07:30",
+          "file": "ltst_0730.png"
+        },
+        {
+          "time_ltst": "08:00",
+          "file": "ltst_0800.png"
+        },
+        {
+          "time_ltst": "08:30",
+          "file": "ltst_0830.png"
+        },
+        {
+          "time_ltst": "09:00",
+          "file": "ltst_0900.png"
+        },
+        {
+          "time_ltst": "09:30",
+          "file": "ltst_0930.png"
+        },
+        {
+          "time_ltst": "10:00",
+          "file": "ltst_1000.png"
+        },
+        {
+          "time_ltst": "10:30",
+          "file": "ltst_1030.png"
+        },
+        {
+          "time_ltst": "11:00",
+          "file": "ltst_1100.png"
+        },
+        {
+          "time_ltst": "11:30",
+          "file": "ltst_1130.png"
+        }
+      ],
+      "size_px": [
+        738,
+        718
+      ],
+      "opaque": true,
+      "colormap": "plasma-like, shared scale across all frames (cool purple -> hot orange)",
+      "units": "unknown - ask data team for temperature range to build the legend",
+      "sprite": {
+        "file": "heatmap_sprite_strip.jpg",
+        "frame_width": 738,
+        "frame_count": 21
+      },
+      "preview": "heatmap_timelapse.gif"
+    },
+    {
+      "id": "thermal_inertia",
+      "type": "reference_figure",
+      "file": "thermal_inertia/themis_vs_tes.png",
+      "note": "Matplotlib figure with axes and colorbars (THEMIS 100 m vs TES 3 km, 180-500 tiu). Use as an info-panel graphic, not a map overlay."
+    },
+    {
+      "id": "gale_tiles",
+      "type": "basemap_tiles",
+      "folder": "gale_tiles",
+      "status": "MISSING - not in the shared Drive folder"
+    },
+    {
+      "id": "topography",
+      "type": "elevation",
+      "folder": "topography",
+      "status": "MISSING - not in the shared Drive folder"
+    }
+  ],
+  "credit": "THEMIS: NASA/JPL-Caltech/ASU. TES: NASA/JPL-Caltech/ASU. Processed by the team's MarsDataPipeline."
+}
