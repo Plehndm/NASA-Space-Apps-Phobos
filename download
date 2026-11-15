@@ -1,0 +1,9 @@
+# OS and archive junk (app/.gitignore and phobos/.gitignore cover their own folders)
+__MACOSX/
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+
+# Python bytecode (written by npm run test:py)
+__pycache__/
