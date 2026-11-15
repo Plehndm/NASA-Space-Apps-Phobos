@@ -8,7 +8,7 @@ import { useRoutes } from "../route/RouteProvider";
 import { useTelemetry } from "../home/telemetry";
 import { useDustAdvisory } from "../home/advisory";
 import { fmtClock, mtcSeconds } from "../state/clock";
-import { askModel, modelStatus, type Answer, type ChatTurn } from "./api";
+import { ASSISTANT_URL, askModel, modelStatus, type Answer, type ChatTurn } from "./api";
 import { buildContext, type Sources } from "./context";
 import { scripted } from "./scripted";
 
@@ -53,8 +53,10 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
   const adv = useDustAdvisory();
   const [chat, setChat] = useState<ChatMsg[]>([]);
   const [busy, setBusy] = useState(false);
-  const [live, setLive] = useState<boolean | null>(null);
-  const [mode, setModeState] = useState<AssistantMode>("live");
+  // A build with no backend (the Pages export without its Worker) starts offline and never calls one.
+  const [live, setLive] = useState<boolean | null>(ASSISTANT_URL ? null : false);
+  const [mode, setModeState] = useState<AssistantMode>(ASSISTANT_URL ? "live" : "offline");
+  const picked = useRef(false); // the crew chose a mode themselves: don't switch it for them
 
   // Sends read the latest app state through a ref (a reply can arrive after several renders).
   const src = useRef<Omit<Sources, "clock">>({ S, r, tele, adv });
@@ -65,13 +67,21 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
 
   // Ask the backend whether it has a key each time the assistant opens.
   const open = S.mode === "assistant";
+  // null while checking ("checking the connection"); false when the backend is missing, unreachable or
+  // has no key. Unless the crew picked LIVE themselves, an unavailable model switches to OFFLINE, so
+  // offline reads as a mode rather than an error.
   useEffect(() => {
-    if (!open) return;
+    if (!open || mode !== "live") return;
     let on = true;
-    if (mode === "live") modelStatus().then(v => on && setLive(v));
+    setLive(null);
+    modelStatus().then(v => {
+      if (!on) return;
+      setLive(v);
+      if (!v && !picked.current) setModeState("offline");
+    });
     return () => { on = false; };
   }, [open, mode]);
-  const pickMode = useCallback((m: AssistantMode) => setModeState(m), []);
+  const pickMode = useCallback((m: AssistantMode) => { picked.current = true; setModeState(m); }, []);
 
   const send = useCallback(async (input: string, opts?: { offline?: boolean }) => {
     const text = input.trim().slice(0, MAX_INPUT);

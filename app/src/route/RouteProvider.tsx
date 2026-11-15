@@ -7,6 +7,7 @@ import { useApp } from "../state/store";
 import { useMapData, loadDustLevels, terrainAt } from "../map/data";
 import { distanceM, fmtInt, fmtLatLon, inWorld, M_PER_PX, toLonLat, type Pt } from "../map/geo";
 import { HAZARD_ZONES, type HazardZone } from "../map/hazards";
+import { isPin, PIN_PREFIX } from "../map/tap";
 import { LANDMARKS, type Landmark } from "../map/landmarks";
 import { mtcSeconds } from "../state/clock";
 import { buildRoute, CAP_DIRECT, CAP_OVERRIDE, cumul, edgeDist, inside, makeGrid, nodeElev, posAt, profile, pxToKm, segHit, speedFor, type Profile, type Route, type RouteGrid } from "./router";
@@ -63,9 +64,8 @@ export interface RouteApi {
   dropPin: (p: Pt) => void;
 }
 
-/** Dropped pins are run-time landmarks with ids starting with this. */
-export const PIN_PREFIX = "pin-";
-export const isPin = (id: string | null | undefined) => !!id && id.startsWith(PIN_PREFIX);
+// Dropped pins: run-time landmarks whose ids start with PIN_PREFIX (defined with the tap rules).
+export { isPin, PIN_PREFIX } from "../map/tap";
 
 const Ctx = createContext<RouteApi | null>(null);
 

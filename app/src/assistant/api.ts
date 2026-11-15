@@ -7,34 +7,50 @@ import { Platform } from "react-native";
 import Constants from "expo-constants";
 import type { AssistantContext } from "./context";
 
-function assistantUrl(): string {
-  const env = process.env.EXPO_PUBLIC_ASSISTANT_URL;
-  if (env) return env;
-  if (Platform.OS === "web" && typeof location !== "undefined") return `${location.origin}/api/assistant`;
-  return `http://${Constants.expoConfig?.hostUri ?? "localhost:8081"}/api/assistant`;
+/**
+ * Where the assistant backend is, or null when this build has none. Only the Expo dev server serves
+ * /api/assistant; a production build (the GitHub Pages export, a native release) has a backend only
+ * when EXPO_PUBLIC_ASSISTANT_URL names one. The Pages workflow sets it to an empty string when the
+ * Worker isn't deployed.
+ */
+export function resolveAssistantUrl(o: { env: string | undefined; dev: boolean; web: boolean; origin: string | null; hostUri: string | undefined }): string | null {
+  if (o.env !== undefined) return o.env.trim() || null;
+  if (!o.dev) return null;
+  if (o.web) return o.origin ? `${o.origin}/api/assistant` : null;
+  return `http://${o.hostUri ?? "localhost:8081"}/api/assistant`;
 }
 
-export const ASSISTANT_URL = assistantUrl();
+export const ASSISTANT_URL = resolveAssistantUrl({
+  env: process.env.EXPO_PUBLIC_ASSISTANT_URL,
+  dev: typeof __DEV__ !== "undefined" && __DEV__,
+  web: Platform.OS === "web",
+  origin: typeof location !== "undefined" ? location.origin : null,
+  hostUri: Constants.expoConfig?.hostUri ?? undefined,
+});
 
 export interface ChatTurn { role: "user" | "assistant"; content: string }
 export interface Answer { reply: string; route: string[]; avoid: string[] }
 
-/** Whether the backend has a key (true), has none (false), or cannot be reached (null). */
-export async function modelStatus(): Promise<boolean | null> {
+/** Whether the live model can answer: the backend exists, is reachable and has a key. */
+export async function modelStatus(): Promise<boolean> {
+  if (!ASSISTANT_URL) return false;
+  const url = ASSISTANT_URL;
   try {
-    const r = await withTimeout(signal => fetch(ASSISTANT_URL, { signal }), 5000);
-    if (!r.ok) return null;
+    const r = await withTimeout(signal => fetch(url, { signal }), 5000);
+    if (!r.ok) return false;
     const j = (await r.json()) as { live?: unknown };
     return j.live === true;
   } catch {
-    return null;
+    return false;
   }
 }
 
 /** Asks the live model. Throws on any failure, so the caller can answer from the scripted fallback. */
 export async function askModel(messages: ChatTurn[], context: AssistantContext): Promise<Answer> {
+  if (!ASSISTANT_URL) throw new Error("no_backend");
+  const url = ASSISTANT_URL;
   const r = await withTimeout(
-    signal => fetch(ASSISTANT_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages, context }), signal }),
+    signal => fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages, context }), signal }),
     50_000,
   );
   const j = (await r.json().catch(() => null)) as Partial<Answer> & { error?: string } | null;

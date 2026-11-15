@@ -2,7 +2,7 @@
 
 Team Phobos's entry for NASA Space Apps 2026, challenge **"Interplanetary Survival Guide: Martian Map"**.
 
-**Live demo:** <https://plehndm.github.io/NASA-Space-Apps-Phobos/> · **Project page:** <https://plehndm.github.io/NASA-Space-Apps-Phobos/showcase/> (source in [`site/`](site/index.html); to add the demo video, paste its link into `VIDEO_URL` at the bottom of that file).
+**Live demo:** <https://plehndm.github.io/NASA-Space-Apps-Phobos/> · **Project page:** <https://plehndm.github.io/NASA-Space-Apps-Phobos/showcase/> · **Demo video:** <https://youtu.be/MpiWPI1M4P8> (project page source in [`site/`](site/index.html); the video link is `VIDEO_URL` at the bottom of that file).
 
 ## The goal
 
@@ -14,7 +14,7 @@ Team Phobos's entry for NASA Space Apps 2026, challenge **"Interplanetary Surviv
 - **Street Level:** walk-around rover panoramas at key waypoints.
 - **Route assistant:** a Claude-powered chat that suggests and loads routes.
 
-Status: the **data pipeline**, the **UI design** and the **app** are built. In `app/`: the map (real CTX imagery, terrain, elevation strata, ground and air temperature, hazard zones, the dust-devil heating index, landmarks), Home and Search, hazard-aware routing with multi-stop trips and a simulated drive, the route assistant (offline by default, optional live Claude model), and Street Level with five NASA rover panoramas. Still to do: Android testing and the submission materials (demo video, deck, project page).
+Status: the **data pipeline**, the **UI design** and the **app** are built. In `app/`: the map (real CTX imagery, terrain, elevation strata, ground and air temperature, hazard zones, the dust-devil heating index, landmarks), Home and Search, hazard-aware routing with multi-stop trips and a simulated drive, the route assistant (offline by default, optional live Claude model), and Street Level with five NASA rover panoramas. The demo video, live web demo and project page are published (links above). Still to do: Android testing.
 
 > **`app/` is the actual application. `Mars Navigator App Design/` is only the reference.**
 > The design folder is an HTML mock-up with fake terrain. It shows what each screen should look like and how it should behave. Don't edit it or ship it, and don't import from it. Build features in `app/`, matching the design.
@@ -52,7 +52,6 @@ More detail, including campus Wi-Fi workarounds and where each feature goes: [`a
 NASA-Space-Apps-Phobos/
 ├── .github/workflows/           claim-checklist.yml: fills in names on the checklist issue
 ├── README.md                    this file: overview + link to the feature checklist
-├── mars-navigator.pptx          presentation deck (exported from the design deck)
 │
 ├── app/                         THE APP (React Native + Expo: phone via Expo Go, desktop via web); start in app/README.md
 │   ├── src/shell/               header, dock, bottom sheet / side panel, settings, toasts, map area

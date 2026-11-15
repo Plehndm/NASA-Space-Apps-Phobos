@@ -17,7 +17,8 @@ import { LandmarkLayer } from "../map/layers/LandmarkLayer";
 import { RoverMarker } from "../map/layers/RoverMarker";
 import { MapOverlays } from "../map/MapOverlays";
 import { RouteLayer } from "../route/RouteLayer";
-import { isPin, useRoutes } from "../route/RouteProvider";
+import { useRoutes } from "../route/RouteProvider";
+import { tapAction } from "../map/tap";
 import { C, EASE } from "../theme";
 import { Dock } from "./Dock";
 
@@ -118,20 +119,19 @@ export function MapArea() {
   const onTap = (sx: number, sy: number) => {
     const { app: a, data: d, routes: r } = latest.current;
     const p = { x: (sx - live.current.tx) / live.current.s, y: (sy - live.current.ty) / live.current.s };
+    // The rules are in src/map/tap.ts: dismissing taps never drop a pin.
+    const act = tapAction(a.state);
     a.patch({ heatOpen: false, elevOpen: false });
-    // REROUTE armed: this tap is the via-point.
-    if (a.state.viaPending && a.state.nav) {
+    if (act === "via") {
       if (inWorld(p)) r.addVia(p);
       return;
     }
-    // With a landmark's card open, tapping empty map closes it (back to the sequence or Home). Otherwise
-    // the tap drops a pin there, or moves the pin whose card is open (not mid-expedition).
-    const named = a.state.mode === "waypoint" && !isPin(a.state.sel);
-    if (named) a.goHome();
+    if (act === "closePopover") return;
+    if (act === "closeCard") a.goHome();
     if (!inWorld(p)) return;
     const t = terrainAt(d.terrain, p);
     a.showCoord(t ? `${fmtLatLon(p)} · ${fmtInt(t.elev)} m · ${Math.round(t.slope)}° slope` : fmtLatLon(p));
-    if (!named && !a.state.nav) r.dropPin(p);
+    if (act === "dropPin") r.dropPin(p);
   };
 
   // Page coordinates → map-area coordinates. The map area may sit inside a centred phone frame.
