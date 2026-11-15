@@ -1,0 +1,126 @@
+# NASA-Space-Apps-Phobos: Mars Navigator
+
+Team Phobos's entry for NASA Space Apps 2026, challenge **"Interplanetary Survival Guide: Martian Map"**.
+
+**Live demo:** <https://plehndm.github.io/NASA-Space-Apps-Phobos/> · **Project page:** <https://plehndm.github.io/NASA-Space-Apps-Phobos/showcase/> (source in [`site/`](site/index.html); to add the demo video, paste its link into `VIDEO_URL` at the bottom of that file).
+
+## The goal
+
+**Mars Navigator** is a Google-Maps-style navigation app for crews driving a rover in **Gale Crater** (Curiosity's landing site, with Mount Sharp at the centre). It combines real NASA orbital and rover data into one map:
+
+- **Base map and terrain:** CTX imagery, elevation and slope from stereo DTMs.
+- **Environment layers:** modelled ground and air temperature through the day, plus a dust-devil likelihood layer.
+- **Hazard-aware routing:** two route options (direct vs. safe), multi-stop trips, and a simulated drive with live ETA and grade profile.
+- **Street Level:** walk-around rover panoramas at key waypoints.
+- **Route assistant:** a Claude-powered chat that suggests and loads routes.
+
+Status: the **data pipeline**, the **UI design** and the **app** are built. In `app/`: the map (real CTX imagery, terrain, elevation strata, ground and air temperature, hazard zones, the dust-devil heating index, landmarks), Home and Search, hazard-aware routing with multi-stop trips and a simulated drive, the route assistant (offline by default, optional live Claude model), and Street Level with five NASA rover panoramas. Still to do: Android testing and the submission materials (demo video, deck, project page).
+
+> **`app/` is the actual application. `Mars Navigator App Design/` is only the reference.**
+> The design folder is an HTML mock-up with fake terrain. It shows what each screen should look like and how it should behave. Don't edit it or ship it, and don't import from it. Build features in `app/`, matching the design.
+
+## Run the app
+
+You need [Node.js](https://nodejs.org) 22.13 or newer (24 LTS recommended) and, to build the map data, Python 3.10 or newer. Full steps, with the Drive files to download and phone, simulator and Windows notes, are in [`app/README.md`](app/README.md#run-it-locally). In short:
+
+```bash
+cd app
+npm install                    # once
+# once: put the map data in app/data/ (a teammate's copy, or build it: app/README.md, step 2)
+npx expo start                 # then press w for the browser, or scan the QR code with Expo Go
+```
+
+One terminal is enough: the Expo dev server also serves the map data, the Street Level panoramas and the route assistant. Without `app/data/` the app opens, but the map is empty ("MAP DATA OFFLINE").
+
+To run the design reference next to it, in a second terminal from `app/`:
+```bash
+npm run design                 # then open http://localhost:8090
+```
+
+| What | Desktop | Phone (same Wi-Fi) |
+| --- | --- | --- |
+| **The app** | Press **w** in the `expo start` terminal, or open <http://localhost:8081>. Add `?device=phone` for the phone layout. | Scan the QR code with **Expo Go**: on Android in the app, on iPhone with the Camera. |
+| **Design reference** | Open <http://localhost:8090> and pick Phone, Desktop or Slide deck. | Open the `Phone:` address that `npm run design` prints. |
+
+**Checking your work:** put the app and the reference side by side at the same size. For example, the app at `?device=phone` next to the reference's Phone version. Compare layout, colours, spacing and copy, then click through the same steps in both and compare behaviour. The reference uses fake terrain and sample data, so match how it looks and behaves, not its numbers. Before pushing, run `npm run test:all` from `app/`.
+
+More detail, including campus Wi-Fi workarounds and where each feature goes: [`app/README.md`](app/README.md).
+
+## Where everything is
+
+```text
+NASA-Space-Apps-Phobos/
+├── .github/workflows/           claim-checklist.yml: fills in names on the checklist issue
+├── README.md                    this file: overview + link to the feature checklist
+├── mars-navigator.pptx          presentation deck (exported from the design deck)
+│
+├── app/                         THE APP (React Native + Expo: phone via Expo Go, desktop via web); start in app/README.md
+│   ├── src/shell/               header, dock, bottom sheet / side panel, settings, toasts, map area
+│   ├── src/map/                 coordinate system, map data loader, map layers, layer controls
+│   ├── src/cards/               one screen per sheet mode (placeholders until built)
+│   ├── scripts/                 fetch_imagery.py + build_map_data.py (pipeline outputs -> app data), data and design servers
+│   └── data/                    built map data and panoramas, served by `npx expo start` (not tracked by git)
+│
+├── Mars Navigator App Design/   DESIGN REFERENCE ONLY, not the app: HTML mock-up to copy from
+│   ├── README.md                full design spec: tokens, layouts, screens, behaviour, state
+│   ├── design/
+│   │   ├── Mars Navigator v2.dc.html       interactive prototype (phone); open in a browser
+│   │   ├── Mars Navigator Desktop.dc.html  same app, desktop layout
+│   │   ├── Mars Navigator Deck.dc.html     10-slide demo deck
+│   │   └── assets/              base map, elevation strata, 21 heat frames used by the prototype
+│   └── data/                    heat-frame manifest + design brief from the data team
+│
+├── MarsDataPipline/             DATA + SCIENCE (Python / Jupyter)
+│ ├── README.md                  start here: results, how to run, notebook order
+│ ├── CLAUDE.md                  rules + physics spec; read before changing code
+│ ├── heatmap/                   ground and air temperature maps
+│ │ ├── thermal1d.py               1D soil heat model (physics baseline)
+│ │ ├── residual.py                corrections fitted to Curiosity REMS readings (ground and air)
+│ │ ├── map_export.py              builds and encodes the full-crater temperature maps
+│ │ ├── paths.py                   every folder path the code uses
+│ │ ├── pytest.ini                 test settings
+│ │ ├── tests/                     solver and forcing tests (Gates 1 and 2)
+│ │ ├── notebooks/                 temperature-model notebooks, in build order
+│ ├── dust_devil/                 Dust Devil Heating Index layer (parked); has its own README
+│ │ ├── dust_devil_pipeline.ipynb   pipeline notebook
+│ │ ├── dev/,                       tests/ iteration scripts and tests
+│ ├── data_prep/                   raw data -> processed data
+│ ├── gale_tiles/                  map tiles (imagery, topo) + source DTMs; has its own README
+│ ├── processed_data/              Google Drive link: model inputs, map tiles, heat-map outputs
+│ ├── raw_data/                    citation list: REMS, THEMIS, TES albedo, Mastcam tau (downloads not in git)
+│ └── docs/                        plan, progress log, findings, rejected ideas
+│
+├── mars_streetview/             STREET LEVEL PANORAMAS
+│   ├── README.md                how to download, fill in and build the panoramas
+│   ├── manifest.json            the 5 panoramas: position, view, source URL and checksum
+│   ├── fetch_raw.py             downloads the source images into raw/, checked by SHA-256
+│   ├── build_panos.py           NASA panorama -> tile pyramid + panos.json
+│   ├── streetview.js            original Google Maps viewer (the app has its own)
+│   ├── tests/                   build and fetch tests
+│   └── raw/                     downloaded source images (not tracked by git)
+│
+├── tests/                       repo-wide checks: Markdown links resolve (check_doc_links.py)
+│
+└── phobos/                      local Python virtualenv (not tracked by git)
+```
+
+Large data files are not in git. They are on the shared Google Drive linked in `MarsDataPipline/processed_data/Google_Drive`.
+
+## Feature checklist
+
+**The checklist lives in [issue #3: Feature checklist](https://github.com/Plehndm/NASA-Space-Apps-Phobos/issues/3)**, where the boxes can be clicked.
+
+- **Claim a feature:** tick its box. A bot (`.github/workflows/claim-checklist.yml`) puts your GitHub username next to it.
+- **Give it up:** untick the box and it goes back to `unclaimed`.
+- **Finish a feature:** edit the issue and change that line's 👤 to ✅.
+- **Dependencies:** shown as a tree. An indented item depends on the item above it.
+
+Areas covered: app foundation, map and layers, routing and navigation, search and home, route assistant, Street Level, science follow-ups, and submission.
+
+## Credits
+
+Imagery NASA/JPL-Caltech/MSSS · THEMIS/TES NASA/JPL-Caltech/ASU · USGS Astrogeology. Full references: `MarsDataPipline/raw_data/Citations`.
+
+## License
+
+See `LICENSE`.
