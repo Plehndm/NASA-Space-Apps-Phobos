@@ -1,0 +1,23 @@
+# Cloudflare Worker for the route assistant behind the GitHub Pages demo (see index.js).
+# Deployed by .github/workflows/deploy.yml; the key is a secret (ANTHROPIC_API_KEY), never a var here.
+name = "mars-navigator-assistant"
+main = "index.js"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[vars]
+# Browser origins allowed to call the Worker, comma-separated. The Pages site is served from here.
+ALLOWED_ORIGINS = "https://plehndm.github.io"
+ASSISTANT_MODEL = "claude-sonnet-5-5"
+
+# 12 requests a minute per address, 120 a minute across everyone.
+[[ratelimits]]
+name = "LIMIT_IP"
+namespace_id = "1001"
+simple = { limit = 12, period = 60 }
+
+[[ratelimits]]
+name = "LIMIT_ALL"
+namespace_id = "1002"
+simple = { limit = 120, period = 60 }

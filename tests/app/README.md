@@ -1,0 +1,303 @@
+# Mars Navigator app
+
+React Native + Expo (SDK 58) + TypeScript. One codebase runs on phones through **Expo Go** and on desktop in a **web browser**. It is built from the HTML prototype in `../Mars Navigator App Design/`; read that folder's README for the exact look and behaviour of every screen.
+
+## Run it locally
+
+Everything runs from `app/` with **one command**, `npx expo start`. That one dev server serves the app, the map data, the Street Level panoramas and the route assistant. The steps below are for a fresh clone; after that, only step 3 is needed.
+
+### 1. Install (once)
+
+You need:
+- **[Node.js](https://nodejs.org) 22.13 or newer** (24 LTS recommended; Expo SDK 58 refuses older). Check with `node -v`.
+- **Python 3.10 or newer**, for building the map data and panoramas (step 2). Check with `python3 --version`.
+- **Git**, and about 1 GB of disk space.
+
+```bash
+cd app
+npm install
+```
+
+npm may warn that it skipped install scripts for `fsevents`; that's an optional macOS file watcher, and nothing breaks without it.
+
+### 2. Get the map data (once, and again when the pipeline data changes)
+
+The map (imagery, terrain, temperature, dust devils, telemetry) and Street Level are built into `app/data/`, which is not in git. Without it the app still opens, but the map is empty, with a "MAP DATA OFFLINE" notice, and the Street Level button stays dimmed.
+
+**Quickest:** `npm run data:fetch` downloads the packed data from the repo's `map-data` release into `app/data/` and checks its SHA-256 (needs the GitHub CLI, `gh auth login`, while the repo is private). Or ask a teammate for a zip of their `app/data/`. Then skip to step 3.
+
+**Or build it yourself:**
+
+a. Download these from the team Drive (the link is in `MarsDataPipline/processed_data/Google_Drive`) to the **same paths** under `MarsDataPipline/`:
+
+| File (under `MarsDataPipline/`) | Used for |
+| --- | --- |
+| `processed_data/gale_dem_20m.tif` and `gale_slope_20m.tif` | elevation and slope (coordinate pill, strata, routing) |
+| `heatmap/outputs/maps/{ground,air}/map_manifest.json` and their `raw/*.u16` | temperature frames |
+| `dust_devil/outputs/gale_dust_devil_heating_index_sol{800,1850}.npz` and `dust_devil_heating_index_reference_sol1850.json` | dust-devil layer and Home advisory |
+| `processed_data/mastcam_tau_per_sol.csv` | dust opacity τ on the Home card |
+
+b. Build (from `app/`):
+
+```bash
+python3 -m venv .venv                              # once: a Python environment for the build
+.venv/bin/pip install numpy pillow rasterio        # once
+python3 scripts/fetch_imagery.py                   # satellite tiles from NASA Mars Trek (~56 MB; safe to re-run)
+.venv/bin/python scripts/build_map_data.py         # -> app/data/ (about 20 s)
+npm run panos                                      # Street Level: 113 MB from NASA, then about 1.5 min
+```
+
+On Windows, use `.venv\Scripts\pip` and `.venv\Scripts\python` in place of `.venv/bin/pip` and `.venv/bin/python`. `npm run panos` and `npm run test:py` find the venv on either layout (`scripts/py.mjs`).
+
+- If an input is missing, `build_map_data.py` lists every missing file and where to get it, and builds nothing. To build only part, name the stages: `imagery`, `terrain`, `strata`, `heat`, `dustDevil`, `telemetry` (for example `build_map_data.py imagery heat`). `--help` shows the full list of inputs.
+- `npm run panos` downloads only from NASA's server, checks every file's checksum, and skips files you already have. The build briefly needs about 14 GB of memory. On a smaller laptop, copy `app/data/panos/` from a teammate instead; the rest of the app doesn't need it.
+
+### 3. Start the app
+
+```bash
+npx expo start
+```
+
+It prints a QR code and a menu, then waits. Saving a file reloads every connected device. Then open the app on any of these:
+
+| Where | How |
+| --- | --- |
+| **Browser** | Press **w**, or open <http://localhost:8081>. Add `?device=phone` or `?device=desktop` to pick a layout (by default, windows 900 px or wider get the desktop layout). Add `&scene=<name>` to open a demo scene (below). |
+| **Your phone** | Install **Expo Go** (App Store or Google Play; it must support SDK 58). Put the phone on the **same Wi-Fi** as the computer and scan the QR code: on iPhone with the Camera app, on Android from inside Expo Go. |
+| **iOS Simulator** (Mac) | Press **i**. Needs Xcode with an iOS simulator installed. |
+| **Android emulator** | Press **a**. Needs Android Studio with an emulator running. |
+
+#### Demo scenes
+
+For screenshots, the slide deck and the demo video, `?scene=<name>` jumps the app into one state on load, for example <http://localhost:8081/?device=phone&scene=nav>. It works next to `?device=`. Scenes marked * plan routes, so they wait for the map data and then apply once (with no map data they show a toast and do nothing). On a phone in Expo Go, start the dev server with `EXPO_PUBLIC_SCENE=<name> npx expo start` (PowerShell: `$env:EXPO_PUBLIC_SCENE='<name>'; npx expo start`); the variable only counts in development builds, and the URL wins on web. The scenes live in `src/state/scenes.ts` and are applied by `src/shell/DemoScene.tsx`.
+
+| Scene | Shows |
+| --- | --- |
+| `home` | the normal start (same as no scene) |
+| `layers` | temperature layer on with its popover open, hazard zones on, sheet at peek |
+| `search` | Search with the Geological chip, sheet at half |
+| `waypoint` * | The Rocknest selected: Waypoint card with its routes, sheet at half |
+| `route` * | the sequence Yellowknife Bay → The Rocknest → Pahrump Hills on Route #2, sheet at half |
+| `nav` * | an expedition to The Rocknest then Pahrump Hills, jumped to 30% and still driving, sheet at half, map on the rover (zoom ≥ 1.9) |
+| `assistant` * | the assistant full height, asked "Plan a 3-stop science day that stays clear of dust devils", with the offline scripted answer and its proposed route (no network) |
+| `settings` | the Settings dialog |
+| `about` | About & credits (opened from Settings): the app, the team, the temperature model's limits and the data credits |
+
+To check it's working: the map shows satellite imagery around Bradbury Landing, the header shows "Sol 742", and the Home card shows surface temperature and dust opacity.
+
+### 4. Optional: the live route assistant
+
+The assistant works offline out of the box, answering from the app's own data. To try the live Claude model instead, create `app/.env.local` (git-ignored) containing `ANTHROPIC_API_KEY=sk-ant-...` and restart `npx expo start`. The Claude API is billed per use, so use your own spend-limited key, and never name it `EXPO_PUBLIC_…` (those are built into the app). Details in "Route assistant" below.
+
+### If the phone can't connect
+
+- **Campus or public Wi-Fi** (eduroam, cafés) often blocks devices from reaching each other. Run `npx expo start --tunnel` instead. It works over the internet; the first time, it asks to install `@expo/ngrok`, so answer yes. The map data comes through the same tunnel. Or connect the computer to the phone's hotspot.
+- **Windows firewall:** if Windows asks whether Node.js may use the network, allow **Private networks**. Then set your Wi-Fi to Private: Settings → Network & internet → Wi-Fi → your network → Network profile type → Private.
+- **"Project is incompatible with this version of Expo Go":** update Expo Go from the app store.
+- **Map empty, "MAP DATA OFFLINE":** `app/data/manifest.json` is missing; see step 2.
+
+### Compare with the design reference
+
+The legacy HTML prototype in `../Mars Navigator App Design/` shows how every screen should look and behave. To run it next to the app:
+
+```bash
+npm run design           # in a second terminal, from app/
+```
+
+Open <http://localhost:8090> on the desktop. The page links the phone, desktop and slide-deck versions. On a phone on the same Wi-Fi, use the `Phone:` address it prints. Put the prototype and the app side by side, for example the app at `?device=phone` beside the prototype's phone version.
+
+The prototype is a reference only. Don't build on it or import from it.
+
+## Map data
+
+The app reads `app/data/` from the dev server at `/mapdata/` (`metro.config.js`, `scripts/data-middleware.js`), so phones on the same Wi-Fi need no setup. `npm run data` serves the same folder on its own at port 8092, which is only useful for checking the files. **For a hosted demo,** copy `app/data/` to any static host, put its address in `app/.env.local` as `EXPO_PUBLIC_DATA_URL=https://…`, and restart Expo.
+
+| Layer | Source | App file |
+| --- | --- | --- |
+| Base imagery | MRO CTX mosaic (Mars Trek `Gale_CTX_BlockAdj_dd`), the pipeline's tile grid, tint baked in | `imagery/{z}/{row}/{col}.jpg` |
+| Terrain | 20 m CTX DTM and slope rasters resampled to 100 m: elevation, mean slope, upper-quartile slope | `terrain.bin` |
+| Elevation strata | same: L1 above −2 km, L2 −4 to −2 km, L3 below −4 km | `strata/l{1,2,3}.webp` |
+| Temperature | ground and air maps: 5 seasons (Ls 15/75/195/255/340) × 48 frames, inferno 150–320 K | `heat/{ground,air}/ls{LLL}/{HHMM}.webp` |
+| Dust devils | Dust Devil Heating Index, sols 1850 (clear) and 800 (dusty), levels low/moderate/high | `dustdevil/sol{N}.webp`, `sol{N}_level.bin` |
+| Telemetry | Mastcam τ per sol; ground temperature at 400 m per season and LTST frame (uint8 on the 150–320 K scale) | `telemetry/tau.json`, `telemetry/ground/{season}/{HHMM}.bin` |
+
+### Web demo (GitHub Pages)
+
+`.github/workflows/deploy.yml` publishes the web build to <https://plehndm.github.io/NASA-Space-Apps-Phobos/> on every push to `main` that touches `app/`, or by hand from the Actions tab ("Deploy web demo"). `app/data/` isn't in git, so the workflow takes it from the `map-data` release:
+
+1. Build the data (step 2 above), then pack it: `npm run data:pack`. This writes `mapdata.tar.gz` and its `.sha256` to your temp folder (leaving out build caches and panorama previews) and prints the upload command.
+2. Upload both files: `gh release create map-data <archive> <archive>.sha256 --latest=false` the first time, `gh release upload map-data <archive> <archive>.sha256 --clobber` after that. Then re-run the workflow.
+3. Once: Settings → Pages → Build and deployment → Source: **GitHub Actions**. On a private repo, Pages needs a paid GitHub plan, and the site (including the map data) is public either way.
+
+The workflow exports with `EXPO_PUBLIC_DATA_URL=/NASA-Space-Apps-Phobos/mapdata`, checks the archive's SHA-256, unpacks it to `dist/mapdata/`, and deploys. `experiments.baseUrl` in `app.json` must match the repository name; it only affects exports, so `npx expo start` is unchanged. The route assistant is live when the Cloudflare secrets are set (see "Live assistant on the web demo" below), and otherwise answers from its offline planner. Pages caches files for about 10 minutes, so a data update can take that long to show.
+
+To preview a Pages build locally on Windows, run the export from PowerShell: Git Bash rewrites `/NASA-…` values into Windows paths (or set `MSYS_NO_PATHCONV=1`). `npx expo export` also fails inside a OneDrive folder whose `node_modules` files are cloud-only placeholders; mark the repo folder "Always keep on this device" first.
+
+### Checks before you push
+
+`npm test` needs only `npm install`. `test:py` and `test:all` also need Python with numpy and Pillow: the environment from step 2 (`app/.venv`), or else `python3`/`python` on your PATH.
+
+```bash
+npm run typecheck        # TypeScript
+npm test                 # 107 unit and HTTP tests (Vitest), well under a second
+npm run test:py          # Street Level build/fetch tests and the repo-wide doc link check (Python)
+npm run test:all         # all three
+npm run doctor           # Expo dependency and config checks
+```
+
+The tests in `app/tests/` cover what can run without a phone: the route planner on synthetic terrain (and on the real terrain to every landmark, when `app/data/` is built), search and coordinate parsing, τ, landmark positions, the panorama list and looping strip, the offline assistant's answers and sector snapshot, and both dev-server middlewares over real HTTP (map data: path traversal, symlinks, methods, gzip; assistant: key handling, origin and host checks, size and rate limits, upstream errors, against a fake Claude API, so no key is used). React Native and Expo are stubbed (`tests/stubs/`), so screens and gestures are still checked by hand in the iOS Simulator and the browser. `mars_streetview/tests/` and `tests/` (repo root) hold the Python tests; `test:py` uses the map-data venv in `app/.venv` when it exists, else Python on your PATH.
+
+Add libraries with `npx expo install <package>`, not `npm install`. It picks the version that matches SDK 58. Only libraries included in Expo Go will work in Expo Go; check the library's page on docs.expo.dev for "Included in Expo Go".
+
+## What's built (checklist section 1: App foundation)
+
+- **Design tokens + theme:** `src/theme.ts`.
+  - Colours (`C`), radii (`R`), shadows (`SHADOW`), gradients, and `font(weight, size)`.
+  - Use these, never raw hex.
+  - Put all text in `<T>` from `src/ui/Text.tsx` so it gets the Plus Jakarta Sans font.
+- **Layout shells:** `src/layout/geometry.ts` and `src/shell/Sheet.tsx`.
+  - Phone: bottom sheet with full / half / peek snap points, plus a minimised one that leaves only the search bar. Drag the handle, tap it to step through the points, or use the chevron beside it to minimise and restore the sheet. The map dims as the sheet rises. The header and sheet allow for the notch and home bar.
+  - Desktop: fixed 420 px left panel. Both layouts use the same components.
+- **Header, dock, toasts:**
+  - `Header.tsx`: Sol + ticking MTC clock, status pill, settings gear.
+  - `Dock.tsx`: Layers, Hazards (with status dot), HM, ✦ Assistant, zoom.
+  - `Toast.tsx`: transient messages, shown with `toast("…")`.
+  - Android's back button closes Settings, then popovers, then returns to Home.
+- **Settings dialog:** `src/shell/SettingsDialog.tsx`. Every setting from the prototype. Values are saved on the device.
+- **About & credits:** `src/shell/AboutDialog.tsx`, from the last row of Settings (back and DONE return there). What the app is, the team, the temperature model's limits and the data credits by layer (`src/shell/credits.ts`, citations from `MarsDataPipline/raw_data/Citations`). Settings and About share one frame, `src/shell/Dialog.tsx`.
+
+## What's built (checklist section 2: Map and layers)
+
+- **Map engine:** `src/shell/MapArea.tsx`. One-finger pan, two-finger pinch (with pan), mouse-wheel and trackpad zoom around the cursor on web, tap for the coordinate pill ("4.59°S 137.44°E · −4,498 m · 2° slope"), scale bar, recenter on the rover. Zoom 0.25–4.2 screen px per 100 m.
+- **Dropped pins** (`dropPin` in `src/route/RouteProvider.tsx`): like Google Maps, tapping empty map drops a pin there and opens its waypoint card (both routes, elevation profile, Add stop, NAVIGATE; inside a hazard zone, the nearest safe approach), so any point can be a target, not just the named landmarks. Tapping again while the pin's card is open moves it; typing a coordinate in search ("4.6S 137.4E") drops one there. A pin you add as a stop stays; a loose pin goes when its card closes (the × on the card) or a new one is dropped. With a landmark's card open, a tap closes the card instead, and there are no pins mid-expedition (taps then set via-points as before).
+- **Dust storm past the edges** (`src/map/layers/StormLayer.tsx`): the map data ends at the grid, so beyond it the map fades into a drifting Martian dust storm instead of empty space, thickening and darkening with distance and feathering a few km over the edge. The textures (`assets/storm.png`, `assets/wisp.png`) come from `scripts/make_storm_textures.py`. The storm also thickens about 10 km into the image, so its straight edge never shows. The map opens closer in (zoom 3.2 on desktop, 2.0 on phone), zooms in to 10 (as close as the 20 m imagery stays sharp on a high-density screen, about 4 km across a phone) and zooms out to 0.36: the whole crater on a desktop, about 110 km across a phone.
+- **Coordinate system:** `src/map/geo.ts`. World space is the pipeline's 100 m grid (1477 × 1436 cells, 136.75–139.24° E, 4.15–6.57° S); one transform for every layer.
+- **Data hosting:** `src/map/data.ts` loads `manifest.json` and the terrain grid; `scripts/build_map_data.py`, `scripts/serve-data.mjs`.
+- **Layers** (`src/map/layers/`): CTX tiles, elevation strata, temperature (ground / air, season, LTST slider + play, kelvin legend, model limits), hazard zones with type filters, the dust-devil heating index, 19 landmarks with rank-based labels and a selected state, the rover.
+- **Temperature model limits** (`src/map/heatLimits.ts`): the maps are checked against Curiosity's REMS only near the rover, so the heat legend says "Checked at the rover only" (tap for details), and the heat popover (tap MODEL LIMITS) and the Layers card list the key limits: about 5 K ground / 4 K air error at the rover, not clearly better than a seasonal average; accuracy elsewhere not measured; 82% of pixels outside the thermal-inertia range the rover tests; night air nearly uniform; the THEMIS scaling backed by published REMS studies near the rover only. The About screen adds the full caveats from the map data's manifest (`heat.kinds[].caveats`; built-in fallback text for older data). Numbers come from `MarsDataPipline/README.md`, `docs/plan.md` and `docs/literature_check.md`.
+- **Layer controls:** `src/map/LayerControls.tsx`, used by the dock popovers (`src/layers/DockPopovers.tsx`) and the Layers card (`src/cards/Layers.tsx`).
+- **Everything is reachable with default settings.** Settings → Layer picker = DOCK (the default) opens popovers from the Layers and HM buttons; the elevation popover's **ALL LAYERS** opens the Layers card (landing points, dust-devil sol, every layer at once). While warning zones are on (⚠ button), a **WARNING ZONES · FILTER BY HAZARD** row with the five hazard chips and an "x/5 ON" count sits at the top of the Home, Waypoint, Sequence and Expedition sheets, as in the design. With Layer picker = PANEL, the Layers button opens the Layers card directly. The other settings only switch between two presentations of the same feature (hazard banner or advisory card, stepped or compact progress, chip counts or codes).
+- **Landmarks and hazards:** `src/map/landmarks.ts`, `src/map/hazards.ts`. Real sites use approximate published positions; the invented ones (habitat, relays, pads, checkpoints) and the hazard zones are placed on suitable real ground, read from the terrain data. Each file says how.
+
+## Where your feature goes
+
+```text
+src/
+├── App.tsx                fonts, safe areas, status bar
+├── theme.ts               design tokens
+├── state/store.tsx        app state + actions: useApp()
+├── state/settings.ts      Settings type and defaults
+├── state/clock.ts         MTC clock (useMtcClock, mtcSeconds, fmtClock)
+├── layout/geometry.ts     frame size, panel width, safe areas, sheet snap points
+├── ui/                    shared pieces: T (text), Card, SectionLabel, Segmented, Switch, BlinkDot, icons
+├── shell/                 header, dock, sheet, search bar, toast, settings, map area (gestures)
+├── map/geo.ts             the world grid: lon/lat ↔ world px, distances, tile maths
+├── map/data.ts            data server URL, manifest, terrain grid (terrainAt)
+├── map/view.tsx           live map view (one Reanimated shared value), <Pin> for markers, useLabelFade
+├── map/layers/            one component per map layer
+├── map/LayerControls.tsx  layer controls shared by the popovers and the Layers card
+├── map/MapOverlays.tsx    coordinate pill, scale bar, heat legend, recenter button
+├── layers/DockPopovers.tsx  elevation + heat popovers beside the dock
+├── assistant/             route assistant: backend client, sector snapshot, scripted fallback, chat state
+├── street/                Street Level: panorama list (panos.ts), 360° viewer (PanoView.tsx), screen (StreetLevel.tsx)
+└── cards/CardStack.tsx    one entry per sheet mode
+```
+
+- **A sheet screen**: create `src/cards/<Name>.tsx` and add it to the mode's entry in `src/cards/CardStack.tsx`.
+- **A map layer:**
+  - **Images** (rasters that should zoom with the map): add a component in `src/map/layers/` and list it inside the world container in `src/shell/MapArea.tsx`, positioned absolutely in world px (`toWorld({ lon, lat })` from `geo.ts`).
+  - **Markers, labels, lines and shapes:** put them in the overlay next to `LandmarkLayer` and wrap each in `<Pin x y>`. iOS stretches anything inside the zoomed container, so text and SVG there go blurry; `HazardLayer` shows how to draw a shape for the current zoom. Use `react-native-svg` for shapes and routes.
+  - **Reading the live view:** `useMapView().view` is one Reanimated shared value `{ s, tx, ty }`. Keep scale and position in that one value: as three separate animated values, iOS can draw a frame with the new zoom but the old position (a visible jump).
+- **Terrain under a point:** `terrainAt(useMapData().terrain, p)` gives elevation and slope at 100 m. For routes and profiles use `useRoutes()` (`routeOpts`, `activeRoute`, `profileOf`).
+- **Moving the map:** `centerOn(p, zoom?)` glides to a world point, `zoomBy(k, x, y)` zooms around a point, `showCoord(text)` shows the pill.
+- **Something pinned above the search bar** (the ETA card while navigating): pass it to `<Sheet pinned={…} />`.
+
+## What's built (checklist section 3: Routing and navigation)
+
+- **Router** (`src/route/router.ts`, plain TypeScript, no React): the design's A* on a 200 m grid of the real DEM, with a tangent grade cap, cost `d·(1+3·(grade/cap)²)`, extra cost on rough cells (upper-quartile 20 m slope over the cap) and, on safe routes, on strong dust-devil heating; then line-of-sight smoothing. Route #1 (direct) caps at 25° and ignores hazards; Route #2 (safe) uses Settings → Rover grade limit and blocks every enabled hazard zone. "Override" lifts both to 45° for one target. A route across the crater takes about 25–100 ms.
+- **Route state and actions** (`src/route/RouteProvider.tsx`, `useRoutes()`): cached routes, select / add stop / navigate / reorder / remove, the 100 ms expedition simulation (speed by grade × demo speed), via-points, automatic safe reroute, "Nearest safe approach" / "Nearest reachable point".
+- **On the map** (`src/route/RouteLayer.tsx`): active route with casing, grades over 12° in warm, the alternative as dots, tappable time pills, the driven part dimmed. Sequence stops get numbered badges.
+- **Cards** (`src/cards/`): `Waypoint.tsx` (route picker, elevation profile, Add stop / Street Level / NAVIGATE, "No safe route found"), `Sequence.tsx` (multi-stop, ↑ ↓ ×, Route #1 hazard warning), `Expedition.tsx` (stepped and compact progress cards, the pinned ETA card, hazard and steep-grade warnings, REROUTE / via-points, Arrived).
+- Street Level opens from the Waypoint eye button (section 6).
+
+## What's built (checklist section 4: Search and home)
+
+- **Search** (`src/cards/Search.tsx`, `src/home/search.ts`, `src/shell/SearchBar.tsx`): category chips with counts or codes (Settings → Category chips), results nearest first, recent searches (kept on the device, max 4, Clear History), Enter opens the nearest match and Escape (web) leaves. Coordinates like `4.6S 137.4E` jump the map there. While searching, non-matching markers dim and matches keep their labels. With a sequence planned (or during a drive), picking a result adds it as a stop. The field keeps its own text and updates the store 120 ms after typing pauses, so fast typing isn't dropped on iOS.
+- **Home** (`src/cards/Home.tsx`): sector card (tap to recenter), the three nearest landmarks, and the dust-devil advisory from the real heating-index grid (nearest strongly heated ground; WATCH under 5 km). Settings → Hazard alerts = TOP BANNER shows the nearest hazard as a blinking pill on the map instead (`src/map/MapOverlays.tsx`). The sector card and advisory also sit under the Waypoint and Arrived cards, as in the design.
+- **Live telemetry** (`src/home/telemetry.ts`): surface temperature from the ground model at the rover (season nearest the sol's Ls, frame for the rover's local solar time, refreshed each minute), τ for the demo sol from the Mastcam table (interpolated within 5 sols, as the pipeline does), slope from the DEM.
+
+## What's built (checklist section 5: Route assistant)
+
+The assistant has two modes, picked with the **✦ LIVE AGENT / OFFLINE** switch under its title. LIVE asks a Claude model (Sonnet 5.5) through the backend; if the key is missing, expired or out of credit, or the API is down or rate-limited, it answers from the scripted assistant instead, so it always replies. OFFLINE always answers from the scripted assistant, with no network. The status line under the switch says which is answering ("LIVE AGENT · …", "LIVE AGENT UNAVAILABLE · answering offline…" or "OFFLINE · …"), and every reply is tagged "✦ LIVE AGENT" or "OFFLINE ANSWER". The ✦ button in the dock opens the assistant, and closes it when it's open.
+
+- **Chat** (`src/cards/Assistant.tsx`, `src/assistant/AssistantProvider.tsx`): bubbles, TRY suggestions, a busy pill, the status line, and a PROPOSED ROUTE card under any answer that plans one (stops with leg lengths, total distance and time including 25 min per stop, AVOIDS). LOAD ROUTE puts the stops in the multi-stop sequence on Route #2 (not during an expedition). The input row is pinned under the chat and rides above the iOS keyboard. The conversation survives closing the assistant.
+- **Scripted answers** (`src/assistant/scripted.ts`): by keyword, from the planned routes, hazard zones, terrain, dust-devil heating and telemetry. It understands: greetings, help and thanks; one hazard type ("any radiation?", "sand traps?"); hazards toward a named place; a general hazard check; emergency (route to the nearest landing pad); go home (nearest habitat); the nearest landmark of a kind (water ice, geology, habitat, relay, landing pad, crater, checkpoint); what's nearby; about a named place; how far / how long, by rover and on foot; elevation and slope, at a place or under the rover; a 3-stop science day; where am I; a status report; rover speeds; weather, temperature and dust; the time and sol; the map layers; and a route through named places. `tests/assistant-offline.test.ts` checks an answer for each.
+- **Live-model backend** (`scripts/assistant-middleware.js`, `worker/index.js`, `src/assistant/api.ts`, `src/assistant/context.ts`): `POST /api/assistant` on the Expo dev server, or on the Cloudflare Worker for the web demo, calls the Claude API (Claude Sonnet 5.5) with the key held on the server, never in the app. The app sends the conversation and a snapshot of the sector; the server caps every field, writes the system prompt itself, and keeps only landmark and hazard ids the app sent. `GET /api/assistant` reports whether a key is set; with none, the app never sends chat to the server. Any failure falls back to the scripted answers.
+  - Locally: create `app/.env.local` (git-ignored) with `ANTHROPIC_API_KEY=sk-ant-...` and restart Expo. Never use an `EXPO_PUBLIC_…` name, which is built into the app. The Claude API is billed per use and the cost per message hasn't been measured, so use a spend-limited key and check the live path before relying on it.
+  - Limits: 12 requests a minute per address, 3 at once, 64 KB bodies, 16 messages of history, JSON only. Requests must come from the app's own origin or a native app, and the Host must be an IP address, `localhost` or an Expo tunnel (blocks DNS-rebinding pages). The dev server listens on your network, so anyone on the same Wi-Fi could reach a configured key.
+  - Hosted: `ANTHROPIC_API_KEY=… npm run assistant` (port 8093), with `ASSISTANT_ALLOW_HOSTS=<domain>`, `ASSISTANT_ALLOW_ORIGINS=https://<web app origin>` for a web build elsewhere, and the app built with `EXPO_PUBLIC_ASSISTANT_URL=https://<domain>/api/assistant`.
+
+### Live assistant on the web demo
+
+GitHub Pages only serves files, so the shared key lives in a small Cloudflare Worker (`app/worker/`, free plan), which `.github/workflows/deploy.yml` deploys on every push. One-time setup:
+
+1. Create a Claude API key in the [Claude Console](https://platform.claude.com), and set a monthly spend limit on it: every visitor to the demo uses this key.
+2. Create a free [Cloudflare](https://dash.cloudflare.com) account, open **Workers & Pages** once (this picks your `workers.dev` subdomain), then create an API token with the **Edit Cloudflare Workers** template.
+3. In the GitHub repo, **Settings → Secrets and variables → Actions**, add the secrets `ANTHROPIC_API_KEY` and `CLOUDFLARE_API_TOKEN` (and `CLOUDFLARE_ACCOUNT_ID` only if the token covers more than one account).
+4. Re-run **Deploy web demo** from the Actions tab (or push). The log shows the Worker's address, and the assistant's status line on the demo reads "LIVE MODEL".
+
+To change the key, update the `ANTHROPIC_API_KEY` secret and re-run the workflow. To switch the demo back to offline, delete `CLOUDFLARE_API_TOKEN` and re-run. The model is set in `app/worker/wrangler.toml` (`ASSISTANT_MODEL`). The Worker takes 12 requests a minute per address and 120 a minute in total, and accepts browsers only from `https://<owner>.github.io`.
+
+### Check the live assistant
+
+The automated tests run the assistant backend against a fake Claude API, so they need no key. To check the real thing with your own key, send one request through the same code the server uses:
+
+```bash
+cd app
+ANTHROPIC_API_KEY=sk-ant-... node scripts/assistant-smoke.mjs
+# PowerShell: $env:ANTHROPIC_API_KEY='sk-ant-...'; node scripts/assistant-smoke.mjs
+```
+
+It prints the HTTP status, the model that answered (and whether Anthropic's server-side fallback answered instead), `stop_reason`, whether the reply parsed into the app's `{reply, route[], avoid[]}` shape, and token usage, then `PASS` or `FAIL` (exit code 0 or 1). It costs one small request and never prints the key. Without a key it says so and exits.
+
+The model defaults to `claude-sonnet-5-5`. Set `ASSISTANT_MODEL` (in `app/.env.local`, or in the environment of `npm run assistant` or the smoke script) to use another one, for example `claude-opus-5-5`. Requests to Claude Fable 5.1, Opus 5.5, Opus 5 and Sonnet 5.5 opt into server-side refusal fallback (`fallbacks: "default"`); other models are sent without it. Use a current model: the request sets `output_config.effort`, which older models reject.
+
+## What's built (checklist section 6: Street Level)
+
+- **Panoramas** (`mars_streetview/`): five NASA Curiosity panoramas in `raw/` (git-ignored, about 113 MB, from science.nasa.gov/photojournal): Bradbury Landing (Navcam, sol 2, 360°), Rocknest (Mastcam, sol ~70, 171°), Point Lake by Yellowknife Bay (Mastcam, sol 106, 360°), Naukluft Plateau (Mastcam, sol 1284, 130°), and Gale's north rim toward Peace Vallis (Mastcam, sol 4640, 102°). The two GigaPan sources in the original manifest had no full-resolution download, so Rocknest and Point Lake use their official Photojournal versions. `manifest.json` records where every value came from (`_how`): positions from the PDS localization table, field of view from captions or the camera's pixel scale, centre heading from captions or from Mount Sharp's bearing on the terrain grid, pitch from each image's horizon row.
+- **Download and build** (from `app/`, with the map-data venv):
+
+  ```bash
+  npm run panos
+  ```
+
+  `fetch_raw.py` downloads the five images (113 MB) from NASA's asset server into `mars_streetview/raw/`, checking each against the size and SHA-256 in the manifest, and skips files already there; then `build_panos.py` builds them. The build takes about 1.5 minutes and 14 GB of memory; writes 32 MB of tiles and `panos.json` to `app/data/panos/`, which the Expo dev server already serves at `/mapdata/panos/`. Bradbury, Rocknest and Point Lake are within 5 km of each other, so they link; the two rim views stand alone.
+- **Viewer** (`src/street/`): replaces `mars_streetview/streetview.js` (Google Maps only, not used by the app). It fills the screen with real imagery and turns without end. Zoom-out and tilt stop at the edge of the imagery (trimmed 8% top and bottom for the ragged mosaic edges), so the empty sphere never shows. A full circle simply goes round. A partial panorama (Rocknest 171°, Naukluft 130°, the rim view 102°) repeats end to end with a faint seam where its edges meet. The compass, HDG and walking arrows always give the true bearing of what is on screen, and the compass ticks tighten as you zoom in. Drag to turn, flick to keep turning (it eases to a stop; touch to catch it), pinch or the mouse wheel to zoom, arrow keys and +/- on web, Escape or Back to leave. Only the tiles in view are drawn, at the zoom that matches the screen, over the whole sphere at zoom 0 so there is never a hole. The view is a flat window onto the sphere (no perspective correction), so lines bend slightly near the top and bottom of a wide view. On a phone a short strip opens zoomed in, because its full height has to fill a tall screen.
+- **Opening it:** the Waypoint eye button opens the panorama assigned to that waypoint in the manifest (`"waypoint"`), else the nearest within 3 km; it is dimmed, with a toast, when there is none. It faces the waypoint when that direction has imagery, otherwise the centre of the image. Navigate here starts an expedition to the waypoint the panorama shows.
+- **Walking:** arrows on the ground point at linked panoramas (from `links` in `panos.json`, with name, distance and direction); tap one to walk there, facing the way you walked. Links out of view show as chips at the edge: tap one to turn toward it, or, when its bearing has no imagery (Bradbury seen from Rocknest), to walk straight there.
+- `panos.json` is checked on load (ids, numbers in range, links only between known panoramas). The build rejects ids and file names that could leave its folders, and keeps a 1-gigapixel ceiling on source images.
+
+## Using the store
+
+```tsx
+import { useApp } from "../state/store";
+
+const { state, geo, settings, patch, setMode, snapTo, toast, zoomBy, centerOn } = useApp();
+setMode("waypoint", "half");   // switch the sheet screen and snap the phone sheet
+patch({ hazOn: true });        // merge fields into state
+toast("Navigation started");   // 3.2 s message
+settings.maxGrade;             // resolved settings (defaults + user changes)
+```
+
+Add the fields your feature needs to `AppState` in `store.tsx`, with a default in `AppProvider`.
+
+## Differences from the HTML prototype
+
+React Native can't do everything CSS does. These are the deliberate differences:
+
+- **Map tint:** the CSS `filter` tint is baked into the imagery tiles by `build_map_data.py` (using `scripts/tint_map.py`).
+- **"Pebble" corners:** these are elliptical in CSS. Here each corner is circular, using the average of its two radii.
+- **Backdrop blur:** the frosted blur behind the header, sheet and dialog is not used. The surfaces rely on the design's semi-transparent colours.
+- **Real map instead of the prototype's:** the prototype's 51 × 68 km base image, fake terrain and 21 one-season heat frames are replaced by the pipeline's 148 × 144 km grid (see "Map data"). So the zoom goes down to 0.36 (the whole crater on a desktop), the heat legend uses the pipeline's fixed 150–320 K inferno scale (the prototype's provisional 180–280 K would clip; ground reaches 151–313 K), and the time slider covers the whole sol in 48 steps.
+- **Dust Devil #84** (the prototype's moving fake dust devil) is replaced by the pipeline's heating index map.
+- **Landmark labels** also give way when they would overlap a higher-priority label, since real sites can be a few hundred metres apart.
