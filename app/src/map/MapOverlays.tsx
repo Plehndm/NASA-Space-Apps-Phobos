@@ -126,7 +126,7 @@ function DataNotice() {
     <View pointerEvents="none" style={{ position: "absolute", left: 12, right: 64, top: geo.overlayTop + 40, alignItems: "flex-start" }}>
       <View style={{ paddingVertical: 8, paddingHorizontal: 12, borderRadius: 14, backgroundColor: alpha("bg1", 0.92), borderWidth: 1, borderColor: C.dangerBd }}>
         <T w={700} size={10} ls={0.4} color={C.danger}>MAP DATA OFFLINE</T>
-        <T w={500} size={10} lh={1.4} color={C.fg2}>Build app/data/ (see app/README.md), or set EXPO_PUBLIC_DATA_URL. Tried {DATA_URL}</T>
+        <T w={500} size={10} lh={1.4} color={C.fg2}>Run npm run data:fetch in app/ to download it (or build it, see app/README.md), then reload. Tried {DATA_URL}</T>
       </View>
     </View>
   );

@@ -1,0 +1,28 @@
+# Line endings: text is stored with LF in the repo, and each machine checks files out with its own
+# line endings (CRLF on Windows, LF on macOS/Linux). Without this, files uploaded through GitHub's web
+# uploader or committed from Windows land as CRLF, and every line of them shows as changed in diffs.
+* text=auto
+
+# Scripts that must keep LF even in a Windows checkout (shebang lines break with CRLF).
+*.sh text eol=lf
+*.mjs text eol=lf
+*.py text eol=lf
+
+# Binary data: never touched by line-ending conversion or shown as text diffs.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.tif binary
+*.tiff binary
+*.npz binary
+*.npy binary
+*.bin binary
+*.u16 binary
+*.pdf binary
+*.pptx binary
+*.zip binary
+*.gz binary
+*.ttf binary
+*.mp4 binary

@@ -130,7 +130,7 @@ export function MapDataProvider({ children }: { children: ReactNode }) {
     load()
       .then(d => live && setData({ status: "ready", ...d }))
       .catch(err => {
-        console.warn(`Map data unavailable from ${DATA_URL}: ${err}. Build it with scripts/build_map_data.py (see app/README.md).`);
+        console.warn(`Map data unavailable from ${DATA_URL}: ${err}. Download it with \`npm run data:fetch\` in app/, or build it with scripts/build_map_data.py (see app/README.md).`);
         if (live) setData({ status: "offline", manifest: null, terrain: null });
       });
     return () => { live = false; };
