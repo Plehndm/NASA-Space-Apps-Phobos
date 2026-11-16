@@ -3,7 +3,7 @@
 // warning zones with the dust-devil heating index, landing points, and the always-on imagery.
 import { Pressable, View } from "react-native";
 import { useApp } from "../state/store";
-import { C } from "../theme";
+import { useTheme } from "../state/theme";
 import { Card } from "../ui/Card";
 import { Switch } from "../ui/Switch";
 import { T } from "../ui/Text";
@@ -13,10 +13,12 @@ import {
 } from "../map/LayerControls";
 
 function Title({ children }: { children: string }) {
+  const { C } = useTheme();
   return <T w={700} size={10.5} ls={1} color={C.fg2}>{children}</T>;
 }
 
 export function LayersCard() {
+  const { C } = useTheme();
   const { state: S, patch, goHome, toast } = useApp();
   const { manifest } = useMapData();
   const heat = manifest?.heat;

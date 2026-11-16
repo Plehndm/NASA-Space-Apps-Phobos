@@ -75,10 +75,11 @@ const DARK = {
   hazRadiation: "#c5c6ff",
   hazSand: "#ffb4a5",
 
-  // Elevation strata chips
+  // Elevation strata chip numerals
   strataL1: "#e0bfb8",
   strataL2: "#2eb21e",
   strataL3: "#4c4eff",
+  strataFloor: "#c5c6ff", // the floor label on the strata legend
 };
 export type Palette = { readonly [K in keyof typeof DARK]: string };
 
@@ -115,7 +116,12 @@ const LIGHT: Palette = {
   danger: "#c4382b",
   dangerBg: "rgba(196,56,43,0.10)",
   dangerBd: "rgba(196,56,43,0.35)",
-  // Hazard and strata colours are the map's; they stay the same.
+  // Strata chip numerals: the same hues, deep enough to read on a pale chip.
+  strataL1: "#8a5a4e",
+  strataL2: "#1f8a12",
+  strataL3: "#3c3ecc",
+  strataFloor: "#3c3ecc",
+  // Hazard colours are the map's; they stay the same.
 };
 
 const SHADOW_DARK = {

@@ -6,7 +6,8 @@ import Slider from "@react-native-community/slider";
 import Svg, { Path, Rect } from "react-native-svg";
 import { LinearGradient } from "expo-linear-gradient";
 import { useApp } from "../state/store";
-import { C, GRADIENT } from "../theme";
+import { GRADIENT } from "../theme";
+import { useTheme } from "../state/theme";
 import { Segmented } from "../ui/Segmented";
 import { Switch } from "../ui/Switch";
 import { T } from "../ui/Text";
@@ -16,7 +17,7 @@ import { bandLabel } from "./layers/StrataLayer";
 import { fmtFrame } from "./layers/HeatLayer";
 import { HEAT_CHECKED, keyLimits } from "./heatLimits";
 
-const STRATA_COLOR = { 1: C.strataL1, 2: C.strataL2, 3: C.strataL3 } as const;
+const STRATA_KEY = { 1: "strataL1", 2: "strataL2", 3: "strataL3" } as const;
 const km = (m: number) => `${m < 0 ? "−" : "+"}${Math.abs(m / 1000).toFixed(1)} km`;
 
 /** Mars season names are for the northern hemisphere; Gale (5° S) sits near the equator. */
@@ -25,6 +26,7 @@ function seasonName(ls: number): string {
 }
 
 function Chip({ on, onPress, children, flex, label }: { on: boolean; onPress: () => void; children: ReactNode; flex?: boolean; label: string }) {
+  const { C } = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
@@ -44,6 +46,7 @@ function Chip({ on, onPress, children, flex, label }: { on: boolean; onPress: ()
 // --- elevation strata ---
 
 export function StrataChips({ withOff }: { withOff?: boolean }) {
+  const { C } = useTheme();
   const { state: S, patch } = useApp();
   const st = useMapData().manifest?.strata;
   const levels = [1, 2, 3] as const;
@@ -60,7 +63,7 @@ export function StrataChips({ withOff }: { withOff?: boolean }) {
           <Chip key={n} flex={withOff} on={S.elev === n} onPress={() => patch({ elev: S.elev === n && !withOff ? 0 : n })}
             label={`Elevation level ${n}${lv ? `, ${bandLabel(lv.min_m, lv.max_m)}` : ""}`}>
             <T w={700} size={10} ls={0.5}>L</T>
-            <T w={700} size={10} ls={0.5} color={STRATA_COLOR[n]}>{n}</T>
+            <T w={700} size={10} ls={0.5} color={C[STRATA_KEY[n]]}>{n}</T>
           </Chip>
         );
       })}
@@ -70,14 +73,15 @@ export function StrataChips({ withOff }: { withOff?: boolean }) {
 
 /** Vertical summit → floor bar with the DEM's real extremes. */
 export function StrataBar({ vertical }: { vertical?: boolean }) {
+  const { C, alpha, SHADOW } = useTheme();
   const st = useMapData().manifest?.strata;
   const [lo, hi] = st?.elev_range_m ?? [-4715, 1116];
   if (vertical) {
     return (
-      <View style={{ width: 46, paddingVertical: 10, borderRadius: 21, backgroundColor: "rgba(27,16,13,0.9)", alignItems: "center", gap: 6, boxShadow: "0px 8px 20px rgba(10,4,2,0.4)" }}>
+      <View style={{ width: 46, paddingVertical: 10, borderRadius: 21, backgroundColor: alpha("bg1", 0.9), alignItems: "center", gap: 6, boxShadow: SHADOW.s1 }}>
         <T w={700} size={9} ls={0.4} color={C.warm}>{km(hi).replace(" km", "k")}</T>
         <LinearGradient colors={GRADIENT.strata} style={{ width: 6, flex: 1, minHeight: 52, borderRadius: 3 }} />
-        <T w={600} size={9} ls={0.4} color="#c5c6ff">{km(lo).replace(" km", "k")}</T>
+        <T w={600} size={9} ls={0.4} color={C.strataFloor}>{km(lo).replace(" km", "k")}</T>
       </View>
     );
   }
@@ -93,6 +97,7 @@ export function StrataBar({ vertical }: { vertical?: boolean }) {
 }
 
 export function StrataHint() {
+  const { C } = useTheme();
   const { state: S } = useApp();
   const st = useMapData().manifest?.strata;
   const lv = st?.levels.find(l => l.level === S.elev);
@@ -106,6 +111,7 @@ export function StrataHint() {
 // --- temperature ---
 
 function PlayIcon({ playing }: { playing: boolean }) {
+  const { C } = useTheme();
   return (
     <Svg width={11} height={11} viewBox="0 0 12 12" fill={C.fg}>
       {playing ? (<><Rect x={2} y={2} width={3} height={8} rx={1} /><Rect x={7} y={2} width={3} height={8} rx={1} /></>) : <Path d="M3 2l7 4-7 4z" />}
@@ -116,6 +122,7 @@ function PlayIcon({ playing }: { playing: boolean }) {
 type Heat = NonNullable<Manifest["heat"]>;
 
 export function HeatSwitchRow() {
+  const { C } = useTheme();
   const { state: S, patch } = useApp();
   return (
     <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
@@ -126,6 +133,7 @@ export function HeatSwitchRow() {
 }
 
 export function HeatTime({ heat }: { heat: Heat }) {
+  const { C } = useTheme();
   const { state: S, patch } = useApp();
   const n = heat.frames.length;
   return (
@@ -164,6 +172,7 @@ export function HeatTime({ heat }: { heat: Heat }) {
 }
 
 export function HeatKindAndSeason({ heat }: { heat: Heat }) {
+  const { C } = useTheme();
   const { state: S, patch } = useApp();
   return (
     <View style={{ gap: 8 }}>
@@ -180,6 +189,7 @@ export function HeatKindAndSeason({ heat }: { heat: Heat }) {
 }
 
 export function HeatLegendBar({ heat }: { heat: Heat }) {
+  const { C } = useTheme();
   const [lo, hi] = heat.range_k;
   const ticks = [0, 1, 2, 3, 4].map(i => Math.round(lo + ((hi - lo) * i) / 4));
   return (
@@ -194,6 +204,7 @@ export function HeatLegendBar({ heat }: { heat: Heat }) {
 }
 
 export function HeatHint({ heat }: { heat: Heat }) {
+  const { C } = useTheme();
   const { state: S } = useApp();
   const season = heat.seasons.find(s => s.tag === S.heatSeason);
   const range = heat.kinds[S.heatKind]?.range_by_season_k[S.heatSeason];
@@ -211,6 +222,7 @@ export function HeatHint({ heat }: { heat: Heat }) {
  * ALL LIMITS & SOURCES opens the About screen at the full list.
  */
 export function HeatLimits({ open: openProp, onToggle }: { open?: boolean; onToggle?: () => void }) {
+  const { C } = useTheme();
   const { state: S, patch } = useApp();
   const [openSelf, setOpenSelf] = useState(true);
   const open = openProp ?? openSelf;
@@ -248,6 +260,7 @@ export function HeatLimits({ open: openProp, onToggle }: { open?: boolean; onTog
 // --- warning zones ---
 
 export function HazardChips() {
+  const { C } = useTheme();
   const { state: S, patch } = useApp();
   return (
     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
@@ -279,6 +292,7 @@ export function HazardChips() {
  * Expedition), so hazards can be filtered without opening the Layers card.
  */
 export function HazardFilterRow() {
+  const { C } = useTheme();
   const { state: S } = useApp();
   const on = HAZ_TYPES.filter(h => S.hazTypes[h.type]).length;
   return (
@@ -294,6 +308,7 @@ export function HazardFilterRow() {
 
 /** Which sol's heating index to show, its three levels and what they mean. */
 export function DustDevilControls() {
+  const { C } = useTheme();
   const { state: S, patch } = useApp();
   const dd = useMapData().manifest?.dustDevil;
   if (!dd) return null;
