@@ -1,5 +1,5 @@
 import { Pressable, View } from "react-native";
-import { C } from "../theme";
+import { useTheme } from "../state/theme";
 import { T } from "./Text";
 
 /** Segmented control: `row` track, selected segment is `fg` with `raised` text. */
@@ -8,6 +8,7 @@ export function Segmented<V extends string>({ value, options, onChange }: {
   options: [V, string][];
   onChange: (v: V) => void;
 }) {
+  const { C } = useTheme();
   return (
     <View accessibilityRole="radiogroup" style={{ flexDirection: "row", gap: 4, backgroundColor: C.row, padding: 3, borderRadius: 999 }}>
       {options.map(([v, label]) => {

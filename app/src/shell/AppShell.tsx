@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { BackHandler, View } from "react-native";
 import { useApp } from "../state/store";
-import { C } from "../theme";
+import { useTheme } from "../state/theme";
 import { Header } from "./Header";
 import { MapArea } from "./MapArea";
 import { Sheet } from "./Sheet";
@@ -33,6 +33,7 @@ function useBackButton() {
 /** The whole app frame. Phone and desktop share every component; only geometry differs. */
 export function AppShell() {
   const { geo, state } = useApp();
+  const { C } = useTheme();
   useBackButton();
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: C.bg0 }}>

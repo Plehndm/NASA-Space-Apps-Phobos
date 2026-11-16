@@ -15,7 +15,7 @@ import { AppProvider } from "./state/store";
 import { RouteProvider } from "./route/RouteProvider";
 import { AssistantProvider } from "./assistant/AssistantProvider";
 import { AppShell } from "./shell/AppShell";
-import { C } from "./theme";
+import { ThemeProvider, useTheme } from "./state/theme";
 
 function Root() {
   const geo = useGeometry();
@@ -32,6 +32,16 @@ function Root() {
   );
 }
 
+function Themed({ fontsLoaded }: { fontsLoaded: boolean }) {
+  const { C, name } = useTheme();
+  return (
+    <SafeAreaProvider style={{ backgroundColor: C.bg0 }}>
+      <StatusBar style={name === "light" ? "dark" : "light"} />
+      {fontsLoaded ? <Root /> : <View style={{ flex: 1, backgroundColor: C.bg0 }} />}
+    </SafeAreaProvider>
+  );
+}
+
 export default function App() {
   const [fontsLoaded] = useFonts({
     PlusJakartaSans_400Regular,
@@ -41,9 +51,8 @@ export default function App() {
     PlusJakartaSans_800ExtraBold,
   });
   return (
-    <SafeAreaProvider style={{ backgroundColor: C.bg0 }}>
-      <StatusBar style="light" />
-      {fontsLoaded ? <Root /> : <View style={{ flex: 1, backgroundColor: C.bg0 }} />}
-    </SafeAreaProvider>
+    <ThemeProvider>
+      <Themed fontsLoaded={fontsLoaded} />
+    </ThemeProvider>
   );
 }

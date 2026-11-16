@@ -2,14 +2,16 @@ import { Pressable, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useApp } from "../state/store";
 import { SOL, useMtcClock } from "../state/clock";
-import { alpha, C } from "../theme";
+import { useTheme } from "../state/theme";
 import { T } from "../ui/Text";
-import { GearIcon } from "../ui/icons";
+import { GearIcon, MoonIcon, SunIcon } from "../ui/icons";
 import { useMapData } from "../map/data";
 
-/** Top bar: location + MTC clock on the left, status pill and settings gear on the right. */
+/** Top bar: location + MTC clock on the left; status pill, light / dark button and settings gear on the right. */
 export function Header() {
   const { geo, state, settings, patch } = useApp();
+  const { C, alpha, name, toggle } = useTheme();
+  const light = name === "light";
   const clock = useMtcClock();
   const desk = geo.device === "desktop";
   const { status } = useMapData();
@@ -29,6 +31,18 @@ export function Header() {
         <View style={{ paddingVertical: 6, paddingHorizontal: 11, borderRadius: 999, backgroundColor: alpha("raised", 0.75) }}>
           <T w={700} size={9.5} ls={0.6} color={pill.color} numberOfLines={1}>{pill.text}</T>
         </View>
+        {/* Sun in dark mode, moon in light mode, as on the project page. */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={light ? "Switch to dark mode" : "Switch to light mode"}
+          onPress={toggle}
+          style={({ pressed }) => ({
+            width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center",
+            backgroundColor: pressed ? C.raised : alpha("raised", 0.75),
+          })}
+        >
+          {light ? <MoonIcon /> : <SunIcon />}
+        </Pressable>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Settings"

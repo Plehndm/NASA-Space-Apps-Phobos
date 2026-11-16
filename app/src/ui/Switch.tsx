@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Animated, Pressable } from "react-native";
-import { C } from "../theme";
+import { useTheme } from "../state/theme";
 
 /** 44×24 toggle. `tone="cta"` is used by the hazard toggle; everything else uses the accent. */
 export function Switch({ on, onChange, tone = "accent", label }: {
@@ -9,6 +9,7 @@ export function Switch({ on, onChange, tone = "accent", label }: {
   tone?: "accent" | "cta";
   label?: string;
 }) {
+  const { C } = useTheme();
   const x = useRef(new Animated.Value(on ? 22 : 2)).current;
   useEffect(() => {
     Animated.timing(x, { toValue: on ? 22 : 2, duration: 200, useNativeDriver: false }).start();
