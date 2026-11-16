@@ -7,19 +7,20 @@ import { Image, Linking, Pressable, View, type ScrollView } from "react-native";
 import { useApp, type AppState } from "../state/store";
 import { useMapData } from "../map/data";
 import { HEAT_CHECKED, heatCaveats, KEY_LIMITS, LIMITS_DOCS } from "../map/heatLimits";
-import { C } from "../theme";
+import { useTheme } from "../state/theme";
 import { Card, SectionLabel } from "../ui/Card";
 import { T } from "../ui/Text";
 import { Dialog } from "./Dialog";
 import { ABOUT_CHALLENGE, ABOUT_GOAL, ABOUT_MEMBERS, ABOUT_TEAM, avatarUrl, creditGroups, type Member } from "./credits";
 
-function Bullets({ lines, color = C.fg2 }: { lines: readonly string[]; color?: string }) {
+function Bullets({ lines, color }: { lines: readonly string[]; color?: string }) {
+  const { C } = useTheme();
   return (
     <View style={{ gap: 6 }}>
       {lines.map(l => (
         <View key={l} style={{ flexDirection: "row", gap: 8 }}>
           <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: C.warm2, marginTop: 7 }} />
-          <T w={500} size={11} lh={1.5} color={color} style={{ flex: 1 }}>{l}</T>
+          <T w={500} size={11} lh={1.5} color={color ?? C.fg2} style={{ flex: 1 }}>{l}</T>
         </View>
       ))}
     </View>
@@ -27,11 +28,13 @@ function Bullets({ lines, color = C.fg2 }: { lines: readonly string[]; color?: s
 }
 
 function Title({ children }: { children: string }) {
+  const { C } = useTheme();
   return <T w={700} size={10.5} ls={1} color={C.fg2}>{children}</T>;
 }
 
 /** A DOI or URL as plain text; tapping it opens the browser. */
 function Link({ url }: { url: string }) {
+  const { C } = useTheme();
   return (
     <Pressable accessibilityRole="link" accessibilityLabel={url} onPress={() => { Linking.openURL(url).catch(() => {}); }} hitSlop={4}>
       <T w={600} size={10} lh={1.45} color={C.accent2}>{url.replace(/^https:\/\//, "")}</T>
@@ -41,6 +44,7 @@ function Link({ url }: { url: string }) {
 
 /** GitHub profile picture over the member's initials, which show if the picture can't load (offline). */
 function Avatar({ m }: { m: Member }) {
+  const { C } = useTheme();
   const initials = m.name.split(" ").map(w => w[0]).join("").slice(0, 2);
   return (
     <View style={{ width: 38, height: 38, borderRadius: 19, overflow: "hidden", backgroundColor: C.raised, alignItems: "center", justifyContent: "center" }}>
@@ -56,6 +60,7 @@ export function AboutDialog() {
 }
 
 function About({ about }: { about: NonNullable<AppState["about"]> }) {
+  const { C } = useTheme();
   const { patch } = useApp();
   const { manifest } = useMapData();
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
