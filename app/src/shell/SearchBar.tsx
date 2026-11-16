@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type ComponentRef } from "react";
 import { Pressable, TextInput, View } from "react-native";
 import { useApp } from "../state/store";
-import { C, font } from "../theme";
+import { font } from "../theme";
+import { useTheme } from "../state/theme";
 import { CloseIcon, FilterIcon, SearchIcon } from "../ui/icons";
 import { fmtInt, fmtLatLon } from "../map/geo";
 import { terrainAt, useMapData } from "../map/data";
@@ -14,6 +15,7 @@ import { MAX_QUERY, parseCoords, results } from "../home/search";
  * leaves. During an expedition, searching edits the remaining stops (the design's "add stop" path).
  */
 export function SearchBar() {
+  const { C, SHADOW } = useTheme();
   const { state: S, patch, setMode, goHome, centerOn, showCoord, toast } = useApp();
   const r = useRoutes();
   const { terrain } = useMapData();
@@ -89,7 +91,7 @@ export function SearchBar() {
       <View
         style={{
           flexDirection: "row", alignItems: "center", gap: 10, height: 46, paddingLeft: 16, paddingRight: 7, borderRadius: 999,
-          backgroundColor: C.row, boxShadow: "inset 0px 1px 0px rgba(255,216,190,0.05)",
+          backgroundColor: C.row, boxShadow: SHADOW.sheetEdge,
         }}
       >
         <SearchIcon />

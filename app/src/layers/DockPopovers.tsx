@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { useApp } from "../state/store";
-import { alpha, C, SHADOW } from "../theme";
+import { useTheme } from "../state/theme";
 import { T } from "../ui/Text";
 import { useMapData } from "../map/data";
 import { HeatHint, HeatKindAndSeason, HeatLegendBar, HeatLimits, HeatSwitchRow, HeatTime, StrataBar, StrataChips } from "../map/LayerControls";
@@ -14,6 +14,7 @@ import { HeatHint, HeatKindAndSeason, HeatLegendBar, HeatLimits, HeatSwitchRow, 
  * layout has no other way to open.
  */
 export function ElevationPopover() {
+  const { C, alpha, SHADOW } = useTheme();
   const { patch, setMode } = useApp();
   const openLayers = () => {
     patch({ elevOpen: false, heatOpen: false });
@@ -42,6 +43,7 @@ export function ElevationPopover() {
  * swaps the controls for the model's limits (the popover has to clear the phone sheet, so not both).
  */
 export function HeatPopover() {
+  const { C, alpha, SHADOW } = useTheme();
   const heat = useMapData().manifest?.heat;
   const [limits, setLimits] = useState(false);
   return (

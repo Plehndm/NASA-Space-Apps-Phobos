@@ -1,7 +1,8 @@
 import { useMemo, useRef, type ComponentRef, type ReactNode } from "react";
 import { Animated, PanResponder, Pressable, ScrollView, View } from "react-native";
 import { useApp, type SnapName } from "../state/store";
-import { C, R, SHADOW } from "../theme";
+import { R } from "../theme";
+import { useTheme } from "../state/theme";
 import { SearchBar } from "./SearchBar";
 import { CardStack } from "../cards/CardStack";
 import { AssistantHeader, AssistantInput } from "../cards/Assistant";
@@ -12,6 +13,7 @@ import { ChevronIcon } from "../ui/icons";
  * point. The chevron on the right minimises the sheet to its search bar, or brings it back to peek.
  */
 function Handle() {
+  const { C } = useTheme();
   const { state, geo, sheetTop, snapTo } = useApp();
   // PanResponder is created once, so read the latest values through a ref.
   const live = useRef({ state, geo, snapTo });
@@ -74,6 +76,7 @@ function Handle() {
  * Both hold the same content: pinned slot (ETA card while navigating), search bar, scrolling card stack.
  */
 export function Sheet({ pinned }: { pinned?: ReactNode }) {
+  const { C, SHADOW } = useTheme();
   const { geo, sheetTop, state } = useApp();
   const desk = geo.device === "desktop";
   const chat = state.mode === "assistant";
@@ -119,7 +122,7 @@ export function Sheet({ pinned }: { pinned?: ReactNode }) {
       style={{
         position: "absolute", left: 0, width: geo.W, top: sheetTop, height: Animated.subtract(geo.H, sheetTop), zIndex: 4,
         backgroundColor: C.sheet, borderTopLeftRadius: R.sheet, borderTopRightRadius: R.sheet,
-        boxShadow: `${SHADOW.sheet}, inset 0px 1px 0px rgba(255,216,190,0.08)`,
+        boxShadow: `${SHADOW.sheet}, ${SHADOW.sheetEdge}`,
       }}
     >
       <Handle />

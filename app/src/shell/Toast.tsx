@@ -1,11 +1,12 @@
 import { View } from "react-native";
 import { useApp } from "../state/store";
-import { alpha, C, SHADOW } from "../theme";
+import { useTheme } from "../state/theme";
 import { T } from "../ui/Text";
 import { BlinkDot } from "../ui/BlinkDot";
 
 /** Transient message at the top of the map. Trigger it with `useApp().toast("...")`. */
 export function Toast() {
+  const { C, alpha, SHADOW } = useTheme();
   const { state, geo } = useApp();
   if (!state.toast) return null;
   return (

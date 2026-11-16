@@ -3,7 +3,8 @@
 import { Animated, Pressable, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useApp } from "../state/store";
-import { alpha, C, SHADOW } from "../theme";
+import { useTheme } from "../state/theme";
+import { THEMES } from "../theme";
 import { T } from "../ui/Text";
 import { CrosshairIcon } from "../ui/icons";
 import { DATA_URL, useMapData } from "./data";
@@ -22,6 +23,8 @@ function useAnchoredTop(phoneOffset: number, deskFromBottom: number) {
 }
 
 function ScaleBar({ scale }: { scale: number }) {
+  // Drawn straight on the imagery, so it keeps the dark palette in light mode too.
+  const { C, alpha } = THEMES.dark;
   const { geo } = useApp();
   const top = useAnchoredTop(34, 44);
   const pxPerKm = (1000 / M_PER_PX) * scale;
@@ -44,6 +47,7 @@ function ScaleBar({ scale }: { scale: number }) {
 }
 
 function RecenterButton() {
+  const { C, alpha, SHADOW } = useTheme();
   const { geo, state, centerOn, showCoord } = useApp();
   const top = useAnchoredTop(58, 60);
   const locate = () => {
@@ -68,6 +72,7 @@ function RecenterButton() {
 }
 
 function CoordPill() {
+  const { C, alpha, SHADOW } = useTheme();
   const { geo, state } = useApp();
   if (!state.coord) return null;
   return (
@@ -84,6 +89,7 @@ function CoordPill() {
  * Its last line says where the model is checked and opens the limits on the About screen.
  */
 function HeatLegend() {
+  const { C, alpha, SHADOW } = useTheme();
   const { geo, state: S, patch } = useApp();
   const heat = useMapData().manifest?.heat;
   const top = useAnchoredTop(34 + 66 + 22, 116 + 22);
@@ -119,6 +125,7 @@ function HeatLegend() {
 }
 
 function DataNotice() {
+  const { C, alpha } = useTheme();
   const { geo } = useApp();
   const { status } = useMapData();
   if (status !== "offline") return null;
@@ -134,6 +141,7 @@ function DataNotice() {
 
 /** Settings → Hazard alerts = TOP BANNER: the nearest hazard as a pill at the top left of the map. */
 function HazardBanner() {
+  const { alpha, SHADOW } = useTheme();
   const { geo, state: S, settings } = useApp();
   const adv = useDustAdvisory();
   const nh = useNearestHazard(adv);

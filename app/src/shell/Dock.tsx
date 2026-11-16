@@ -1,28 +1,32 @@
 import type { ReactNode } from "react";
 import { Pressable, View, type ViewStyle } from "react-native";
 import { useApp } from "../state/store";
-import { alpha, C, SHADOW } from "../theme";
+import { useTheme } from "../state/theme";
+import type { Theme } from "../theme";
 import { T } from "../ui/Text";
 import { HazardIcon, LayersIcon } from "../ui/icons";
 import { ElevationPopover, HeatPopover } from "../layers/DockPopovers";
 
-const circle = (active: boolean): ViewStyle => ({
+const circle = ({ C, alpha, SHADOW }: Theme, active: boolean): ViewStyle => ({
   width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", boxShadow: SHADOW.s1,
   backgroundColor: active ? C.cta : alpha("bg1", 0.86), borderWidth: 1, borderColor: active ? C.cta : C.hair,
 });
 
 /** Dock button. `children` receives the glyph colour for the current state. */
-function DockButton({ active, label, onPress, idleFg = C.fg, children }: {
+function DockButton({ active, label, onPress, idleFg, children }: {
   active: boolean; label: string; onPress: () => void; idleFg?: string; children: (fg: string) => ReactNode;
 }) {
+  const theme = useTheme();
+  const { C } = theme;
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: active }} onPress={onPress} style={circle(active)}>
-      {children(active ? C.ctaInk : idleFg)}
+    <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: active }} onPress={onPress} style={circle(theme, active)}>
+      {children(active ? C.ctaInk : idleFg ?? C.fg)}
     </Pressable>
   );
 }
 
 function ZoomButton({ label, glyph, onPress }: { label: string; glyph: string; onPress: () => void }) {
+  const { C } = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
@@ -37,6 +41,7 @@ function ZoomButton({ label, glyph, onPress }: { label: string; glyph: string; o
 
 /** Right-hand column of map controls: Layers, Hazards, Heatmap, Assistant, zoom. */
 export function Dock() {
+  const { C, alpha, SHADOW } = useTheme();
   const { state: S, geo, settings, patch, setMode, goHome, toast, zoomBy } = useApp();
   const panel = settings.layerPicker === "panel";
 

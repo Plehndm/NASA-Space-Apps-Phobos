@@ -4,7 +4,8 @@
 import { useEffect, useRef, type ComponentRef, type ReactNode, type Ref } from "react";
 import { Platform, Pressable, ScrollView, View } from "react-native";
 import { useApp } from "../state/store";
-import { C, R, SHADOW } from "../theme";
+import { R } from "../theme";
+import { useTheme } from "../state/theme";
 import { T } from "../ui/Text";
 
 export function Dialog({ label, title, onClose, onBack, backLabel, scrollRef, children }: {
@@ -16,6 +17,7 @@ export function Dialog({ label, title, onClose, onBack, backLabel, scrollRef, ch
   scrollRef?: Ref<ComponentRef<typeof ScrollView>>;
   children: ReactNode;
 }) {
+  const { C, SHADOW } = useTheme();
   const { geo } = useApp();
   const desk = geo.device === "desktop";
 
@@ -31,7 +33,7 @@ export function Dialog({ label, title, onClose, onBack, backLabel, scrollRef, ch
 
   return (
     <>
-      <Pressable accessibilityLabel={`Close ${label.toLowerCase()}`} onPress={onClose} style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0, backgroundColor: "rgba(20,11,9,0.55)", zIndex: 9 }} />
+      <Pressable accessibilityLabel={`Close ${label.toLowerCase()}`} onPress={onClose} style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0, backgroundColor: C.scrim, zIndex: 9 }} />
       <View
         accessibilityViewIsModal
         accessibilityLabel={label}
