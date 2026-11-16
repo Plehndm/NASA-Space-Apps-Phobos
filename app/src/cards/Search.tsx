@@ -3,7 +3,7 @@
 // the landmark to the sequence when one is planned.
 import { Pressable, ScrollView, View } from "react-native";
 import { useApp } from "../state/store";
-import { C } from "../theme";
+import { useTheme } from "../state/theme";
 import { T } from "../ui/Text";
 import { LANDMARKS, landmarkById } from "../map/landmarks";
 import { useRoutes } from "../route/RouteProvider";
@@ -13,6 +13,7 @@ import { LandmarkRow } from "./LandmarkRow";
 import { saveRecent } from "../state/settings";
 
 export function SearchCard() {
+  const { C, alpha } = useTheme();
   const { state: S, settings, patch } = useApp();
   const r = useRoutes();
   const filtering = isFiltering(S.q, S.cat);
@@ -37,7 +38,7 @@ export function SearchCard() {
               style={{ flexDirection: "row", alignItems: "center", gap: 7, height: 32, paddingLeft: 14, paddingRight: 6, borderRadius: 999, backgroundColor: on ? C.fg : C.raised }}
             >
               <T w={600} size={11} color={on ? C.bg1 : C.fg}>{c}</T>
-              <View style={{ minWidth: 22, paddingVertical: 3, paddingHorizontal: 7, borderRadius: 999, alignItems: "center", backgroundColor: icons ? (on ? "rgba(0,0,0,0.08)" : "rgba(127,212,193,0.12)") : on ? C.raised : C.hair }}>
+              <View style={{ minWidth: 22, paddingVertical: 3, paddingHorizontal: 7, borderRadius: 999, alignItems: "center", backgroundColor: icons ? (on ? "rgba(0,0,0,0.08)" : alpha("accent", 0.12)) : on ? C.raised : C.hair }}>
                 <T w={700} size={10} color={icons ? (on ? C.raised : C.accent2) : on ? C.fg : C.fg2}>{badge}</T>
               </View>
             </Pressable>
@@ -57,7 +58,7 @@ export function SearchCard() {
       </View>
 
       {coords && (
-        <View style={{ paddingVertical: 12, paddingHorizontal: 16, borderRadius: 20, backgroundColor: "rgba(127,212,193,0.09)" }}>
+        <View style={{ paddingVertical: 12, paddingHorizontal: 16, borderRadius: 20, backgroundColor: alpha("accent", 0.09) }}>
           <T w={600} size={12} color={C.accent2}>{`Coordinate ${fmtLatLon(coords)} · press Enter to go there`}</T>
         </View>
       )}
