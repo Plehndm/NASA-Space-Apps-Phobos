@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 import { Pressable, View } from "react-native";
 import Slider from "@react-native-community/slider";
 import { useApp } from "../state/store";
-import { C, R } from "../theme";
+import { R } from "../theme";
+import { useTheme } from "../state/theme";
 import { Card, SectionLabel } from "../ui/Card";
 import { Segmented } from "../ui/Segmented";
 import { Switch } from "../ui/Switch";
@@ -10,6 +11,7 @@ import { T } from "../ui/Text";
 import { Dialog } from "./Dialog";
 
 function Head({ title, hint }: { title: string; hint: string }) {
+  const { C } = useTheme();
   return (
     <View style={{ flexShrink: 1 }}>
       <T w={700} size={13}>{title}</T>
@@ -22,6 +24,7 @@ function SliderCard({ pebble, title, hint, value, unit, min, max, step, left, ri
   pebble: 1 | 2; title: string; hint: string; value: number; unit: string; min: number; max: number; step: number;
   left: string; right: string; onChange: (v: number) => void;
 }) {
+  const { C } = useTheme();
   return (
     <Card pebble={pebble} style={{ gap: 8 }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
@@ -56,6 +59,7 @@ function SegCard({ pebble, children }: { pebble: 1 | 2; children: ReactNode }) {
 
 /** Settings: phone = bottom sheet, desktop = centred 480 px dialog (src/shell/Dialog.tsx). Opened from the header gear. */
 export function SettingsDialog() {
+  const { C } = useTheme();
   const { state, settings: o, setSetting, resetSettings, patch } = useApp();
   if (!state.settingsOpen) return null;
   const close = () => patch({ settingsOpen: false });
