@@ -4,14 +4,15 @@
 // result picked there is appended to the sequence.
 import { Pressable, View } from "react-native";
 import { useApp } from "../state/store";
-import { C, SHADOW } from "../theme";
+import { useTheme } from "../state/theme";
 import { T } from "../ui/Text";
 import { fmtLatLon } from "../map/geo";
 import { useRoutes } from "../route/RouteProvider";
 import { cumul, timeAt } from "../route/router";
 import { deg, fmtKm, fmtMin } from "../route/format";
 
-function RoundBtn({ label, glyph, color = C.fg, onPress, disabled }: { label: string; glyph: string; color?: string; onPress: () => void; disabled?: boolean }) {
+function RoundBtn({ label, glyph, color, onPress, disabled }: { label: string; glyph: string; color?: string; onPress: () => void; disabled?: boolean }) {
+  const { C } = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
@@ -20,15 +21,16 @@ function RoundBtn({ label, glyph, color = C.fg, onPress, disabled }: { label: st
       onPress={onPress}
       style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: C.raised, alignItems: "center", justifyContent: "center", opacity: disabled ? 0.35 : 1 }}
     >
-      <T w={600} size={glyph === "×" ? 15 : 12} color={color} style={{ lineHeight: 16 }}>{glyph}</T>
+      <T w={600} size={glyph === "×" ? 15 : 12} color={color ?? C.fg} style={{ lineHeight: 16 }}>{glyph}</T>
     </Pressable>
   );
 }
 
 function Row({ num, name, tag, sub, children }: { num: string; name: string; tag?: string; sub: string; children?: React.ReactNode }) {
+  const { C, alpha } = useTheme();
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, paddingLeft: 10, paddingRight: 12, borderRadius: 999, backgroundColor: C.row }}>
-      <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: "rgba(127,212,193,0.15)", alignItems: "center", justifyContent: "center" }}>
+      <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: alpha("accent", 0.15), alignItems: "center", justifyContent: "center" }}>
         <T w={700} size={11} color={C.accent2}>{num}</T>
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
@@ -48,6 +50,7 @@ function Row({ num, name, tag, sub, children }: { num: string; name: string; tag
 }
 
 export function SequenceCard() {
+  const { C, SHADOW } = useTheme();
   const { state: S } = useApp();
   const r = useRoutes();
   const o = S.stops.length ? r.routeOpts(S.stops) : null;
