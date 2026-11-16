@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { View } from "react-native";
 import Svg, { Defs, LinearGradient, Path, Stop } from "react-native-svg";
 import { M_PER_PX } from "../map/geo";
-import { C } from "../theme";
+import { useTheme } from "../state/theme";
 import type { Profile } from "./router";
 
 const VW = 300, VH = 44;
@@ -32,6 +32,7 @@ export function profilePaths(samples: Profile["samples"]) {
 }
 
 export function ElevationProfile({ samples, height = 44, at }: { samples: Profile["samples"]; height?: number; at?: number }) {
+  const { C, alpha } = useTheme();
   const p = useMemo(() => profilePaths(samples), [samples]);
   if (!p) return <View style={{ height }} />;
   const frac = at === undefined ? null : Math.max(0, Math.min(1, at / p.tot));
@@ -50,7 +51,7 @@ export function ElevationProfile({ samples, height = 44, at }: { samples: Profil
       </Svg>
       {frac !== null && (
         <>
-          <View pointerEvents="none" style={{ position: "absolute", left: 0, top: -4, bottom: -4, width: `${frac * 100}%`, backgroundColor: "rgba(27,16,13,0.45)" }} />
+          <View pointerEvents="none" style={{ position: "absolute", left: 0, top: -4, bottom: -4, width: `${frac * 100}%`, backgroundColor: alpha("bg1", 0.45) }} />
           <View pointerEvents="none" style={{ position: "absolute", left: `${frac * 100}%`, top: -4, bottom: -4, width: 2, marginLeft: -1, backgroundColor: C.warm3 }} />
           <View
             pointerEvents="none"

@@ -5,7 +5,8 @@ import type { ReactNode } from "react";
 import { Pressable, View } from "react-native";
 import Svg, { Circle, Path } from "react-native-svg";
 import { useApp } from "../state/store";
-import { C, R, SHADOW } from "../theme";
+import { R } from "../theme";
+import { useTheme } from "../state/theme";
 import { T } from "../ui/Text";
 import { CloseIcon } from "../ui/icons";
 import { fmtLatLon } from "../map/geo";
@@ -16,17 +17,19 @@ import { bearing, diff180, panoNear, STREET_RADIUS_KM, usePanos } from "../stree
 import type { Landmark } from "../map/landmarks";
 
 export function NoteBubble({ children }: { children: ReactNode }) {
+  const { C, alpha } = useTheme();
   return (
-    <View style={{ flexDirection: "row", gap: 9, marginTop: 12, paddingVertical: 10, paddingHorizontal: 14, borderTopLeftRadius: 18, borderTopRightRadius: 18, borderBottomRightRadius: 18, borderBottomLeftRadius: 6, backgroundColor: "rgba(127,212,193,0.09)" }}>
+    <View style={{ flexDirection: "row", gap: 9, marginTop: 12, paddingVertical: 10, paddingHorizontal: 14, borderTopLeftRadius: 18, borderTopRightRadius: 18, borderBottomRightRadius: 18, borderBottomLeftRadius: 6, backgroundColor: alpha("accent", 0.09) }}>
       <T size={12} lh={1.5} color={C.accent}>✦</T>
       <T w={500} size={12} lh={1.5} color={C.accent2} style={{ flex: 1 }}>{children}</T>
     </View>
   );
 }
 
-export function WarnIcon({ color = C.danger }: { color?: string }) {
+export function WarnIcon({ color }: { color?: string }) {
+  const { C } = useTheme();
   return (
-    <Svg pointerEvents="none" viewBox="0 0 16 16" width={16} height={16} fill="none" stroke={color} strokeWidth={1.6} strokeLinejoin="round" strokeLinecap="round">
+    <Svg pointerEvents="none" viewBox="0 0 16 16" width={16} height={16} fill="none" stroke={color ?? C.danger} strokeWidth={1.6} strokeLinejoin="round" strokeLinecap="round">
       <Path d="M8 2.5 14 13H2Z" />
       <Path d="M8 6.5v3M8 11.2v.3" />
     </Svg>
@@ -34,6 +37,7 @@ export function WarnIcon({ color = C.danger }: { color?: string }) {
 }
 
 function RoutePick({ title, sub, subColor, on, onPress, leftCorner }: { title: string; sub: string; subColor: string; on: boolean; onPress: () => void; leftCorner: boolean }) {
+  const { C, alpha } = useTheme();
   return (
     <Pressable
       accessibilityRole="radio"
@@ -41,7 +45,7 @@ function RoutePick({ title, sub, subColor, on, onPress, leftCorner }: { title: s
       onPress={onPress}
       style={{
         flex: 1, paddingVertical: 10, paddingHorizontal: 14, borderWidth: 1.5,
-        borderColor: on ? C.accent : "transparent", backgroundColor: on ? "rgba(127,212,193,0.1)" : C.row,
+        borderColor: on ? C.accent : "transparent", backgroundColor: on ? alpha("accent", 0.1) : C.row,
         borderTopLeftRadius: 20, borderTopRightRadius: 20, borderBottomLeftRadius: leftCorner ? 8 : 20, borderBottomRightRadius: leftCorner ? 20 : 8,
       }}
     >
@@ -52,6 +56,7 @@ function RoutePick({ title, sub, subColor, on, onPress, leftCorner }: { title: s
 }
 
 export function WaypointCard() {
+  const { C, alpha, SHADOW } = useTheme();
   const { state: S, settings, toast, goHome } = useApp();
   const r = useRoutes();
   const sel = r.lm(S.sel);
@@ -63,8 +68,8 @@ export function WaypointCard() {
 
   const hero = (body: ReactNode, eta: string, km: string) => (
     <View style={[{ position: "relative", overflow: "hidden", backgroundColor: C.card, padding: 16 }, R.pebble]}>
-      <View pointerEvents="none" style={{ position: "absolute", right: -40, top: -50, width: 150, height: 150, borderRadius: 75, backgroundColor: "rgba(236,122,86,0.14)" }} />
-      <View pointerEvents="none" style={{ position: "absolute", right: 30, top: 40, width: 70, height: 70, borderRadius: 35, backgroundColor: "rgba(255,195,148,0.06)" }} />
+      <View pointerEvents="none" style={{ position: "absolute", right: -40, top: -50, width: 150, height: 150, borderRadius: 75, backgroundColor: alpha("cta", 0.14) }} />
+      <View pointerEvents="none" style={{ position: "absolute", right: 30, top: 40, width: 70, height: 70, borderRadius: 35, backgroundColor: alpha("warm", 0.06) }} />
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
         <View style={{ flexShrink: 1 }}>
           <T w={700} size={10.5} ls={1.2} color={C.warm}>TARGET</T>
@@ -179,6 +184,7 @@ export function WaypointCard() {
 
 /** Eye button: opens Street Level at the nearest rover panorama, facing the waypoint. Dimmed when none is close. */
 function StreetButton({ l }: { l: Landmark }) {
+  const { C } = useTheme();
   const { patch, toast } = useApp();
   const panos = usePanos();
   const near = panoNear(panos, l);
