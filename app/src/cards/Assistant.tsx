@@ -5,7 +5,8 @@ import { useEffect, useRef, useState, type ComponentRef } from "react";
 import { Animated, Keyboard, Platform, Pressable, TextInput, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { useApp } from "../state/store";
-import { C, font, SHADOW } from "../theme";
+import { font } from "../theme";
+import { useTheme } from "../state/theme";
 import { T } from "../ui/Text";
 import { CloseIcon } from "../ui/icons";
 import { Segmented } from "../ui/Segmented";
@@ -25,6 +26,7 @@ export const SUGGESTIONS = [
 const hazardName = (id: string) => (id === DUST_ID ? "Dust devils" : HAZARD_ZONES.find(z => z.id === id)?.name ?? null);
 
 function Blink({ children }: { children: string }) {
+  const { C } = useTheme();
   const o = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     const loop = Animated.loop(Animated.sequence([
@@ -38,6 +40,7 @@ function Blink({ children }: { children: string }) {
 }
 
 function RouteCard({ m }: { m: ChatMsg }) {
+  const { C, alpha, SHADOW } = useTheme();
   const r = useRoutes();
   const { loadRoute } = useAssistant();
   const o = r.ready ? r.routeOpts(m.route) : null;
@@ -48,7 +51,7 @@ function RouteCard({ m }: { m: ChatMsg }) {
   return (
     <View
       style={{
-        width: "100%", backgroundColor: C.card, padding: 14, borderWidth: 1, borderColor: "rgba(127,212,193,0.22)",
+        width: "100%", backgroundColor: C.card, padding: 14, borderWidth: 1, borderColor: alpha("accent", 0.22),
         borderTopLeftRadius: 22, borderTopRightRadius: 22, borderBottomRightRadius: 22, borderBottomLeftRadius: 8,
       }}
     >
@@ -60,7 +63,7 @@ function RouteCard({ m }: { m: ChatMsg }) {
         const leg = route ? cum[route.legEnds[i + 1]] - cum[route.legEnds[i]] : null;
         return (
           <View key={`${id}-${i}`} style={{ flexDirection: "row", gap: 10, alignItems: "center", marginTop: 8 }}>
-            <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: "rgba(127,212,193,0.15)", alignItems: "center", justifyContent: "center" }}>
+            <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: alpha("accent", 0.15), alignItems: "center", justifyContent: "center" }}>
               <T w={700} size={10} color={C.accent2}>{String(i + 1).padStart(2, "0")}</T>
             </View>
             <T w={600} size={13} numberOfLines={1} style={{ flex: 1, minWidth: 0 }}>{r.lm(id)?.name ?? id}</T>
@@ -85,6 +88,7 @@ function RouteCard({ m }: { m: ChatMsg }) {
 }
 
 function Bubble({ m }: { m: ChatMsg }) {
+  const { C } = useTheme();
   const u = m.role === "user";
   return (
     <View style={{ gap: 8, alignItems: u ? "flex-end" : "flex-start" }}>
@@ -117,6 +121,7 @@ export function assistantStatus(mode: AssistantMode, live: boolean | null): { te
 export function AssistantHeader() {
   const { goHome } = useApp();
   const { live, mode, setMode } = useAssistant();
+  const { C } = useTheme();
   const status = assistantStatus(mode, live);
   return (
     <View style={{ paddingHorizontal: 16, paddingBottom: 8, gap: 4 }}>
@@ -145,6 +150,7 @@ export function AssistantHeader() {
 
 /** The conversation: bubbles, proposed routes, the busy pill and the TRY suggestions. */
 export function AssistantCard() {
+  const { C } = useTheme();
   const { chat, busy, send } = useAssistant();
   return (
     <>
@@ -179,6 +185,7 @@ export function AssistantCard() {
 
 /** The input row, pinned under the chat. On iOS it rides above the keyboard. */
 export function AssistantInput({ insetBottom }: { insetBottom: number }) {
+  const { C, alpha } = useTheme();
   const { busy, send } = useAssistant();
   const [text, setText] = useState("");
   // Return can reach JavaScript before the last keystrokes' change events, so a submit uses the text
@@ -223,7 +230,7 @@ export function AssistantInput({ insetBottom }: { insetBottom: number }) {
         onPress={() => submit()}
         style={{
           width: 48, height: 48, borderRadius: 24, backgroundColor: C.accent, alignItems: "center", justifyContent: "center",
-          boxShadow: "0px 8px 20px rgba(127,212,193,0.3)", opacity: can ? 1 : 0.55,
+          boxShadow: `0px 8px 20px ${alpha("accent", 0.3)}`, opacity: can ? 1 : 0.55,
         }}
       >
         <Svg width={16} height={16} viewBox="0 0 16 16" fill="none">
