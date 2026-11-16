@@ -29,7 +29,7 @@ const RGB_LIGHT: Record<RgbName, string> = {
   accent: "29,122,103",
   cta: "185,71,31",
   warm: "168,83,35",
-  warm3: "255,227,204", // map grid: drawn on the imagery, same in both modes
+  warm3: "122,58,20"
 };
 
 const DARK = {
@@ -110,7 +110,7 @@ const LIGHT: Palette = {
 
   warm: "#a85323",
   warm2: "#c27a4b",
-  // warm3 is the map grid, on the imagery.
+  warm3: "#7a3a14", // the strongest warm accent: deepest on a light ground (the map grid uses the static dark one)
 
   danger: "#c4382b",
   dangerBg: "rgba(196,56,43,0.10)",

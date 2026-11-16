@@ -1,7 +1,7 @@
 // One landmark row (Search results, recent searches, Home's nearby list): code circle, name,
 // "x km away · y min", and NAV READY or HAZARD.
 import { Pressable, View } from "react-native";
-import { C } from "../theme";
+import { useTheme } from "../state/theme";
 import { T } from "../ui/Text";
 import { distanceM } from "../map/geo";
 import type { Landmark } from "../map/landmarks";
@@ -10,6 +10,7 @@ import { fmtMin } from "../route/format";
 import { useRoutes } from "../route/RouteProvider";
 
 export function LandmarkRow({ l, from, icon, onPress }: { l: Landmark; from: { x: number; y: number }; icon?: string; onPress: () => void }) {
+  const { C } = useTheme();
   const r = useRoutes();
   const km = distanceM(from, l) / 1000;
   const blocked = !!r.blockedBy(l);

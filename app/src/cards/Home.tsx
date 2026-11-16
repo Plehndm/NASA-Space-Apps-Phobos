@@ -4,7 +4,8 @@
 import { Pressable, View } from "react-native";
 import Svg, { Circle, Path } from "react-native-svg";
 import { useApp } from "../state/store";
-import { C, R } from "../theme";
+import { R } from "../theme";
+import { useTheme } from "../state/theme";
 import { T } from "../ui/Text";
 import { distanceM, fmtLatLon } from "../map/geo";
 import { LANDMARKS } from "../map/landmarks";
@@ -13,25 +14,27 @@ import { tauLevel, useTelemetry } from "../home/telemetry";
 import { useDustAdvisory, WATCH_KM } from "../home/advisory";
 import { LandmarkRow } from "./LandmarkRow";
 
-function Tile({ label, value, sub, color, subColor = C.fg2 }: { label: string; value: string; sub: string; color: string; subColor?: string }) {
+function Tile({ label, value, sub, color, subColor }: { label: string; value: string; sub: string; color: string; subColor?: string }) {
+  const { C } = useTheme();
   return (
     <View style={{ flex: 1, minWidth: 0, backgroundColor: C.card, borderRadius: 18, paddingVertical: 10, paddingHorizontal: 11 }}>
       <T w={600} size={9} ls={0.6} color={C.fg2} numberOfLines={1}>{label}</T>
       <View style={{ flexDirection: "row", alignItems: "baseline", flexWrap: "wrap", columnGap: 4, marginTop: 4 }}>
         <T w={700} size={14} ls={-0.2} color={color}>{value}</T>
-        <T w={500} size={9} color={subColor}>{sub}</T>
+        <T w={500} size={9} color={subColor ?? C.fg2}>{sub}</T>
       </View>
     </View>
   );
 }
 
 export function SectorCard() {
+  const { C, alpha } = useTheme();
   const { state: S, centerOn, showCoord } = useApp();
   const t = useTelemetry();
   const slope = t.slope;
   return (
-    <View style={[{ backgroundColor: "rgba(46,30,25,0.92)", paddingVertical: 14, paddingHorizontal: 16, overflow: "hidden" }, R.pebble]}>
-      <View pointerEvents="none" style={{ position: "absolute", left: -40, bottom: -60, width: 150, height: 150, borderRadius: 75, backgroundColor: "rgba(255,195,148,0.06)" }} />
+    <View style={[{ backgroundColor: alpha("row", 0.92), paddingVertical: 14, paddingHorizontal: 16, overflow: "hidden" }, R.pebble]}>
+      <View pointerEvents="none" style={{ position: "absolute", left: -40, bottom: -60, width: 150, height: 150, borderRadius: 75, backgroundColor: alpha("warm", 0.06) }} />
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Center on rover"
@@ -74,6 +77,7 @@ export function SectorCard() {
 }
 
 export function AdvisoryCard() {
+  const { C, alpha } = useTheme();
   const { state: S, patch, centerOn, toast } = useApp();
   const adv = useDustAdvisory();
   if (!adv) return null;
@@ -95,7 +99,7 @@ export function AdvisoryCard() {
       onPress={view}
       style={({ pressed }) => ({
         flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, paddingLeft: 10, paddingRight: 12, borderRadius: 999,
-        backgroundColor: pressed ? C.row : "rgba(27,16,13,0.92)", borderWidth: 1, borderColor: watch ? "rgba(255,195,148,0.4)" : C.hair,
+        backgroundColor: pressed ? C.row : alpha("bg1", 0.92), borderWidth: 1, borderColor: watch ? alpha("warm", 0.4) : C.hair,
       })}
     >
       <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: C.card, alignItems: "center", justifyContent: "center" }}>
@@ -127,6 +131,7 @@ export function SectorHeader() {
 }
 
 export function HomeCard() {
+  const { C } = useTheme();
   const { state: S } = useApp();
   const r = useRoutes();
   // The three nearest landmarks, leaving out any the rover is parked at.
