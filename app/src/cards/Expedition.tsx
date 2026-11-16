@@ -3,7 +3,8 @@
 import { Pressable, View } from "react-native";
 import Svg, { Circle, Path } from "react-native-svg";
 import { useApp } from "../state/store";
-import { C, R } from "../theme";
+import { R } from "../theme";
+import { useTheme } from "../state/theme";
 import { T } from "../ui/Text";
 import { ElevationProfile } from "../route/ElevationProfile";
 import { arrivalMtc, crossingAhead, useRoutes } from "../route/RouteProvider";
@@ -13,6 +14,7 @@ import type { Pt } from "../map/geo";
 
 /** Everything the expedition cards show, from the running nav. */
 function useNavView() {
+  const { C } = useTheme();
   const { state: S } = useApp();
   const r = useRoutes();
   const n = S.nav;
@@ -56,24 +58,26 @@ function useNavView() {
   };
 }
 
-function Btn({ label, onPress, flex = 1, bg = C.raised, fg = C.fg, border, h = 42, w }: { label: string; onPress: () => void; flex?: number; bg?: string; fg?: string; border?: string; h?: number; w?: number }) {
+function Btn({ label, onPress, flex = 1, bg, fg, border, h = 42, w }: { label: string; onPress: () => void; flex?: number; bg?: string; fg?: string; border?: string; h?: number; w?: number }) {
+  const { C } = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
-      style={{ flex: w ? undefined : flex, width: w, height: h, borderRadius: 999, backgroundColor: bg, borderWidth: 1.5, borderColor: border ?? "transparent", alignItems: "center", justifyContent: "center" }}
+      style={{ flex: w ? undefined : flex, width: w, height: h, borderRadius: 999, backgroundColor: bg ?? C.raised, borderWidth: 1.5, borderColor: border ?? "transparent", alignItems: "center", justifyContent: "center" }}
     >
-      <T w={label === "END" ? 800 : 700} size={10.5} ls={0.6} color={fg}>{label}</T>
+      <T w={label === "END" ? 800 : 700} size={10.5} ls={0.6} color={fg ?? C.fg}>{label}</T>
     </Pressable>
   );
 }
 
 export function ExpeditionCard() {
+  const { C, alpha } = useTheme();
   const { state: S, settings } = useApp();
   const r = useRoutes();
   const v = useNavView();
   if (!v) return null;
-  const reroute = { label: "REROUTE", onPress: r.toggleReroute, bg: S.viaPending ? "rgba(127,212,193,0.12)" : C.raised, border: S.viaPending ? C.accent : "transparent" };
+  const reroute = { label: "REROUTE", onPress: r.toggleReroute, bg: S.viaPending ? alpha("accent", 0.12) : C.raised, border: S.viaPending ? C.accent : "transparent" };
 
   return (
     <>
@@ -85,7 +89,7 @@ export function ExpeditionCard() {
         </View>
       )}
       {S.viaPending && (
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 11, paddingLeft: 16, paddingRight: 12, borderRadius: 20, backgroundColor: "rgba(127,212,193,0.1)", borderWidth: 1, borderColor: "rgba(127,212,193,0.35)" }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 11, paddingLeft: 16, paddingRight: 12, borderRadius: 20, backgroundColor: alpha("accent", 0.1), borderWidth: 1, borderColor: alpha("accent", 0.35) }}>
           <T w={600} size={11} lh={1.45} color={C.accent2} style={{ flex: 1 }}>MANUAL REROUTE · tap the map to place a via-point</T>
           <Btn label="CANCEL" onPress={r.toggleReroute} h={32} w={80} />
         </View>
@@ -117,7 +121,7 @@ export function ExpeditionCard() {
         </>
       ) : (
         <View style={[{ backgroundColor: C.card, paddingVertical: 14, paddingHorizontal: 16, overflow: "hidden" }, R.pebble]}>
-          <View pointerEvents="none" style={{ position: "absolute", right: -50, top: -60, width: 160, height: 160, borderRadius: 80, backgroundColor: "rgba(127,212,193,0.07)" }} />
+          <View pointerEvents="none" style={{ position: "absolute", right: -50, top: -60, width: 160, height: 160, borderRadius: 80, backgroundColor: alpha("accent", 0.07) }} />
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
             <T w={700} size={10} ls={1} color={C.warm}>EXPEDITION PROGRESS</T>
             <T w={700} size={11} color={C.fg2}>{`${Math.round(v.pct * 100)}%`}</T>
@@ -167,6 +171,7 @@ export function ExpeditionCard() {
 
 /** Pinned above the search bar while driving: arrival time (MTC), time left, distance left. */
 export function EtaCard() {
+  const { C } = useTheme();
   const { state: S } = useApp();
   const r = useRoutes();
   const n = S.nav;
@@ -190,13 +195,14 @@ export function EtaCard() {
 }
 
 export function ArrivedCard() {
+  const { C, alpha } = useTheme();
   const { state: S } = useApp();
   const r = useRoutes();
   const a = S.arrived;
   if (!a) return null;
   return (
-    <View style={[{ flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: C.card, padding: 14, borderWidth: 1, borderColor: "rgba(127,212,193,0.25)" }, R.pebble2]}>
-      <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(127,212,193,0.15)", alignItems: "center", justifyContent: "center" }}>
+    <View style={[{ flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: C.card, padding: 14, borderWidth: 1, borderColor: alpha("accent", 0.25) }, R.pebble2]}>
+      <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: alpha("accent", 0.15), alignItems: "center", justifyContent: "center" }}>
         <Svg pointerEvents="none" viewBox="0 0 16 16" width={16} height={16} fill="none" stroke={C.accent} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
           <Path d="M3 8.5 6.5 12 13 4.5" />
         </Svg>
