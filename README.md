@@ -56,7 +56,7 @@ NASA-Space-Apps-Phobos/
 ├── app/                         THE APP (React Native + Expo: phone via Expo Go, desktop via web); start in app/README.md
 │   ├── src/shell/               header, dock, bottom sheet / side panel, settings, toasts, map area
 │   ├── src/map/                 coordinate system, map data loader, map layers, layer controls
-│   ├── src/cards/               one screen per sheet mode (placeholders until built)
+│   ├── src/cards/               one screen per sheet mode: Home, Search, Layers, Waypoint, Sequence, Expedition, Assistant
 │   ├── scripts/                 fetch_imagery.py + build_map_data.py (pipeline outputs -> app data), data and design servers
 │   └── data/                    built map data and panoramas, served by `npx expo start` (not tracked by git)
 │
