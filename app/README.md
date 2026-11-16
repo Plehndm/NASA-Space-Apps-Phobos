@@ -152,14 +152,15 @@ Add libraries with `npx expo install <package>`, not `npm install`. It picks the
 ## What's built (checklist section 1: App foundation)
 
 - **Design tokens + theme:** `src/theme.ts`.
-  - Colours (`C`), radii (`R`), shadows (`SHADOW`), gradients, and `font(weight, size)`.
+  - Colours, radii (`R`), shadows, gradients, and `font(weight, size)`.
   - Use these, never raw hex.
+  - **Light / dark mode:** two palettes, dark (the design, and the default) and light (the project page's light colours). In a component, read the active one with `const { C, alpha, SHADOW } = useTheme();` from `src/state/theme.tsx`; it re-renders when the mode changes. The static `C`, `alpha` and `SHADOW` exports are the dark palette, for things drawn on the map imagery (labels, routes, hazards, rover, scale bar) and Street Level, which stay dark in both modes.
   - Put all text in `<T>` from `src/ui/Text.tsx` so it gets the Plus Jakarta Sans font.
 - **Layout shells:** `src/layout/geometry.ts` and `src/shell/Sheet.tsx`.
   - Phone: bottom sheet with full / half / peek snap points, plus a minimised one that leaves only the search bar. Drag the handle, tap it to step through the points, or use the chevron beside it to minimise and restore the sheet. The map dims as the sheet rises. The header and sheet allow for the notch and home bar.
   - Desktop: fixed 420 px left panel. Both layouts use the same components.
 - **Header, dock, toasts:**
-  - `Header.tsx`: Sol + ticking MTC clock, status pill, settings gear.
+  - `Header.tsx`: Sol + ticking MTC clock, status pill, sun / moon button (light / dark mode, remembered on the device as `mn.theme`, separate from Settings so Reset leaves it alone), settings gear.
   - `Dock.tsx`: Layers, Hazards (with status dot), HM, ✦ Assistant, zoom.
   - `Toast.tsx`: transient messages, shown with `toast("…")`.
   - Android's back button closes Settings, then popovers, then returns to Home.
